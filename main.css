@@ -1,0 +1,101 @@
+.user__addition-info,
+.user__main-info {
+    padding: 10px;
+}
+
+.user__main-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /*margin-left: 1.1em;*/
+}
+
+.user__addition-info {
+    padding-top: 0;
+}
+
+.user__fullname {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 0.8em;
+    margin-left: 0.4em;
+}
+
+.user__fullname a {
+    text-decoration: underline;
+}
+
+.user__lastaccess {
+    margin-left: 0.6em;
+}
+
+.um-tab-pane {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    background-color: #fff;
+    padding: 10px;
+}
+
+.um-badge {
+    display: inline-block;
+    padding: .4em .4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.um-badge-pill {
+    padding: .4em .8em;
+    border-radius: 10rem;
+}
+
+.um-badge-info {
+    color: #fff;
+    background-color: #17a2b8;
+}
+
+.um-badge-primary {
+    color: #fff;
+    background-color: #035d96;
+}
+
+.um-badge-danger {
+    color: #fff;
+    background-color: #dc3545;
+}
+
+.um-nav-tabs .um-nav-link {
+    padding: 0 5px;
+    color: #035d96;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.um-table {
+    margin-bottom: 0;
+}
+
+.um-table tbody td,
+.um-table thead th {
+    border-top: none;
+}
+
+.um-table thead th {
+    color: #035d96;
+}
+
+.um-table tbody tr:nth-of-type(odd),
+.um-table thead tr:nth-of-type(odd){
+    background-color: #fff;
+}
+
+.um-table thead th {
+    border-bottom-width: 1px;
+}
