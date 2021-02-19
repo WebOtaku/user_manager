@@ -77,7 +77,7 @@ class cohort {
 //        return $group_users_cohorts;
 //    }
 
-    // TODO: Deprecated function prepare_grouped_users_cohorts_for_output
+    // TODO: Deprecated function - prepare_grouped_users_cohorts_for_output
     public static function prepare_grouped_users_cohorts_for_output($grouped_users_cohorts, $baseurl = '', $sitecontext = '', $chtsreturnurl = '') {
         global $OUTPUT;
 
@@ -246,6 +246,7 @@ class cohort {
         return $output_grouped_users_data;
     }
 
+    // TODO: Deprecated function - prepare_grouped_users_data_for_table
     public static function prepare_grouped_users_data_for_table($grouped_users_data, $baseurl = '', $sitecontext = '', $chtsreturnurl = '') {
         global $OUTPUT;
 
@@ -410,7 +411,8 @@ class cohort {
         return $group_users_cohorts;
     }
 
-    public static function group_users_courses_by_users($users_courses) {
+    // TODO: Deprecated function - group_users_courses_by_users
+    /*public static function group_users_courses_by_users($users_courses) {
         $group_users_courses = array();
 
         foreach ($users_courses as $users_course) {
@@ -454,6 +456,125 @@ class cohort {
             elseif (!isset($group_users_courses[$userid]->roles))
                 $group_users_courses[$userid]->roles = array();
 
+            // Группируем enrol_method
+            if (isset($group_users_courses[$userid]->enrol_methods) && $users_course->enrol_method)
+                $group_users_courses[$userid]->enrol_methods[] = $users_course->enrol_method;
+            elseif (!isset($group_users_courses[$userid]->enrol_methods) && $users_course->enrol_method)
+                $group_users_courses[$userid]->enrol_methods = array($users_course->enrol_method);
+            elseif (!isset($group_users_courses[$userid]->enrol_methods))
+                $group_users_courses[$userid]->enrol_methods = array();
+
+        }
+
+        return $group_users_courses;
+    }*/
+
+    private static function custom_array_key_last($array) {
+        return array_keys($array)[count($array) - 1];
+    }
+
+    public static function group_users_courses_by_users($users_courses) {
+        $group_users_courses = array();
+        $group_users_courses_temp = array();
+
+        foreach ($users_courses as $users_course) {
+            $userid = $users_course->userid;
+            if (!(isset($group_users_courses[$userid]) &&
+                isset($group_users_courses_temp[$userid]) ))
+            {
+                $group_users_courses[$userid] = new stdClass();
+                $group_users_courses_temp[$userid] = new stdClass();
+            }
+
+            // Фамилия
+            if (!isset($group_users_courses[$userid]->lastname) && $users_course->lastname)
+                $group_users_courses[$userid]->lastname = $users_course->lastname;
+            elseif (!isset($group_users_courses[$userid]->lastname))
+                $group_users_courses[$userid]->lastname = '';
+
+            // Имя
+            if (!isset($group_users_courses[$userid]->firstname) && $users_course->firstname)
+                $group_users_courses[$userid]->firstname = $users_course->firstname;
+            elseif (!isset($group_users_courses[$userid]->firstname))
+                $group_users_courses[$userid]->firstname = '';
+
+            // Группируем courseids
+            if (isset($group_users_courses[$userid]->courseids) && $users_course->courseid) {
+                $group_users_courses[$userid]->courseids[] = $users_course->courseid;
+                $group_users_courses[$userid]->courseids =
+                    array_unique($group_users_courses[$userid]->courseids);
+            }
+            elseif (!isset($group_users_courses[$userid]->courseids) && $users_course->courseid)
+                $group_users_courses[$userid]->courseids = array($users_course->courseid);
+            elseif (!isset($group_users_courses[$userid]->courseids))
+                $group_users_courses[$userid]->courseids = array();
+
+            // Группируем course
+            if (isset($group_users_courses[$userid]->courses) && $users_course->course) {
+                $group_users_courses[$userid]->courses[] = $users_course->course;
+                $group_users_courses[$userid]->courses =
+                    array_unique($group_users_courses[$userid]->courses);
+            }
+            elseif (!isset($group_users_courses[$userid]->courses) && $users_course->course)
+                $group_users_courses[$userid]->courses = array($users_course->course);
+            elseif (!isset($group_users_courses[$userid]->courses))
+                $group_users_courses[$userid]->courses = array();
+
+            // Группируем role
+            if (isset($group_users_courses[$userid]->roles) &&
+                isset($group_users_courses_temp[$userid]->roles) && $users_course->role)
+            {
+                $group_users_courses_temp[$userid]->roles[$users_course->courseid][] =
+                    $users_course->role;
+                $group_users_courses_temp[$userid]->roles[$users_course->courseid] =
+                    array_unique($group_users_courses_temp[$userid]->roles[$users_course->courseid]);
+                $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
+                $group_users_courses[$userid]->roles[$id_in_coursids] =
+                    implode(', ', $group_users_courses_temp[$userid]->roles[$users_course->courseid]);
+            }
+            elseif (!(isset($group_users_courses[$userid]->roles) &&
+                    isset($group_users_courses_temp[$userid]->roles)) && $users_course->role)
+            {
+                $group_users_courses_temp[$userid]->roles =
+                    array($users_course->courseid => [$users_course->role]);
+                $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
+                $group_users_courses[$userid]->roles =
+                    array($id_in_coursids => ''.$users_course->role);
+            }
+            elseif (!(isset($group_users_courses[$userid]->roles) &&
+                    isset($group_users_courses_temp[$userid]->roles)))
+            {
+                $group_users_courses_temp[$userid]->roles = array();
+                $group_users_courses[$userid]->roles = array();
+            }
+
+            // Группируем enrol_method
+            if (isset($group_users_courses[$userid]->enrol_methods) &&
+                isset($group_users_courses_temp[$userid]->enrol_methods) && $users_course->enrol_method)
+            {
+                $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid][] =
+                    $users_course->enrol_method;
+                $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid] =
+                    array_unique($group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid]);
+                $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
+                $group_users_courses[$userid]->enrol_methods[$id_in_coursids] =
+                    implode(', ', $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid]);
+            }
+            elseif (!(isset($group_users_courses[$userid]->enrol_methods) &&
+                    isset($group_users_courses_temp[$userid]->enrol_methods)) && $users_course->enrol_method)
+            {
+                $group_users_courses_temp[$userid]->enrol_methods =
+                    array($users_course->courseid => [$users_course->enrol_method]);
+                $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
+                $group_users_courses[$userid]->enrol_methods =
+                    array($id_in_coursids => ''.$users_course->enrol_method);
+            }
+            elseif (!(isset($group_users_courses[$userid]->enrol_methods) &&
+                    isset($group_users_courses_temp[$userid]->enrol_methods)))
+            {
+                $group_users_courses_temp[$userid]->enrol_methods = array();
+                $group_users_courses[$userid]->enrol_methods = array();
+            }
         }
 
         return $group_users_courses;
@@ -479,6 +600,7 @@ class cohort {
             $groped_users_data[$userid]->courseids = $grouped_users_courses[$userid]->courseids;
             $groped_users_data[$userid]->courses = $grouped_users_courses[$userid]->courses;
             $groped_users_data[$userid]->roles = $grouped_users_courses[$userid]->roles;
+            $groped_users_data[$userid]->enrol_methods = $grouped_users_courses[$userid]->enrol_methods;
 
             // Информация о глобальных группах в которых состоит пользователь
             $groped_users_data[$userid]->chtids = $grouped_users_cohorts[$userid]->chtids;
@@ -491,7 +613,7 @@ class cohort {
         return $groped_users_data;
     }
 
-    // TODO: Deprecated function filter_grouped_users_cohorts
+    // TODO: Deprecated function - filter_grouped_users_cohorts
     public static function filter_grouped_users_cohorts($grouped_users_cohorts, $field, $value) {
         $filtered_grouped_users_cohorts = array();
 
@@ -526,8 +648,9 @@ class cohort {
         $filtered_users = array();
 
         foreach ($users as $user) {
-            if (array_key_exists($user->id, $grouped_users_cohorts))
+            if (array_key_exists($user->id, $grouped_users_cohorts)) {
                 $filtered_users[] = $user;
+            }
         }
 
         return $filtered_users;
@@ -558,54 +681,58 @@ class cohort {
 
         $n = max($num_els);
 
-        for ($i = 0; $i < $n; $i++) {
-            $result_table_str  .= '<tr>';
+        if ($n) {
+            for ($i = 0; $i < $n; $i++) {
+                $result_table_str .= '<tr>';
 
-            foreach ($object_fields_names as $obj_field => $obj_field_params) {
-                if (isset($obj_field_params['type'])) {
-                    if ($obj_field_params['type'] === 'link') {
-                        $urlparams = array();
+                foreach ($object_fields_names as $obj_field => $obj_field_params) {
+                    if (isset($obj_field_params['type'])) {
+                        if ($obj_field_params['type'] === 'link') {
+                            $urlparams = array();
 
-                        if (isset($obj_field_params['urlparams']) && is_array($obj_field_params['urlparams'])) {
-                            foreach ($obj_field_params['urlparams'] as $field => $params) {
-                                if (isset($params['type'])) {
-                                    $value = (isset($params['value'])) ? $params['value'] : '';
+                            if (isset($obj_field_params['urlparams']) && is_array($obj_field_params['urlparams'])) {
+                                foreach ($obj_field_params['urlparams'] as $field => $params) {
+                                    if (isset($params['type'])) {
+                                        $value = (isset($params['value'])) ? $params['value'] : '';
 
-                                    if ($params['type'] === 'field') {
-                                        if (isset($grouped_user_data->$value)) {
-                                            if (is_array($grouped_user_data->$value))
-                                                $urlparams[$field] = (isset($grouped_user_data->$value[$i])) ?
-                                                    $grouped_user_data->$value[$i] : '';
-                                            else $urlparams[$field] = $grouped_user_data->$value;
+                                        if ($params['type'] === 'field') {
+                                            if (isset($grouped_user_data->$value)) {
+                                                if (is_array($grouped_user_data->$value))
+                                                    $urlparams[$field] = (isset($grouped_user_data->$value[$i])) ?
+                                                        $grouped_user_data->$value[$i] : '';
+                                                else $urlparams[$field] = $grouped_user_data->$value;
+                                            }
                                         }
-                                    }
 
-                                    if ($params['type'] === 'raw') {
-                                        $urlparams[$field] = $value;
+                                        if ($params['type'] === 'raw') {
+                                            $urlparams[$field] = $value;
+                                        }
                                     }
                                 }
                             }
+
+                            if (isset($obj_field_params['url'])) {
+                                $url = new moodle_url($obj_field_params['url'], $urlparams);
+                            } else {
+                                $url = new moodle_url('', $urlparams);
+                            }
+
+                            $data_str = (isset($grouped_user_data->$obj_field[$i])) ?
+                                html_writer::link($url, $grouped_user_data->$obj_field[$i]) : '-';
+                            $result_table_str .= '<td>' . $data_str . '</td>';
                         }
 
-                        if (isset($obj_field_params['url'])) {
-                            $url = new moodle_url($obj_field_params['url'], $urlparams);
-                        } else {
-                            $url = new moodle_url('', $urlparams);
+                        if ($obj_field_params['type'] == 'text') {
+                            $data_str = (isset($grouped_user_data->$obj_field[$i])) ? $grouped_user_data->$obj_field[$i] : '-';
+                            $result_table_str .= '<td>' . $data_str . '</td>';
                         }
-
-                        $data_str = (isset($grouped_user_data->$obj_field[$i])) ?
-                            html_writer::link($url, $grouped_user_data->$obj_field[$i]) : '-';
-                        $result_table_str .= '<td>' . $data_str . '</td>';
-                    }
-
-                    if ($obj_field_params['type'] == 'text') {
-                        $data_str = (isset($grouped_user_data->$obj_field[$i])) ? $grouped_user_data->$obj_field[$i] : '-';
-                        $result_table_str .= '<td>' . $data_str . '</td>';
                     }
                 }
-            }
 
-            $result_table_str  .= '</tr>';
+                $result_table_str .= '</tr>';
+            }
+        } else {
+            $result_table_str .= '<tr><td colspan="'. count($object_fields_names) .'">'.get_string('noentries', 'block_user_manager').'</td></tr>';
         }
 
         $result_table_str .= '</tbody></table>';

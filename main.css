@@ -1,34 +1,35 @@
-.user__addition-info,
-.user__main-info {
-    padding: 10px;
+.um-user__additional-info,
+.um-user__main-info {
+    padding: 8px;
 }
 
-.user__main-info {
+.um-user__main-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
     /*margin-left: 1.1em;*/
 }
 
-.user__addition-info {
+.um-user__additional-info {
     padding-top: 0;
 }
 
-.user__fullname {
+.um-user__fullname {
     display: flex;
     flex-grow: 1;
     align-items: center;
-    justify-content: space-between;
+    /*justify-content: space-between;*/
     margin-right: 0.8em;
     margin-left: 0.4em;
 }
 
-.user__fullname a {
+.um-user__fullname a {
     text-decoration: underline;
 }
 
-.user__lastaccess {
-    margin-left: 0.6em;
+.um-user__lastaccess,
+.um-user__lastcolumn {
+    margin-right: 0.6em;
 }
 
 .um-tab-pane {

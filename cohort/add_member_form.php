@@ -36,10 +36,10 @@ class add_member_form extends moodleform {
         $mform->setType('userid', PARAM_INT);
 
         $mform->addElement('hidden', 'sort');
-        $mform->setType('sort', PARAM_INT);
+        $mform->setType('sort', PARAM_ALPHANUM);
 
         $mform->addElement('hidden', 'dir');
-        $mform->setType('dir', PARAM_INT);
+        $mform->setType('dir', PARAM_ALPHA);
 
         $mform->addElement('hidden', 'perpage');
         $mform->setType('perpage', PARAM_INT);
@@ -51,10 +51,10 @@ class add_member_form extends moodleform {
         $mform->setType('chtid', PARAM_INT);
 
         $mform->addElement('hidden', 'userfilter');
-        $mform->setType('userfilter', PARAM_INT);
+        $mform->setType('userfilter', PARAM_TEXT);
 
         $mform->addElement('hidden', 'chtsreturnurl');
-        $mform->setType('chtsreturnurl', PARAM_INT);
+        $mform->setType('chtsreturnurl', PARAM_LOCALURL);
 
         $this->add_action_buttons(true, get_string('add', 'block_user_manager'));
     }

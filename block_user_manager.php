@@ -11,7 +11,6 @@ class block_user_manager extends block_base {
     // Задаёт содержимое для блоков
     public function get_content()
     {
-        global $CFG;
         if ($this->content !== null) {
             return $this->content;
         }
@@ -28,7 +27,7 @@ class block_user_manager extends block_base {
                 '/blocks/user_manager/user_tabs.php'
             ];
 
-            $linksparams = [];
+            $linksparams = [[],[], ['returnurl' => $this->page->url]];
 
             $langfile = 'block_user_manager';
             $keyslangfile = ['users_table', 'chts_table', 'users_table_tabs'];
@@ -38,6 +37,7 @@ class block_user_manager extends block_base {
 
         return $this->content;
     }
+
     /**
      * Проверяет есть ли право "moodle/cohort:manage" у текущего пользователя
      * @return bool да/нет

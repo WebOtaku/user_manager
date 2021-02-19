@@ -55,7 +55,7 @@ $strconfirm = get_string('confirm');
 $strresendemail = get_string('resendemail');
 
 $pageurl = '/blocks/user_manager/user_tabs.php';
-$urlparams = array('sort' => $sort, 'dir' => $dir, 'perpage' => $perpage);
+$urlparams = array('sort' => $sort, 'dir' => $dir);
 
 // Добавления параметров в запрос для случая фильтрации по данным
 if ($userfilter == 'cohort') {
@@ -66,8 +66,8 @@ if ($userfilter == 'cohort') {
 if ($chtsreturnurl)
     $urlparams['chtsreturnurl'] = $chtsreturnurl;
 
-$returnurl = new moodle_url($pageurl, $urlparams + array('page' => $page));
-$baseurl = new moodle_url($pageurl, $urlparams);
+$returnurl = new moodle_url($pageurl, $urlparams + array('perpage' => $perpage, 'page' => $page));
+$baseurl = new moodle_url($pageurl, $urlparams + array('perpage' => $perpage));
 
 $PAGE->set_url($returnurl);
 
@@ -259,7 +259,7 @@ echo $OUTPUT->header();
 $context = context_system::instance();
 // These columns are always shown in the users list.
 $requiredcolumns = array(
-    'course', 'roles', 'lastaccess', 'cht_code_mdl', 'cht_code', 'form'
+    'course', 'roles', 'lastaccess', 'cht_code_mdl', 'cht_code', 'form', 'enrol_method'
 );
 // Extra columns containing the extra user fields, excluding the required columns (city and country, to be specific).
 $extracolumns = get_extra_user_fields($context, $requiredcolumns);
@@ -269,7 +269,7 @@ $columns = array_merge($allusernamefields, $extracolumns, $requiredcolumns);
 
 // Список колонок недоступных для сортировки по ним
 $notsortable = array(
-    'course', 'roles', 'cht_code_mdl', 'cht_code', 'form'
+    'course', 'roles', 'cht_code_mdl', 'cht_code', 'form', 'enrol_method'
 );
 
 foreach ($columns as $column) {
@@ -294,10 +294,14 @@ foreach ($columns as $column) {
             ['class' => 'iconsort']);
     }
 
-    if (!in_array($column, $notsortable))
-        $$column = "<a href=\"user_tabs.php?sort=$column&amp;dir=$columndir\">".$string[$column]."</a>$columnicon";
-    else
-        $$column = $string[$column];
+    if (!in_array($column, $notsortable)) {
+        $sorturlparams = $urlparams;
+        $sorturlparams['sort'] = $column;
+        $sorturlparams['dir'] = $columndir;
+        $sorturl = new moodle_url($pageurl, $sorturlparams);
+        $$column = html_writer::link($sorturl, $string[$column])."$columnicon";
+    }
+    else $$column = $string[$column];
 }
 
 // We need to check that alternativefullnameformat is not set to '' or language.
@@ -335,6 +339,12 @@ list($extrasql, $params) = $ufiltering->get_sql_filter();
 $users = get_users_listing($sort, $dir, $page*$perpage, $perpage, '', '', '',
     $extrasql, $params, $context);
 
+print_object($extrasql);
+print_object($params);
+
+print_object(count(get_users_listing($sort, $dir, '', '', '', '', '',
+    $extrasql, $params, $context)));
+
 $usercount = get_users(false);
 $usersearchcount = get_users(false, '', false, null, "", '', '', '', '', '*', $extrasql, $params);
 
@@ -345,11 +355,10 @@ $grouped_users_cohorts = cohort::group_users_cohorts_by_users($users_cohorts);
 $users_courses = db_request::get_users_courses();
 $grouped_users_courses = cohort::group_users_courses_by_users($users_courses);
 
-$grouped_users_data = cohort::group_users_data($users_courses, $users_cohorts);
+//$grouped_users_data = cohort::group_users_data($users_courses, $users_cohorts);
 
 //$filtered_grouped_users_cohorts = array();
 $filtered_grouped_users_data = array();
-//print_object($grouped_users_data);
 
 if ($userfilter == 'cohort') {
     $cht = $DB->get_record('cohort', array('id' => $chtid));
@@ -357,8 +366,10 @@ if ($userfilter == 'cohort') {
     $usercount = $DB->count_records('cohort_members', array('cohortid' => $chtid));
     //$filtered_grouped_users_cohorts = cohort::filter_grouped_users_cohorts($grouped_users_cohorts, 'chtids', $chtid);
     //$users = cohort::filter_users_by_cohorts($users, $filtered_grouped_users_cohorts);
-    $filtered_grouped_users_data = cohort::filter_grouped_users_data($grouped_users_data, 'chtids', $chtid);
-    $users = cohort::filter_users_by_cohorts($users, $filtered_grouped_users_data);
+    $grouped_users_cohorts = cohort::filter_grouped_users_data($grouped_users_cohorts, 'chtids', $chtid);
+    print_object($grouped_users_cohorts);
+    $users = cohort::filter_users_by_cohorts($users, $grouped_users_cohorts);
+    print_object($users);
     $usersearchcount = count($users);
 }
 
@@ -418,12 +429,12 @@ if (!$users) {
     }
 
     // Подговотовка пользовательских данных для вывода
-    if ($userfilter == 'cohort')
+    /*if ($userfilter == 'cohort')
         //$output_grouped_users_cohorts = cohort::prepare_grouped_users_cohorts_for_output($filtered_grouped_users_cohorts, $baseurl, $sitecontext);
         $output_grouped_users_data = cohort::prepare_grouped_users_data_for_output($filtered_grouped_users_data, $baseurl, $sitecontext);
     else
         //$output_grouped_users_cohorts = cohort::prepare_grouped_users_cohorts_for_output($grouped_users_cohorts, $baseurl, $sitecontext);
-        $output_grouped_users_data = cohort::prepare_grouped_users_data_for_output($grouped_users_data, $baseurl, $sitecontext);
+        $output_grouped_users_data = cohort::prepare_grouped_users_data_for_output($grouped_users_data, $baseurl, $sitecontext);*/
 
     /* $PAGE->requires->event_handler('.delete_from_cohort', 'click', 'M.util.show_confirm_dialog',
         array('message' => 'Удалить?'));*/
@@ -432,7 +443,7 @@ if (!$users) {
 
     $course_table_rows = array();
 
-    if ($userfilter == 'cohort') {
+    /*if ($userfilter == 'cohort') {
 
         foreach ($filtered_grouped_users_data as $userid => $filtered_grouped_user_data) {
             $courses_fields = array('courses', 'roles');
@@ -510,7 +521,7 @@ if (!$users) {
                 $course_table_rows[$userid]  .= '</tr>';
             }
         }
-    }
+    }*/
 
     echo '<link rel="stylesheet" href="'.new moodle_url('/blocks/user_manager/main.css').'">';
 
@@ -619,9 +630,9 @@ if (!$users) {
             '['.get_string('add', 'block_user_manager').']'
         );
 
-        $cohorts__list = ($output_grouped_users_data[$user->id]->cht_codes_mdl)?
+        /*$cohorts__list = ($output_grouped_users_data[$user->id]->cht_codes_mdl)?
             $output_grouped_users_data[$user->id]->cht_codes_mdl . '<br>' . $addmemberurl :
-            $output_grouped_users_data[$user->id]->cht_codes_mdl . $addmemberurl;
+            $output_grouped_users_data[$user->id]->cht_codes_mdl . $addmemberurl;*/
 
         /*$card_old = '
             <div class="user">
@@ -679,15 +690,16 @@ if (!$users) {
         ';*/
 
         $card = '
-            <div class="user">
-                <div class="user__main-info">
-                    <div class="user__fullname">
+            <div class="um-user">
+                <div class="um-user__main-info">
+                    <div class="um-user__fullname">
                         <a href=../../user/view.php?id='.$user->id.'&amp;course='.$site->id.'>'.$fullname.'</a>
-                        <div class="user__lastaccess um-badge um-badge-primary">'.$strlastaccess.'</div>
                     </div>
-                    <div class="user__edit">'.implode(' ', $buttons).'</div>
+                    <div class="um-user__lastcolumn">'.$lastcolumn.'</div>
+                    <div class="um-user__lastaccess um-badge um-badge-primary">'.$strlastaccess.'</div>
+                    <div class="um-user__edit">'.implode(' ', $buttons).'</div>
                 </div>
-                <div class="user__addition-info">
+                <div class="um-user__additional-info">
                     <ul class="nav nav-tabs um-nav-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <a class="nav-link um-nav-link" id="courses-tab" data-toggle="tab" href="#courses-'.$i.'" role="tab" aria-controls="courses" aria-selected="true">Courses</a>
@@ -699,9 +711,10 @@ if (!$users) {
                     <div class="tab-content um-tab-content">
                         <div class="tab-pane fade um-tab-pane" id="courses-'.$i.'" role="tabpanel" aria-labelledby="courses-tab">
                             '.
-                                cohort::generate_table_from_object($grouped_users_data[$user->id],
+                                cohort::generate_table_from_object($grouped_users_courses[$user->id],
                                     [
                                         'courses' => [
+                                            'fieldname' => $course,
                                             'type' => 'link',
                                             'url' => '/course/view.php',
                                             'urlparams' => [
@@ -712,16 +725,20 @@ if (!$users) {
                                             ]
                                         ],
                                         'roles' => [
+                                            'fieldname' => $roles,
                                             'type' => 'text'
-                                        ]
-                                    ],
-                                    [$course, $roles]
+                                        ],
+                                        'enrol_methods' => [
+                                            'fieldname' => $enrol_method,
+                                            'type' => 'text'
+                                        ],
+                                    ]
                                 )
                             .'
                         </div>
                         <div class="tab-pane fade um-tab-pane" id="cohorts-'.$i++.'" role="tabpanel" aria-labelledby="cohorts-tab">
-                            '.
-                                cohort::generate_table_from_object($grouped_users_data[$user->id],
+                            '. ''
+                                /*cohort::generate_table_from_object($grouped_users_cohorts[$user->id],
                                     [
                                         'cht_codes_mdl' => [
                                             'type' => 'link',
@@ -756,7 +773,7 @@ if (!$users) {
                                         ]
                                     ],
                                     [$cht_code_mdl, $cht_code, $form]
-                                )
+                                )*/
                             .'
                         </div>
                     </div>
@@ -780,9 +797,7 @@ if (!$users) {
         /*$row[] = $user->city;
         $row[] = $user->country;*/
 
-        /*
-
-        if ($output_grouped_users_data) {
+        /*if ($output_grouped_users_data) {
             if ($output_grouped_users_data[$user->id]->cht_codes_mdl)
                 $row[] = $output_grouped_users_data[$user->id]->cht_codes_mdl . '<br>' . $addmemberurl;
             else

@@ -3,7 +3,10 @@
 $string['pluginname'] = 'User Manager';
 
 $string['user_manager'] = 'User Manager';
-$string['user_manager:addinstance'] = 'Add a new User Manager block';
+$string['user_manager:addinstance'] = 'Add a new "User Manager" block';
+$string['user_manager:myaddinstance'] = 'Add a new "User Manager" block';
+$string['user_manager:view'] = 'View "User Manager" block';
+$string['user_manager:edit'] = 'Edit "User Manager" block';
 
 $string['users_table'] = 'User List';
 $string['users_table_tabs'] = 'User List (tabs)';
@@ -39,6 +42,10 @@ $string['cht_code_mdl'] = 'Group code (moodle)';
 $string['cht_code'] = 'Group code';
 $string['description'] = 'Group description';
 $string['form'] = 'Studying form';
+$string['enrol_method'] = 'Enrol method';
+
+// Таблица
+$string['noentries'] = 'No entries';
 
 // Ошибки
 $string['invaliddata'] = 'Invalid data';

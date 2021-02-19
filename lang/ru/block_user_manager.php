@@ -3,7 +3,10 @@
 $string['pluginname'] = 'Менеджер пользователей';
 
 $string['user_manager'] = 'Менеджер пользователей';
-$string['user_manager:addinstance'] = 'Добавить новый блок Менеджер пользователей';
+$string['user_manager:addinstance'] = 'Добавить новый блок "Менеджер пользователей"';
+$string['user_manager:myaddinstance'] = 'Добавить новый блок "Менеджер пользователей"';
+$string['user_manager:view'] = 'Видеть блок "Менеджер пользователей"';
+$string['user_manager:edit'] = 'Редактировать блок "Менеджер пользователей"';
 
 $string['users_table'] = 'Список пользователей';
 $string['users_table_tabs'] = 'Список пользователей (табы)';
@@ -39,6 +42,10 @@ $string['cht_code_mdl'] = 'Код группы (мудл)';
 $string['cht_code'] = 'Код группы';
 $string['description'] = 'Описание группы';
 $string['form'] = 'Форма обучения';
+$string['enrol_method'] = 'Способ записи';
+
+// Таблица
+$string['noentries'] = 'Записи отсутствуют';
 
 // Ошибки
 $string['invaliddata'] = 'Неверные данные';
