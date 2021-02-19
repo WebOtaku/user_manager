@@ -49,3 +49,6 @@ $string['noentries'] = 'No entries';
 
 // Ошибки
 $string['invaliddata'] = 'Invalid data';
+
+// Действия
+$string['delete'] = 'Delete';

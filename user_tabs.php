@@ -2,6 +2,7 @@
 
 use block_user_manager\db_request;
 use block_user_manager\cohort;
+use block_user_manager\remove_entry_params;
 
 require_once('../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -689,6 +690,82 @@ if (!$users) {
             </div> 
         ';*/
 
+        $courses_table = cohort::generate_table_from_object($grouped_users_courses[$user->id],
+            [
+                'courses' => [
+                    'fieldname' => $course,
+                    'type' => 'link',
+                    'url' => '/course/view.php',
+                    'urlparams' => [
+                        'id' => [
+                            'type'  => 'field',
+                            'value' => 'courseids'
+                        ]
+                    ]
+                ],
+                'roles' => [
+                    'fieldname' => $roles,
+                    'type' => 'text'
+                ],
+                'enrol_methods' => [
+                    'fieldname' => $enrol_method,
+                    'type' => 'text'
+                ],
+            ]
+        );
+
+        $cohorts_actions = array();
+        if (has_capability('moodle/cohort:manage', $sitecontext)) {
+            $remove_params = new remove_entry_params($user->id, $baseurl);
+            $cohorts_actions[] = array(
+                'idfield' => 'chtids',
+                'closure' => cohort::get_cohort_remove_member_link()->bindTo($remove_params)
+            );
+        }
+
+        $cohorts_add = '';
+        if (has_capability('moodle/cohort:manage', $sitecontext))
+            $cohorts_add = $addmemberurl;
+
+        $cohorts_table = cohort::generate_table_from_object($grouped_users_cohorts[$user->id],
+            [
+                'cht_codes_mdl' => [
+                    'fieldname' => $cht_code_mdl,
+                    'type' => 'link',
+                    'url' => '/cohort/assign.php',
+                    'urlparams' => [
+                        'id' => [
+                            'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
+                            'value' => 'chtids'
+                        ],
+                        'returnurl' => [
+                            'type' => 'raw',
+                            'value' => new moodle_url('/blocks/user_manager/user_tabs.php')
+                        ],
+                    ]
+                ],
+                'cht_codes' => [
+                    'fieldname' => $cht_code,
+                    'type' => 'link',
+                    'url' => '/cohort/assign.php',
+                    'urlparams' => [
+                        'id' => [
+                            'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
+                            'value' => 'chtids'
+                        ],
+                        'returnurl' => [
+                            'type' => 'raw',
+                            'value' => new moodle_url('/blocks/user_manager/user_tabs.php')
+                        ],
+                    ]
+                ],
+                'forms' => [
+                    'fieldname' => $form,
+                    'type' => 'text'
+                ]
+            ], $cohorts_actions, $cohorts_add
+        );
+
         $card = '
             <div class="um-user">
                 <div class="um-user__main-info">
@@ -710,71 +787,10 @@ if (!$users) {
                     </ul>
                     <div class="tab-content um-tab-content">
                         <div class="tab-pane fade um-tab-pane" id="courses-'.$i.'" role="tabpanel" aria-labelledby="courses-tab">
-                            '.
-                                cohort::generate_table_from_object($grouped_users_courses[$user->id],
-                                    [
-                                        'courses' => [
-                                            'fieldname' => $course,
-                                            'type' => 'link',
-                                            'url' => '/course/view.php',
-                                            'urlparams' => [
-                                                'id' => [
-                                                    'type'  => 'field',
-                                                    'value' => 'courseids'
-                                                ]
-                                            ]
-                                        ],
-                                        'roles' => [
-                                            'fieldname' => $roles,
-                                            'type' => 'text'
-                                        ],
-                                        'enrol_methods' => [
-                                            'fieldname' => $enrol_method,
-                                            'type' => 'text'
-                                        ],
-                                    ]
-                                )
-                            .'
+                            '. $courses_table .'
                         </div>
                         <div class="tab-pane fade um-tab-pane" id="cohorts-'.$i++.'" role="tabpanel" aria-labelledby="cohorts-tab">
-                            '. ''
-                                /*cohort::generate_table_from_object($grouped_users_cohorts[$user->id],
-                                    [
-                                        'cht_codes_mdl' => [
-                                            'type' => 'link',
-                                            'url' => '/cohort/assign.php',
-                                            'urlparams' => [
-                                                'id' => [
-                                                    'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
-                                                    'value' => 'chtids'
-                                                ],
-                                                'returnurl' => [
-                                                    'type' => 'raw',
-                                                    'value' => new moodle_url('/blocks/user_manager/user_tabs.php')
-                                                ],
-                                            ]
-                                        ],
-                                        'cht_codes' => [
-                                            'type' => 'link',
-                                            'url' => '/cohort/assign.php',
-                                            'urlparams' => [
-                                                'id' => [
-                                                    'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
-                                                    'value' => 'chtids'
-                                                ],
-                                                'returnurl' => [
-                                                    'type' => 'raw',
-                                                    'value' => new moodle_url('/blocks/user_manager/user_tabs.php')
-                                                ],
-                                            ]
-                                        ],
-                                        'forms' => [
-                                            'type' => 'text'
-                                        ]
-                                    ],
-                                    [$cht_code_mdl, $cht_code, $form]
-                                )*/
-                            .'
+                            '. $cohorts_table .'
                         </div>
                     </div>
                 </div>

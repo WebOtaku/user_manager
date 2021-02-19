@@ -656,17 +656,19 @@ class cohort {
         return $filtered_users;
     }
 
-    public static function generate_table_from_object($grouped_user_data = [], $object_fields_names = [], $table_fields_names = []) {
+    public static function generate_table_from_object($grouped_user_data = [], $object_fields_names = [], $actions = [], $action_add = '') {
         $result_table_str = '<table class="table um-table">';
 
         $result_table_str .= '<thead><tr>';
-        $i = 0;
+
         foreach ($object_fields_names as $object_field_name) {
             $result_table_str .= '<th>';
-            $result_table_str .= (isset($table_fields_names[$i]))? $table_fields_names[$i] : '';
+            $result_table_str .= (isset($object_field_name['fieldname']))? $object_field_name['fieldname'] : '';
             $result_table_str .= '</th>';
-            $i++;
         }
+        if (count($actions))
+            $result_table_str .= '<th></th>';
+
         $result_table_str .= '</tr></thead>';
 
         $result_table_str .= '<tbody>';
@@ -729,15 +731,42 @@ class cohort {
                     }
                 }
 
+                foreach ($actions as $action) {
+                    if (isset($action['idfield'])) {
+                        $field = $action['idfield'];
+                        if (isset($grouped_user_data->$field) && is_array($grouped_user_data->$field)) {
+                            if (isset($action['closure'])) {
+                                $closure = $action['closure'];
+                                $result_table_str .= '<td>' . $closure($grouped_user_data->$field[$i]) . '</td>';
+                            }
+                        }
+                    }
+                }
+
                 $result_table_str .= '</tr>';
             }
         } else {
             $result_table_str .= '<tr><td colspan="'. count($object_fields_names) .'">'.get_string('noentries', 'block_user_manager').'</td></tr>';
         }
 
+        if ($action_add)
+            $result_table_str .= '<tr><td colspan="'. count($object_fields_names) .'">'.$action_add.'</td></tr>';
+
         $result_table_str .= '</tbody></table>';
 
         return $result_table_str;
+    }
+
+    public static function get_cohort_remove_member_link() {
+        return function ($chtid) {
+            global $OUTPUT;
+            return html_writer::link(new moodle_url($this->url, array(
+                'func' => 'cohort_remove_member',
+                'delchtid' => $chtid,
+                'userid' => $this->id,
+                'sesskey' => sesskey()
+            )), $OUTPUT->pix_icon('t/delete', get_string('delete', 'block_user_manager')));
+        };
     }
 }
 ?>

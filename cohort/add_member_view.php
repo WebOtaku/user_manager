@@ -31,7 +31,7 @@ $pageurl = '/blocks/user_manager/cohort/add_member_view.php';
 $pageparams = array('userid'=> $userid);
 $baseurl = new moodle_url($pageurl, $pageparams);
 
-$url = '/blocks/user_manager/user.php';
+$url = '/blocks/user_manager/user_tabs.php';
 $urlparams = array('sort' => $sort, 'dir' => $dir, 'perpage' => $perpage, 'page' => $page);
 
 if ($userfilter == 'cohort') {
