@@ -337,18 +337,6 @@ if ($sort == "name") {
 
 list($extrasql, $params) = $ufiltering->get_sql_filter();
 
-$users = get_users_listing($sort, $dir, $page*$perpage, $perpage, '', '', '',
-    $extrasql, $params, $context);
-
-print_object($extrasql);
-print_object($params);
-
-print_object(count(get_users_listing($sort, $dir, '', '', '', '', '',
-    $extrasql, $params, $context)));
-
-$usercount = get_users(false);
-$usersearchcount = get_users(false, '', false, null, "", '', '', '', '', '*', $extrasql, $params);
-
 // Запрос и формирование пользовотельских данных
 $users_cohorts = db_request::get_users_cohorts();
 $grouped_users_cohorts = cohort::group_users_cohorts_by_users($users_cohorts);
@@ -356,22 +344,48 @@ $grouped_users_cohorts = cohort::group_users_cohorts_by_users($users_cohorts);
 $users_courses = db_request::get_users_courses();
 $grouped_users_courses = cohort::group_users_courses_by_users($users_courses);
 
+print_object(db_request::new_get_users_courses($sort, $dir, $page * $perpage, $perpage, $extrasql, $params));
+
 //$grouped_users_data = cohort::group_users_data($users_courses, $users_cohorts);
 
 //$filtered_grouped_users_cohorts = array();
 $filtered_grouped_users_data = array();
 
-if ($userfilter == 'cohort') {
+if ($userfilter === 'cohort')
+{
     $cht = $DB->get_record('cohort', array('id' => $chtid));
 
     $usercount = $DB->count_records('cohort_members', array('cohortid' => $chtid));
     //$filtered_grouped_users_cohorts = cohort::filter_grouped_users_cohorts($grouped_users_cohorts, 'chtids', $chtid);
     //$users = cohort::filter_users_by_cohorts($users, $filtered_grouped_users_cohorts);
     $grouped_users_cohorts = cohort::filter_grouped_users_data($grouped_users_cohorts, 'chtids', $chtid);
-    print_object($grouped_users_cohorts);
-    $users = cohort::filter_users_by_cohorts($users, $grouped_users_cohorts);
-    print_object($users);
+
+    if ($extrasql) $extrasql .= ' AND ';
+
+    $extrasql .= '(';
+    $i = 0;
+    foreach ($grouped_users_cohorts as $userid => $grouped_user_cohorts) {
+        if ($i === 0) $extrasql .= 'id = ' . $userid;
+        else $extrasql .= ' OR id = ' . $userid;
+        $i++;
+    }
+    $extrasql .= ')';
+
+    /* *
+     * TODO: Отказаться от использования функции get_users_listing()
+     * TODO: Добавить аналогичный поиск/фильтрацию и пагинацию для функций get_users_cohorts() и get_users_courses()
+     */
+
+    $users = get_users_listing($sort, $dir, $page*$perpage, $perpage, '', '', '',
+        $extrasql, $params, $context);
+
     $usersearchcount = count($users);
+} else {
+    $users = get_users_listing($sort, $dir, $page * $perpage, $perpage, '', '', '',
+        $extrasql, $params, $context);
+
+    $usercount = get_users(false);
+    $usersearchcount = get_users(false, '', false, null, "", '', '', '', '', '*', $extrasql, $params);
 }
 
 if ($extrasql !== '') {
@@ -385,7 +399,6 @@ if ($extrasql !== '') {
         echo $OUTPUT->heading(get_string('assignto', 'cohort', format_string($cht->name))." ($usercount)");
     else
         echo $OUTPUT->heading("$usercount ".get_string('users'));
-
 }
 
 $strall = get_string('all');
