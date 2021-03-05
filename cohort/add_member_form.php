@@ -35,26 +35,8 @@ class add_member_form extends moodleform {
         $mform->addElement('hidden', 'userid');
         $mform->setType('userid', PARAM_INT);
 
-        $mform->addElement('hidden', 'sort');
-        $mform->setType('sort', PARAM_ALPHANUM);
-
-        $mform->addElement('hidden', 'dir');
-        $mform->setType('dir', PARAM_ALPHA);
-
-        $mform->addElement('hidden', 'perpage');
-        $mform->setType('perpage', PARAM_INT);
-
-        $mform->addElement('hidden', 'page');
-        $mform->setType('page', PARAM_INT);
-
-        $mform->addElement('hidden', 'chtid');
-        $mform->setType('chtid', PARAM_INT);
-
-        $mform->addElement('hidden', 'userfilter');
-        $mform->setType('userfilter', PARAM_TEXT);
-
-        $mform->addElement('hidden', 'chtsreturnurl');
-        $mform->setType('chtsreturnurl', PARAM_LOCALURL);
+        $mform->addElement('hidden', 'returnurl');
+        $mform->setType('returnurl', PARAM_LOCALURL);
 
         $this->add_action_buttons(true, get_string('add', 'block_user_manager'));
     }

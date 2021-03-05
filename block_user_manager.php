@@ -1,6 +1,5 @@
 <?php
 
-use block_user_manager\db_request;
 use block_user_manager\html_list_view;
 
 class block_user_manager extends block_base {
@@ -22,15 +21,17 @@ class block_user_manager extends block_base {
         if ($this->check_capability()) {
 
             $links = [
-                '/blocks/user_manager/user.php',
                 '/blocks/user_manager/group.php',
-                '/blocks/user_manager/user_tabs.php'
+                '/blocks/user_manager/user.php'
             ];
 
-            $linksparams = [[],[], ['returnurl' => $this->page->url]];
+            $linksparams = [
+                ['returnurl' => $this->page->url],
+                ['returnurl' => $this->page->url]
+            ];
 
             $langfile = 'block_user_manager';
-            $keyslangfile = ['users_table', 'chts_table', 'users_table_tabs'];
+            $keyslangfile = ['chts_table', 'users_table'];
 
             $this->content->text .= html_list_view::get_html_list_links($links, $linksparams, $langfile, $keyslangfile);
         }
@@ -39,14 +40,14 @@ class block_user_manager extends block_base {
     }
 
     /**
-     * Проверяет есть ли право "moodle/cohort:manage" у текущего пользователя
+     * Проверяет есть ли право "block/user_manager:edit" у текущего пользователя
      * @return bool да/нет
      * */
     private function check_capability() {
 
         $context = context_system::instance();
 
-        return has_capability('moodle/cohort:manage', $context);
+        return has_capability('block/user_manager:edit', $context);
     }
 
     // Позволяет ограничить отображение блока конкретными форматами страниц

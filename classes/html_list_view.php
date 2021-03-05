@@ -16,7 +16,7 @@ class html_list_view
      * @return string html строка.
      * */
     public static function get_html_list_links($links = [], $linksparams = [], $langfile = '', $keyslangfile = []) {
-        $html_str = '<ul>';
+        $html_str = '<ul style="list-style: none; margin-left: -15px;">';
         foreach ($links as $key => $link) {
             $html_str .= '<li>';
             if (count($linksparams))

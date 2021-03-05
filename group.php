@@ -8,6 +8,7 @@ $contextid = optional_param('contextid', 0, PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
 $searchquery  = optional_param('search', '', PARAM_RAW);
 $showall = optional_param('showall', false, PARAM_BOOL);
+$returnurl = required_param('returnurl', PARAM_LOCALURL);
 
 $pageurl = '/blocks/user_manager/group.php';
 
@@ -25,27 +26,33 @@ if ($context->contextlevel != CONTEXT_COURSECAT and $context->contextlevel != CO
 
 $category = null;
 if ($context->contextlevel == CONTEXT_COURSECAT) {
-    $category = $DB->get_record('course_categories', array('id'=>$context->instanceid), '*', MUST_EXIST);
+    $category = $DB->get_record('course_categories', array('id' => $context->instanceid), '*', MUST_EXIST);
 }
 
 $manager = has_capability('moodle/cohort:manage', $context);
 $canassign = has_capability('moodle/cohort:assign', $context);
+
 if (!$manager) {
     require_capability('moodle/cohort:view', $context);
 }
 
 $strcohorts = get_string('cohorts', 'cohort');
 
-if ($category) {
+/*if ($category) {*/
     $PAGE->set_pagelayout('admin');
     $PAGE->set_context($context);
     $PAGE->set_url($pageurl, array('contextid'=>$context->id));
     $PAGE->set_title($strcohorts);
     $PAGE->set_heading($COURSE->fullname);
     $showall = false;
-} else {
+
+    if (!has_capability('block/user_manager:edit', $context)) {
+        print_error('nopermissions', 'error', '', 'edit users');
+    }
+
+/*} else {
     admin_externalpage_setup('cohorts', '', null, '', array('pagelayout'=>'report'));
-}
+}*/
 
 echo $OUTPUT->header();
 
@@ -66,7 +73,11 @@ if ($cohorts['allcohorts'] > 0) {
 
 echo $OUTPUT->heading(get_string('cohortsin', 'cohort', $context->get_context_name()).$count);
 
-$params = array('page' => $page);
+$params = array(
+    'page' => $page,
+    'returnurl' => $returnurl
+);
+
 if ($contextid) {
     $params['contextid'] = $contextid;
 }
@@ -76,6 +87,7 @@ if ($searchquery) {
 if ($showall) {
     $params['showall'] = true;
 }
+
 $baseurl = new moodle_url($pageurl, $params);
 
 if ($editcontrols = cohort_edit_controls($context, $baseurl)) {
@@ -157,8 +169,11 @@ foreach($cohorts['cohorts'] as $cohort) {
                 array('title' => get_string('edit')));
             
             // Ссылка ведушая на страницу с пользователями состоящими в группе
-            $chtsreturnurl = new moodle_url($pageurl, $params + array('page' => $page));
-            $user_urlparams = array('chtid' => $cohort->id, 'userfilter' => 'cohort', 'chtsreturnurl' => $chtsreturnurl);
+            $user_urlparams = array(
+                'chtid' => $cohort->id,
+                'userfilter' => 'cohort',
+                'returnurl' => $baseurl
+            );
             $buttons[] = html_writer::link(new moodle_url('/blocks/user_manager/user.php', $user_urlparams),
                 $OUTPUT->pix_icon('i/grades', get_string('cht_users_table', 'block_user_manager')),
                 array('title' => get_string('cht_users_table', 'block_user_manager')));
