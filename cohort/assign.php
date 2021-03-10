@@ -2,27 +2,23 @@
 
 require_once('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
-require_once('add_member_form.php');
+require_once('assign_form.php');
 
 $userid = required_param('userid', PARAM_INT);
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
+require_login();
+
 $context = context_system::instance();
 $site = get_site();
 
-require_login();
-
-/*if (!has_capability('moodle/cohort:manage', $context) and !has_capability('moodle/cohort:assign', $context)) {
-    print_error('nopermissions', 'error', '', 'manage/assign cohorts');
-}*/
-
-if (!has_capability('block/user_manager:edit', $context)) {
-    print_error('nopermissions', 'error', '', 'edit users');
+if (!has_capability('moodle/cohort:assign', $context)) {
+    print_error('nopermissions', 'error', '', 'assign cohorts');
 }
 
 $PAGE->set_context($context);
 
-$pageurl = '/blocks/user_manager/cohort/add_member_view.php';
+$pageurl = '/blocks/user_manager/cohort/assign.php';
 
 $urlparams = array(
     'userid'=> $userid,
@@ -33,7 +29,6 @@ $baseurl = new moodle_url($pageurl, $urlparams);
 
 $PAGE->set_url($baseurl);
 $PAGE->set_title(get_string('addtocht', 'block_user_manager'));
-
 $PAGE->set_heading(get_string('addtocht', 'block_user_manager'));
 $PAGE->set_pagelayout('standard');
 
@@ -49,12 +44,12 @@ if (!$user = $DB->get_record('user', array('id' => $userid))) {
     print_error('invaliduser');
 }
 
-$add_member_form = new add_member_form(null, array($user));
-$add_member_form->set_data($urlparams);
+$assign_form = new assign_form(null, array($user));
+$assign_form->set_data($urlparams);
 
-if($add_member_form->is_cancelled()) {
+if($assign_form->is_cancelled()) {
     redirect($returnurl);
-} else if ($form_data = $add_member_form->get_data()) {
+} else if ($form_data = $assign_form->get_data()) {
     require_capability('moodle/cohort:assign', $context);
 
     if (isset($form_data->chtids) && isset($form_data->userid)) {
@@ -67,6 +62,6 @@ if($add_member_form->is_cancelled()) {
 
 } else {
     echo $OUTPUT->header();
-    $add_member_form->display();
+    $assign_form->display();
     echo $OUTPUT->footer();
 }

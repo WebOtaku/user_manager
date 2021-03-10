@@ -533,7 +533,7 @@ if (!$users) {
         $row[] = $user->country;*/
 
         $addmemberurl = html_writer::link(
-            new moodle_url('/blocks/user_manager/cohort/add_member_view.php', $urlparams + array(
+            new moodle_url('/blocks/user_manager/cohort/assign.php', $urlparams + array(
                 'userid'=> $user->id,
                 'page' => $page
             )),
@@ -593,7 +593,7 @@ if ($userfilter == 'cohort') {
     $url = $chtsreturnurl;
     $btn_name = get_string('backtocohorts', 'cohort');
 } else {
-    $url = new moodle_url('/blocks/user_manager/group.php');
+    $url = new moodle_url('/blocks/user_manager/cohort/index.php');
     $btn_name = get_string('cohorts', 'cohort');
 }
 

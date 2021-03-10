@@ -4,6 +4,7 @@ use block_user_manager\db_request;
 use block_user_manager\cohort;
 use block_user_manager\course;
 use block_user_manager\table;
+use block_user_manager\service;
 use block_user_manager\remove_entry_params;
 
 require_once('../../config.php');
@@ -38,23 +39,22 @@ $userfilter = optional_param('userfilter', '', PARAM_TEXT);
 
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
-
-//admin_externalpage_setup('editusers');
+service::admin_externalpage_setup('editusers');
 
 $context = context_system::instance();
 $site = get_site();
 
-require_login();
+//require_login();
 
-/*if (!has_capability('moodle/user:update', $context) and !has_capability('moodle/user:delete', $context)) {
+if (!has_capability('moodle/user:update', $context) and !has_capability('moodle/user:delete', $context)) {
     print_error('nopermissions', 'error', '', 'edit/delete users');
-}*/
-
-if (!has_capability('block/user_manager:edit', $context)) {
-    print_error('nopermissions', 'error', '', 'edit users');
 }
 
-$PAGE->set_context($context);
+/*if (!has_capability('block/user_manager:edit', $context)) {
+    print_error('nopermissions', 'error', '', 'edit users');
+}*/
+
+//$PAGE->set_context($context);
 
 $stredit   = get_string('edit');
 $strdelete = get_string('delete');
@@ -84,14 +84,14 @@ $baseurl = new moodle_url($pageurl, $urlparams);
 $pagetitle = get_string('users_table', 'block_user_manager');
 
 $PAGE->set_url($baseurl);
-$PAGE->set_title($pagetitle);
+/*$PAGE->set_title($pagetitle);
 $PAGE->set_heading($pagetitle);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('admin');*/
 
-$returnurl = new  moodle_url($returnurl);
+$returnurl = new moodle_url($returnurl);
 
 $backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
-$basenode = $backnode->add(get_string('userlist', 'admin'), $baseurl);
+$basenode = $backnode->add(get_string('users_table', 'block_user_manager'), $baseurl);
 
 $basenode->make_active();
 
@@ -275,8 +275,9 @@ $fieldnames = array('realname' => 0, 'lastname' => 1, 'firstname' => 1, 'usernam
     'idnumber' => 1);
 
 // create the user filter form
-
-$ufiltering = new user_filtering($fieldnames, $baseurl);
+$filterurl = new moodle_url($baseurl);
+$filterurl->param('page', 0);
+$ufiltering = new user_filtering($fieldnames, $filterurl);
 echo $OUTPUT->header();
 
 /*// Carry on with the user listing
@@ -368,11 +369,12 @@ if ($userfilter === 'cohort')
     $cohort_members = $DB->get_records('cohort_members', array('cohortid' => $chtid));
     $usercount = count($cohort_members);
 
-    if ($extrasql) $extrasql .= ' AND ';
-    $extrasql .= cohort::form_cohort_members_select($cohort_members);
+    if ($extrasql) $usersselect = ' AND ';
+    else $usersselect = '';
+    $usersselect .= cohort::form_cohort_members_select($cohort_members);
 
-    $users = get_users_listing($sort, $dir, $page*$perpage, $perpage, '', '', '',
-        $extrasql, $params, $context);
+    $users = get_users_listing($sort, $dir, $page * $perpage, $perpage, '', '', '',
+        $extrasql . $usersselect, $params, $context);
 
     $usersearchcount = count($users);
 } else {
@@ -415,6 +417,7 @@ if (!$users) {
     $table = NULL;
 
 } else {
+    //print_object($USER);
 
     $countries = get_string_manager()->get_list_of_countries(true);
     if (empty($mnethosts)) {
@@ -444,45 +447,7 @@ if (!$users) {
         $users = $nusers;
     }
 
-    /* $PAGE->requires->event_handler('.delete_from_cohort', 'click', 'M.util.show_confirm_dialog',
-        array('message' => 'Удалить?'));*/
-
     echo '<link rel="stylesheet" href="'.new moodle_url('/blocks/user_manager/main.css').'">';
-
-    /*$PAGE->requires->js_amd_inline("
-        require(['jquery'], function($) {
-            
-        });"
-    );
-
-    echo '
-        <!-- Button trigger modal -->
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#umModal">
-            Vertically centered scrollable modal
-        </button>
-        
-        <!-- Modal -->
-        <div class="um-modal fade" id="umModal" tabindex="-1" aria-labelledby="umModal" aria-hidden="true"">
-          <div class="um-modal-dialog um-modal-dialog-centered um-modal-dialog-scrollable">
-            <div class="um-modal-content">
-              <div class="um-modal-header">
-                <h5 class="um-modal-title" id="umModalTitle">Modal title</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <div class="um-modal-body">
-                <p>Placeholder text for this demonstration of a vertically centered modal dialog.</p>
-                <p>In this case, the dialog has a bit more content, just to show how vertical centering can be added to a scrollable modal.</p>
-              </div>
-              <div class="um-modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
-              </div>
-            </div>
-          </div>
-        </div>
-    ';*/
 
     $table = new html_table();
     $table->head = array ();
@@ -622,7 +587,7 @@ if (!$users) {
         $cohorts_add = '';
         if (has_capability('moodle/cohort:manage', $context)) {
             $cohorts_add = html_writer::link(
-                new moodle_url('/blocks/user_manager/cohort/add_member_view.php', array(
+                new moodle_url('/blocks/user_manager/cohort/assign.php', array(
                         'userid' => $user->id,
                         'returnurl' => $baseurl
                     )),
@@ -674,31 +639,39 @@ if (!$users) {
             ], $cohorts_actions, $cohorts_add
         );
 
+        $i++;
+
         $card = '
             <div class="um-user">
                 <div class="um-user__main-info">
                     <div class="um-user__fullname">
-                        <a href=../../user/view.php?id='.$user->id.'&amp;course='.$site->id.'>'.$fullname.'</a>
+                        <a href=../../user/view.php?id='.$user->id.'&amp;course='.$site->id.'>'.$fullname.' | '. $user->username .'</a>
                     </div>
                     <div class="um-user__lastcolumn">'.$lastcolumn.'</div>
                     <div class="um-user__lastaccess um-badge um-badge-primary">'.$strlastaccess.'</div>
                     <div class="um-user__edit">'.implode(' ', $buttons).'</div>
                 </div>
                 <div class="um-user__additional-info">
-                    <ul class="nav nav-tabs um-nav-tabs" role="tablist">
+                    <ul class="nav nav-tabs um-nav-tabs" id="tablist-'.$i.'" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link um-nav-link" id="courses-tab" data-toggle="tab" href="#courses-'.$i.'" role="tab" aria-controls="courses" aria-selected="true">Courses</a>
+                            <a class="nav-link um-nav-link" id="courses-tab-'.$i.'" data-toggle="tab" href="#courses-'.$i.'" role="tab" aria-controls="courses" aria-selected="true">Courses</a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link um-nav-link" id="cohorts-tab" data-toggle="tab" href="#cohorts-'.$i.'" role="tab" aria-controls="cohorts" aria-selected="false">Cohorts</a>
+                            <a class="nav-link um-nav-link" id="cohorts-tab-'.$i.'" data-toggle="tab" href="#cohorts-'.$i.'" role="tab" aria-controls="cohorts" aria-selected="false">Cohorts</a>
                         </li>
                     </ul>
                     <div class="tab-content um-tab-content">
-                        <div class="tab-pane fade um-tab-pane" id="courses-'.$i.'" role="tabpanel" aria-labelledby="courses-tab">
-                            '. $courses_table .'
+                        <div class="tab-pane fade um-tab-pane" id="courses-'.$i.'" role="tabpanel" aria-labelledby="courses-tab-'.$i.'">
+                            <span class="um-tab-close" data-close="tab">
+                                <img src="images/close.svg" alt="Close tab">
+                            </span>
+                            '.$courses_table.'
                         </div>
-                        <div class="tab-pane fade um-tab-pane" id="cohorts-'.$i++.'" role="tabpanel" aria-labelledby="cohorts-tab">
-                            '. $cohorts_table .'
+                        <div class="tab-pane fade um-tab-pane" id="cohorts-'.$i.'" role="tabpanel" aria-labelledby="cohorts-tab-'.$i.'">
+                            <span class="um-tab-close" data-close="tab">
+                                <img src="images/close.svg" alt="Close tab">
+                            </span>
+                            '.$cohorts_table.'
                         </div>
                     </div>
                 </div>
@@ -715,6 +688,20 @@ if (!$users) {
 
         $table->data[] = $row;
     }
+
+
+    $PAGE->requires->js_amd_inline("
+        require(['jquery'], function($) {
+            $(document).ready(function() {
+                $('span[data-close=\"tab\"]').click(function() {
+                    var tabpanel = $(this).parent();
+                    var tabID = tabpanel.attr('aria-labelledby');
+                    tabpanel.removeClass('active show');
+                    $('#' + tabID).removeClass('active show');
+                });
+            });
+        });"
+    );
 }
 
 // add filters
@@ -727,6 +714,7 @@ if (!empty($table)) {
     echo html_writer::end_tag('div');
     echo $OUTPUT->paging_bar($usercount, $page, $perpage, $baseurl);
 }
+
 
 if (has_capability('moodle/user:create', $context) ) {
     if ($userfilter == 'cohort')
@@ -742,7 +730,7 @@ if ($userfilter == 'cohort') {
     $btn_name = get_string('backtocohorts', 'cohort');
     echo $OUTPUT->single_button($url, $btn_name);
 } /*else {
-    $url = new moodle_url('/blocks/user_manager/group.php');
+    $url = new moodle_url('/blocks/user_manager/cohort/index.php');
     $btn_name = get_string('cohorts', 'cohort');
 }*/
 

@@ -4,7 +4,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/formslib.php');
 
-class add_member_form extends moodleform {
+class assign_form extends moodleform {
 
     /**
      * Called to define this moodle form

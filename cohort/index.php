@@ -1,6 +1,8 @@
 <?php
 
-require('../../config.php');
+use block_user_manager\service;
+
+require('../../../config.php');
 require_once($CFG->dirroot.'/cohort/lib.php');
 require_once($CFG->libdir.'/adminlib.php');
 
@@ -10,9 +12,7 @@ $searchquery  = optional_param('search', '', PARAM_RAW);
 $showall = optional_param('showall', false, PARAM_BOOL);
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
-$pageurl = '/blocks/user_manager/group.php';
-
-require_login();
+$pageurl = '/blocks/user_manager/cohort/index.php';
 
 if ($contextid) {
     $context = context::instance_by_id($contextid, MUST_EXIST);
@@ -38,21 +38,42 @@ if (!$manager) {
 
 $strcohorts = get_string('cohorts', 'cohort');
 
-/*if ($category) {*/
+if ($category) {
     $PAGE->set_pagelayout('admin');
     $PAGE->set_context($context);
-    $PAGE->set_url($pageurl, array('contextid'=>$context->id));
+//    $PAGE->set_url($pageurl, array('contextid'=>$context->id));
     $PAGE->set_title($strcohorts);
     $PAGE->set_heading($COURSE->fullname);
     $showall = false;
+} else {
+    service::admin_externalpage_setup('cohorts', '', null, '', array('pagelayout'=>'report'));
+}
 
-    if (!has_capability('block/user_manager:edit', $context)) {
-        print_error('nopermissions', 'error', '', 'edit users');
-    }
+$params = array(
+    'page' => $page,
+    'returnurl' => $returnurl
+);
 
-/*} else {
-    admin_externalpage_setup('cohorts', '', null, '', array('pagelayout'=>'report'));
-}*/
+if ($contextid) {
+    $params['contextid'] = $contextid;
+}
+if ($searchquery) {
+    $params['search'] = $searchquery;
+}
+if ($showall) {
+    $params['showall'] = true;
+}
+
+$baseurl = new moodle_url($pageurl, $params);
+
+$PAGE->set_url($baseurl, array('contextid' => $context->id));
+
+$returnurl = new moodle_url($returnurl);
+
+$backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
+$basenode = $backnode->add(get_string('chts_table', 'block_user_manager'), $baseurl);
+
+$basenode->make_active();
 
 echo $OUTPUT->header();
 
@@ -72,23 +93,6 @@ if ($cohorts['allcohorts'] > 0) {
 }
 
 echo $OUTPUT->heading(get_string('cohortsin', 'cohort', $context->get_context_name()).$count);
-
-$params = array(
-    'page' => $page,
-    'returnurl' => $returnurl
-);
-
-if ($contextid) {
-    $params['contextid'] = $contextid;
-}
-if ($searchquery) {
-    $params['search'] = $searchquery;
-}
-if ($showall) {
-    $params['showall'] = true;
-}
-
-$baseurl = new moodle_url($pageurl, $params);
 
 if ($editcontrols = cohort_edit_controls($context, $baseurl)) {
     echo $OUTPUT->render($editcontrols);
