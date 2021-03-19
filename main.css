@@ -37,6 +37,8 @@
     margin-left: 0.4em;
 }
 
+/* TODO: Заменить нижнее подчёркивание на что-то другое или убрать */
+
 .um-user__fullname a {
     text-decoration: underline;
     border: 1px none transparent;

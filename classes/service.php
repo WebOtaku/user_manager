@@ -2,10 +2,8 @@
 
 namespace block_user_manager;
 
-use context_system;
-use admin_externalpage;
-use moodle_url;
-use print_object;
+use context_system, admin_externalpage, moodle_url,
+    print_object, tabobject, tabtree, context;
 
 class service
 {
@@ -124,5 +122,88 @@ class service
 
         // prevent caching in nav block
         // $PAGE->navigation->clear_cache();
+    }
+
+    /**
+     * Returns navigation controls (tabtree) to be displayed on cohort management pages
+     *
+     * @param context $context system or category context where cohorts controls are about to be displayed
+     * @param moodle_url $currenturl
+     * @return null|renderable
+     */
+    public static function cohort_edit_controls(context $context, moodle_url $currenturl) {
+        $tabs = array();
+        $currenttab = 'view';
+        $viewurl = new moodle_url('/blocks/user_manager/cohort/index.php', array('contextid' => $context->id));
+
+        $returnurl = $currenturl->get_param('returnurl');
+        $blockurl = $currenturl->get_param('blockurl');
+        $viewurl->param('returnurl', $returnurl);
+
+        if (($searchquery = $currenturl->get_param('search'))) {
+            $viewurl->param('search', $searchquery);
+        }
+
+        if ($context->contextlevel == CONTEXT_SYSTEM) {
+            $tabs[] = new tabobject('view', new moodle_url($viewurl, array('showall' => 0)), get_string('systemcohorts', 'cohort'));
+            $tabs[] = new tabobject('viewall', new moodle_url($viewurl, array('showall' => 1)), get_string('allcohorts', 'cohort'));
+            if ($currenturl->get_param('showall')) {
+                $currenttab = 'viewall';
+            }
+        } else {
+            $tabs[] = new tabobject('view', $viewurl, get_string('cohorts', 'cohort'));
+        }
+
+        if (has_capability('moodle/cohort:manage', $context)) {
+            $addurl = new moodle_url('/blocks/user_manager/cohort/edit.php', array('contextid' => $context->id));
+
+            if ($returnurl)
+                $addurl->param('returnurl', $returnurl);
+            else
+                $addurl->param('returnurl', $currenturl);
+
+            if ($blockurl)
+                $addurl->param('blockurl', $blockurl);
+            else
+                $addurl->param('blockurl', $currenturl);
+
+            $tabs[] = new tabobject('addcohort', $addurl, get_string('addcohort', 'cohort'));
+            if ($currenturl->get_path() === $addurl->get_path() && !$currenturl->param('id')) {
+                $currenttab = 'addcohort';
+            }
+
+            $uploadurl = new moodle_url('/blocks/user_manager/cohort/upload.php', array('contextid' => $context->id));
+
+            if ($returnurl)
+                $uploadurl->param('returnurl', $returnurl);
+            else
+                $uploadurl->param('returnurl', $currenturl);
+
+            if ($blockurl)
+                $uploadurl->param('blockurl', $blockurl);
+            else
+                $uploadurl->param('blockurl', $currenturl);
+
+            $tabs[] = new tabobject('uploadcohorts', $uploadurl, get_string('uploadcohorts', 'cohort'));
+            if ($currenturl->get_path() === $uploadurl->get_path()) {
+                $currenttab = 'uploadcohorts';
+            }
+        }
+
+        if (count($tabs) > 1) {
+            return new tabtree($tabs, $currenttab);
+        }
+        return null;
+    }
+
+    public static function generate_password($lastname)
+    {
+        if (strlen($lastname) > 3)
+            $lastname = substr($lastname, 0, 3);
+
+        //$password = transliteration::translit_ru_en($lastname);
+        $password = '';
+
+        return $password;
     }
 }

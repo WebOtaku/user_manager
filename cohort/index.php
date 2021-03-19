@@ -11,8 +11,11 @@ $page = optional_param('page', 0, PARAM_INT);
 $searchquery  = optional_param('search', '', PARAM_RAW);
 $showall = optional_param('showall', false, PARAM_BOOL);
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
+$blockurl = required_param('returnurl', PARAM_LOCALURL);
 
 $pageurl = '/blocks/user_manager/cohort/index.php';
+
+require_login();
 
 if ($contextid) {
     $context = context::instance_by_id($contextid, MUST_EXIST);
@@ -49,9 +52,12 @@ if ($category) {
     service::admin_externalpage_setup('cohorts', '', null, '', array('pagelayout'=>'report'));
 }
 
+$blockurl = $returnurl;
+
 $params = array(
     'page' => $page,
-    'returnurl' => $returnurl
+    'returnurl' => $returnurl,
+    'blockurl' => $blockurl
 );
 
 if ($contextid) {
@@ -71,7 +77,13 @@ $PAGE->set_url($baseurl, array('contextid' => $context->id));
 $returnurl = new moodle_url($returnurl);
 
 $backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
-$basenode = $backnode->add(get_string('chts_table', 'block_user_manager'), $baseurl);
+$usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
+
+$userstableurl_params = array('returnurl' => $returnurl);
+$userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
+$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+
+$basenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $baseurl);
 
 $basenode->make_active();
 
@@ -94,7 +106,8 @@ if ($cohorts['allcohorts'] > 0) {
 
 echo $OUTPUT->heading(get_string('cohortsin', 'cohort', $context->get_context_name()).$count);
 
-if ($editcontrols = cohort_edit_controls($context, $baseurl)) {
+// TODO:: Необходима собственная реализации (url у табов жёстко прописан в функции)
+if ($editcontrols = service::cohort_edit_controls($context, $baseurl)) {
     echo $OUTPUT->render($editcontrols);
 }
 
@@ -109,6 +122,7 @@ $search .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => 
         'class' => 'btn btn-secondary'));
 $search .= html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'contextid', 'value'=>$contextid));
 $search .= html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'showall', 'value'=>$showall));
+$search .= html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'returnurl', 'value'=>$returnurl));
 $search .= html_writer::end_div();
 $search .= html_writer::end_tag('form');
 echo $search;
@@ -124,14 +138,16 @@ foreach($cohorts['cohorts'] as $cohort) {
     
     $cohort->description = file_rewrite_pluginfile_urls($cohort->description, 'pluginfile.php', $cohortcontext->id,
             'cohort', 'description', $cohort->id);
+
     if ($showall) {
         if ($cohortcontext->contextlevel == CONTEXT_COURSECAT) {
-            $line[] = html_writer::link(new moodle_url('/cohort/index.php' ,
+            $line[] = html_writer::link(new moodle_url('/blocks/user_manager/cohort/index.php' ,
                     array('contextid' => $cohort->contextid)), $cohortcontext->get_context_name(false));
         } else {
             $line[] = $cohortcontext->get_context_name(false);
         }
     }
+
     $tmpl = new \core_cohort\output\cohortname($cohort);
     $line[] = $OUTPUT->render_from_template('core/inplace_editable', $tmpl->export_for_template($OUTPUT));
     $tmpl = new \core_cohort\output\cohortidnumber($cohort);
@@ -151,8 +167,12 @@ foreach($cohorts['cohorts'] as $cohort) {
         $cohortmanager = has_capability('moodle/cohort:manage', $cohortcontext);
         $cohortcanassign = has_capability('moodle/cohort:assign', $cohortcontext);
 
-        $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
-        $showhideurl = new moodle_url('/cohort/edit.php', $urlparams + array('sesskey' => sesskey()));
+        $urlparams = array(
+            'id' => $cohort->id,
+            'returnurl' => $baseurl->out_as_local_url(),
+            'blockurl' => $blockurl
+        );
+        $showhideurl = new moodle_url('/blocks/user_manager/cohort/edit.php', $urlparams + array('sesskey' => sesskey()));
         if ($cohortmanager) {
             if ($cohort->visible) {
                 $showhideurl->param('hide', 1);
@@ -164,11 +184,11 @@ foreach($cohorts['cohorts'] as $cohort) {
                 $buttons[] = html_writer::link($showhideurl, $visibleimg, array('title' => get_string('show')));
             }
 
-            $buttons[] = html_writer::link(new moodle_url('/cohort/edit.php', $urlparams + array('delete' => 1)),
+            $buttons[] = html_writer::link(new moodle_url('/blocks/user_manager/cohort/edit.php', $urlparams + array('delete' => 1)),
                 $OUTPUT->pix_icon('t/delete', get_string('delete')),
                 array('title' => get_string('delete')));
 
-            $buttons[] = html_writer::link(new moodle_url('/cohort/edit.php', $urlparams),
+            $buttons[] = html_writer::link(new moodle_url('/blocks/user_manager/cohort/edit.php', $urlparams),
                 $OUTPUT->pix_icon('t/edit', get_string('edit')),
                 array('title' => get_string('edit')));
             
@@ -198,10 +218,12 @@ foreach($cohorts['cohorts'] as $cohort) {
         $row->attributes['class'] = 'dimmed_text';
     }
 }
+
 $table = new html_table();
 $table->head = array(get_string('name', 'cohort'), get_string('idnumber', 'cohort'), get_string('description', 'cohort'),
                       get_string('memberscount', 'cohort'), get_string('component', 'cohort'));
 $table->colclasses = array('leftalign name', 'leftalign id', 'leftalign description', 'leftalign size','centeralign source');
+
 if ($showall) {
     array_unshift($table->head, get_string('category'));
     array_unshift($table->colclasses, 'leftalign category');

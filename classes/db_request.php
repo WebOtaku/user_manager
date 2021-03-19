@@ -25,6 +25,8 @@ class db_request {
     public static function get_users_cohorts(array $users = null) {
         global $DB;
 
+        // TODO: Добавить условие на наличие таблицы - block_cohort1c_synch
+
         $select = self::form_select($users);
 
         $sql_request = "

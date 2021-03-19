@@ -21,7 +21,7 @@ $confirmuser  = optional_param('confirmuser', 0, PARAM_INT);
 $sort         = optional_param('sort', 'name', PARAM_ALPHANUM);
 $dir          = optional_param('dir', 'ASC', PARAM_ALPHA);
 $page         = optional_param('page', 0, PARAM_INT);
-$perpage      = optional_param('perpage', 10, PARAM_INT);        // how many per page
+$perpage      = optional_param('perpage', 20, PARAM_INT);        // how many per page
 $ru           = optional_param('ru', '2', PARAM_INT);            // show remote users
 $lu           = optional_param('lu', '2', PARAM_INT);            // show local users
 $acl          = optional_param('acl', '0', PARAM_INT);           // id of user to tweak mnet ACL (requires $access)
@@ -90,8 +90,31 @@ $PAGE->set_pagelayout('admin');*/
 
 $returnurl = new moodle_url($returnurl);
 
-$backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
-$basenode = $backnode->add(get_string('users_table', 'block_user_manager'), $baseurl);
+if ($userfilter == 'cohort')  {
+    $cht = $DB->get_record('cohort', array('id' => $chtid));
+    $backnode = $PAGE->navigation->add(get_string('back'), $returnurl->get_param('returnurl'));
+    $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
+
+    $userstableurl = new moodle_url($baseurl);
+    $userstableurl->remove_params('userfilter', 'chtid');
+    $userstableurl->param('returnurl', (new moodle_url($userstableurl->get_param('returnurl')))->get_param('returnurl'));
+    $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+
+    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $returnurl);
+
+    $basenode = $chtstablenode->add($cht->name, $baseurl);
+    $basenode->make_active();
+}
+else {
+    $backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
+    $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
+
+    $basenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $baseurl);
+
+    $chtstableurl_params = array('returnurl' => $returnurl);
+    $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
+    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+}
 
 $basenode->make_active();
 
@@ -587,7 +610,7 @@ if (!$users) {
         $cohorts_add = '';
         if (has_capability('moodle/cohort:manage', $context)) {
             $cohorts_add = html_writer::link(
-                new moodle_url('/blocks/user_manager/cohort/assign.php', array(
+                new moodle_url('/blocks/user_manager/cohort/addtocht.php', array(
                         'userid' => $user->id,
                         'returnurl' => $baseurl
                     )),
@@ -617,6 +640,8 @@ if (!$users) {
                         ],
                     ]
                 ],
+
+                // TODO: Связать добавление этих полей с наличием или отсутствием таблицы - block_cohort1c_synch
                 'cht_codes' => [
                     'fieldname' => $cht_code,
                     'type' => 'link',
@@ -689,7 +714,6 @@ if (!$users) {
         $table->data[] = $row;
     }
 
-
     $PAGE->requires->js_amd_inline("
         require(['jquery'], function($) {
             $(document).ready(function() {
@@ -718,7 +742,7 @@ if (!empty($table)) {
 
 if (has_capability('moodle/user:create', $context) ) {
     if ($userfilter == 'cohort')
-        $url = new moodle_url('/cohort/assign.php', array('id' => $chtid, 'returnurl' => $baseurl));
+        $url = new moodle_url('/cohort/addtocht.php', array('id' => $chtid, 'returnurl' => $baseurl));
     else
         $url = new moodle_url('/user/editadvanced.php', array('id' => -1, 'returnto' => $baseurl));
 

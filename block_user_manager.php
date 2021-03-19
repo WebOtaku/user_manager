@@ -36,6 +36,13 @@ class block_user_manager extends block_base {
             $keyslangfile[] = 'users_table';
         }
 
+        if (self::has_access_to_uploadusers())
+        {
+            $links[] = '/blocks/user_manager/uploaduser/index.php';
+            $linksparams[] = ['returnurl' => $this->page->url];
+            $keyslangfile[] = 'uploaduser';
+        }
+
         $langfile = 'block_user_manager';
 
         if (count($links))
@@ -71,6 +78,14 @@ class block_user_manager extends block_base {
         return (
             has_capability('moodle/user:update', $context) &&
             has_capability('moodle/user:delete', $context)
+        );
+    }
+
+    public function has_access_to_uploadusers() {
+        $context = context_system::instance();
+
+        return (
+            has_capability('moodle/site:uploadusers', $context)
         );
     }
 

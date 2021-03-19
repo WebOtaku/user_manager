@@ -533,7 +533,7 @@ if (!$users) {
         $row[] = $user->country;*/
 
         $addmemberurl = html_writer::link(
-            new moodle_url('/blocks/user_manager/cohort/assign.php', $urlparams + array(
+            new moodle_url('/blocks/user_manager/cohort/addtocht.php', $urlparams + array(
                 'userid'=> $user->id,
                 'page' => $page
             )),
@@ -582,7 +582,7 @@ if (!empty($table)) {
 
 if (has_capability('moodle/user:create', $sitecontext) ) {
     if ($userfilter == 'cohort')
-        $url = new moodle_url('/cohort/assign.php', array('id' => $chtid, 'returnurl' => $returnurl));
+        $url = new moodle_url('/cohort/addtocht.php', array('id' => $chtid, 'returnurl' => $returnurl));
     else
         $url = new moodle_url('/user/editadvanced.php', array('id' => -1, 'returnto' => $returnurl));
 

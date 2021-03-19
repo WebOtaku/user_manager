@@ -14,6 +14,8 @@ $string['chts_table'] = 'Cohorts List';
 
 $string['cht_users_table'] = 'User List';
 
+$string['uploaduser'] = 'Upload users';
+
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';
 $string['addtocht'] = 'Adding to cohorts';
