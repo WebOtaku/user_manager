@@ -35,56 +35,36 @@ require_once($CFG->dirroot.'/group/lib.php');
 require_once($CFG->dirroot.'/cohort/lib.php');
 require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 require_once('user_form.php');
+require_once($CFG->libdir.'/excellib.class.php');
 
 $iid         = optional_param('iid', '', PARAM_INT);
 $previewrows = optional_param('previewrows', 10, PARAM_INT);
 
-core_php_time_limit::raise(60*60); // 1 hour should be enough
+core_php_time_limit::raise(60 * 60); // 1 hour should be enough
 raise_memory_limit(MEMORY_HUGE);
 
 service::admin_externalpage_setup('tooluploaduser');
 require_capability('moodle/site:uploadusers', context_system::instance());
 
-$returnurl = new moodle_url('/admin/tool/uploaduser/index.php');
+$returnurl = new moodle_url('/blocks/user_manager/uploaduser/index.php');
 $bulknurl  = new moodle_url('/admin/user/user_bulk.php');
 
-// array of all valid fields for validation
-$STD_FIELDS = array('id', 'username', 'email',
-    'city', 'country', 'lang', 'timezone', 'mailformat',
-    'maildisplay', 'maildigest', 'htmleditor', 'autosubscribe',
-    'institution', 'department', 'idnumber', 'skype',
-    'msn', 'aim', 'yahoo', 'icq', 'phone1', 'phone2', 'address',
-    'url', 'description', 'descriptionformat', 'password',
-    'auth',        // watch out when changing auth type or using external auth plugins!
-    'oldusername', // use when renaming users - this is the original username
-    'suspended',   // 1 means suspend user account, 0 means activate user account, nothing means keep as is for existing users
-    'theme',       // Define a theme for user when 'allowuserthemes' is enabled.
-    'deleted',     // 1 means delete user
-    'mnethostid',  // Can not be used for adding, updating or deleting of users - only for enrolments, groups, cohorts and suspending.
-    'interests',
+// Сответствие 1 к 1
+$input_fields = array(
+    'фамилия', 'имя', 'отчество', 'номер зачётной книжки', 'пароль'
 );
-// Include all name fields.
-$STD_FIELDS = array_merge($STD_FIELDS, get_all_user_name_fields());
 
-$PRF_FIELDS = array();
-if ($proffields = $DB->get_records('user_info_field')) {
-    foreach ($proffields as $key => $proffield) {
-        $profilefieldname = 'profile_field_'.$proffield->shortname;
-        $PRF_FIELDS[] = $profilefieldname;
-        // Re-index $proffields with key as shortname. This will be
-        // used while checking if profile data is key and needs to be converted (eg. menu profile field)
-        $proffields[$profilefieldname] = $proffield;
-        unset($proffields[$key]);
-    }
-}
+$output_fields = array(
+    'lastname', 'firstname', 'middlename', 'username', 'password'
+);
 
-$mform1 = new um_admin_uploaduser_form();
+$uploaduser_form = new um_admin_uploaduser_form();
 
-if ($formdata = $mform1->get_data()) {
+if ($formdata = $uploaduser_form->get_data()) {
     $iid = csv_import_reader::get_new_iid('uploaduser');
     $cir = new csv_import_reader($iid, 'uploaduser');
 
-    $content = $mform1->get_file_content('userfile');
+    $content = $uploaduser_form->get_file_content('userfile');
 
     $readcount = $cir->load_csv_content($content, $formdata->encoding, $formdata->delimiter_name);
     $csvloaderror = $cir->get_error();
@@ -94,12 +74,8 @@ if ($formdata = $mform1->get_data()) {
         print_error('csvloaderror', '', $returnurl, $csvloaderror);
     }
     // test if columns ok
-    $filecolumns = uu_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $returnurl);
-
-    echo $OUTPUT->header();
-
-    echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-
+    $columns = $cir->get_columns();
+    $filecolumns = service::um_validate_user_upload_columns($cir, $input_fields, $returnurl);
     $cir->init();
 
     $users = array();
@@ -112,28 +88,45 @@ if ($formdata = $mform1->get_data()) {
                 // this should not happen
                 continue;
             }
-            $key = $filecolumns[$keynum];
 
-            if ($key == 'username') {
-                $user->$key = 'st'. trim($value);
+            $inkey = $filecolumns[$keynum];
+            $outkey = $output_fields[$keynum];
+
+            if ($inkey == 'номер зачётной книжки') {
+                $user->$outkey = 'st'. trim($value);
             } else {
-                $user->$key = trim($value);
+                $user->$outkey = trim($value);
             }
         }
 
-        $user->password = service::generate_password($user->lastname);
-
+        $user->password = service::generate_password($user);
+        print_object($user);
         $users[] = $user;
     }
-    // ovi&45Jr
-    print_object($users);
 
-    echo $OUTPUT->footer();
+    // ovi&45Jr
+    $downloadfilename = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . date("Ymd") . '.xls');
+    $workbook = new MoodleExcelWorkbook('-');
+    $workbook->send($downloadfilename);
+    $users_excel = $workbook->add_worksheet(get_string('users'));
+
+    foreach ($output_fields as $key => $output_field)
+        $users_excel->write_string(0, $key,  $output_field);
+
+    foreach ($users as $key => $user) {
+        $j = 0;
+        foreach ($user as $keynum => $value) {
+            $users_excel->write_string($key + 1, $j,  $user->$keynum);
+            $j++;
+        }
+    }
+
+    //$workbook->close();
+
+    exit;
 } else {
     echo $OUTPUT->header();
-
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-
-    $mform1->display();
+    $uploaduser_form->display();
     echo $OUTPUT->footer();
 }

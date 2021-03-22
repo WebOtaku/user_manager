@@ -3,7 +3,7 @@
 namespace block_user_manager;
 
 use context_system, admin_externalpage, moodle_url,
-    print_object, tabobject, tabtree, context;
+    print_object, tabobject, tabtree, context, csv_import_reader;
 
 class service
 {
@@ -196,14 +196,80 @@ class service
         return null;
     }
 
-    public static function generate_password($lastname)
+    public static function generate_password($user)
     {
-        if (strlen($lastname) > 3)
-            $lastname = substr($lastname, 0, 3);
+        $symbols = array('#', '$', '%', '&');
+        $en_alphabet_capitals = range('A', 'Z');
+        $en_alphabet_lowercase = range('a', 'z');
 
-        //$password = transliteration::translit_ru_en($lastname);
-        $password = '';
+        // Порядок полей в массиве влияет на порядок инициалов
+        $initials_fields = array('lastname', 'firstname', 'middlename');
+        $initials = '';
 
-        return $password;
+        foreach ($initials_fields as $initials_field) {
+            if (isset($user->$initials_field) && !empty($user->$initials_field)) {
+                $initial = strtolower(transliteration::translit_ru_en($user->$initials_field));
+                $initials .= $initial[0];
+            }
+        }
+
+        $rand_symbol = '';
+        $rand_number = '';
+        $rand_capital_en = '';
+        $rand_lowercase_en = '';
+
+        try {
+            $rand_symbol = $symbols[random_int(0, 3)];
+            $rand_number = random_int(0, 9) . random_int(0, 9);
+            $rand_capital_en = $en_alphabet_capitals[random_int(0, count($en_alphabet_capitals) - 1)];
+            $rand_lowercase_en = $en_alphabet_lowercase[random_int(0, count($en_alphabet_lowercase) - 1)];
+        } catch (\Exception $e) {
+            print_error($e->getMessage());
+        }
+
+        return $initials.$rand_symbol.$rand_number.$rand_capital_en.$rand_lowercase_en;
+    }
+
+    public static function um_validate_user_upload_columns(csv_import_reader $cir, $stdfields, moodle_url $returnurl) {
+        $columns = $cir->get_columns();
+
+        if (empty($columns)) {
+            $cir->close();
+            $cir->cleanup();
+            print_error('cannotreadtmpfile', 'error', $returnurl);
+        }
+
+        if (count($columns) < 2) {
+            $cir->close();
+            $cir->cleanup();
+            print_error('csvfewcolumns', 'error', $returnurl);
+        }
+
+        // test columns
+        $processed = array();
+        foreach ($columns as $key => $unused)
+        {
+            $field = $columns[$key];
+            $field = trim($field);
+            $lcfield = mb_strtolower($field);
+
+            if (in_array($field, $stdfields) or in_array($lcfield, $stdfields)) {
+                $newfield = $lcfield;
+            } else {
+                $cir->close();
+                $cir->cleanup();
+                print_error('invalidfieldname', 'error', $returnurl, $field);
+            }
+
+            if (in_array($newfield, $processed)) {
+                $cir->close();
+                $cir->cleanup();
+                print_error('duplicatefieldname', 'error', $returnurl, $newfield);
+            }
+
+            $processed[$key] = $newfield;
+        }
+
+        return $processed;
     }
 }
