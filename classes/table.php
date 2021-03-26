@@ -2,8 +2,7 @@
 
 namespace block_user_manager;
 
-use html_writer;
-use moodle_url;
+use html_writer, moodle_url;
 
 class table
 {

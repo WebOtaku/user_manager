@@ -24,7 +24,7 @@
  */
 
 use block_user_manager\service;
-use block_user_manager\transliteration;
+use block_user_manager\uploaduser;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -49,7 +49,7 @@ require_capability('moodle/site:uploadusers', context_system::instance());
 $returnurl = new moodle_url('/blocks/user_manager/uploaduser/index.php');
 $bulknurl  = new moodle_url('/admin/user/user_bulk.php');
 
-// Сответствие 1 к 1
+// Сответствие 1 к  1
 $input_fields = array(
     'фамилия', 'имя', 'отчество', 'номер зачётной книжки', 'пароль'
 );
@@ -57,6 +57,7 @@ $input_fields = array(
 $output_fields = array(
     'lastname', 'firstname', 'middlename', 'username', 'password'
 );
+
 
 $uploaduser_form = new um_admin_uploaduser_form();
 
@@ -66,16 +67,19 @@ if ($formdata = $uploaduser_form->get_data()) {
 
     $content = $uploaduser_form->get_file_content('userfile');
 
+    //print_object($content);
+
+    $delimiter = csv_import_reader::get_delimiter($formdata->delimiter_name);
+
     $readcount = $cir->load_csv_content($content, $formdata->encoding, $formdata->delimiter_name);
     $csvloaderror = $cir->get_error();
-    unset($content);
 
     if (!is_null($csvloaderror)) {
         print_error('csvloaderror', '', $returnurl, $csvloaderror);
     }
     // test if columns ok
     $columns = $cir->get_columns();
-    $filecolumns = service::um_validate_user_upload_columns($cir, $input_fields, $returnurl);
+    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $input_fields, $returnurl);
     $cir->init();
 
     $users = array();
@@ -100,18 +104,43 @@ if ($formdata = $uploaduser_form->get_data()) {
         }
 
         $user->password = service::generate_password($user);
-        print_object($user);
+        //print_object($user);
         $users[] = $user;
     }
 
-    // ovi&45Jr
-    $downloadfilename = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . date("Ymd") . '.xls');
+    $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
+
+    /*$users_csv = new csv_export_writer($formdata->delimiter_name);
+    $users_csv->set_filename($filename);
+
+    $users_csv->add_data($output_fields);
+
+    foreach ($users as $key => $user) {
+        $row = array();
+        foreach ($user as $value)
+            $row[] = $value;
+        $users_csv->add_data($row);
+    }
+
+    $content = $users_csv->print_csv_data(true);
+
+    $readcount = $cir->load_csv_content($content, 'utf-8', $formdata->delimiter_name);
+    $csvloaderror = $cir->get_error();
+
+    if (!is_null($csvloaderror)) {
+        print_error('csvloaderror', '', $returnurl, $csvloaderror);
+    }*/
+
+
+    $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+    $users_csv = uploaduser::export_users_csv($users, $output_fields, $returnurl, $filename_csv, $formdata->delimiter_name, true);
+
     $workbook = new MoodleExcelWorkbook('-');
-    $workbook->send($downloadfilename);
+    $workbook->send($filename_excel);
     $users_excel = $workbook->add_worksheet(get_string('users'));
 
     foreach ($output_fields as $key => $output_field)
-        $users_excel->write_string(0, $key,  $output_field);
+        $users_excel->write_string(0, $key, $output_field);
 
     foreach ($users as $key => $user) {
         $j = 0;
@@ -121,9 +150,28 @@ if ($formdata = $uploaduser_form->get_data()) {
         }
     }
 
+    $content = $users_csv->print_csv_data(true);
+
+    $iid = csv_import_reader::get_new_iid('uploaduser');
+    $cir = new csv_import_reader($iid, 'uploaduser');
+
+    $cir->load_csv_content($content, 'utf-8', $formdata->delimiter_name);
+    $csvloaderror = $cir->get_error();
+
+    if (!is_null($csvloaderror)) {
+        print_error('csvloaderror', '', $returnurl, $csvloaderror);
+    }
+
+    //$cir->close();
+
     //$workbook->close();
 
-    exit;
+//    redirect(new moodle_url('/admin/tool/uploaduser/index.php', array(
+//        'iid' => $iid,
+//        'previewrows' => $formdata->previewrows,
+//    )));
+
+    //exit;
 } else {
     echo $OUTPUT->header();
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');

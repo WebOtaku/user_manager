@@ -13,11 +13,11 @@ require_once($CFG->dirroot.'/admin/tool/uploaduser/user_form.php');
  * @copyright  2014 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class um_admin_uploaduser_form extends moodleform {
+class um_admin_uploaduser_form extends admin_uploaduser_form1 {
     /**
      * Form definition
      */
-    public function definition() {
+    /*public function definition() {
         $mform = $this->_form;
         $data  = (object)$this->_customdata;
 
@@ -41,6 +41,15 @@ class um_admin_uploaduser_form extends moodleform {
         $mform->setDefault('encoding', 'UTF-8');
 
         $this->add_action_buttons(false, get_string('upload'));
+
+        $this->set_data($data);
+    }*/
+
+    public function definition() {
+        $mform = $this->_form;
+        $data  = (object)$this->_customdata;
+
+        parent::definition($this, $data);;
 
         $this->set_data($data);
     }
