@@ -1,30 +1,8 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * Bulk user registration script from a comma separated file
- *
- * @package    tool
- * @subpackage uploaduser
- * @copyright  2004 onwards Martin Dougiamas (http://dougiamas.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 
 use block_user_manager\service;
 use block_user_manager\uploaduser;
+use block_user_manager\userfields;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -35,10 +13,13 @@ require_once($CFG->dirroot.'/group/lib.php');
 require_once($CFG->dirroot.'/cohort/lib.php');
 require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 require_once('user_form.php');
+require_once('../locallib.php');
 require_once($CFG->libdir.'/excellib.class.php');
 
-$iid         = optional_param('iid', '', PARAM_INT);
-$previewrows = optional_param('previewrows', 10, PARAM_INT);
+//$iid         = optional_param('iid', '', PARAM_INT);
+//$previewrows = optional_param('previewrows', 10, PARAM_INT);
+
+$returnurl = required_param('returnurl', PARAM_LOCALURL);
 
 core_php_time_limit::raise(60 * 60); // 1 hour should be enough
 raise_memory_limit(MEMORY_HUGE);
@@ -46,18 +27,23 @@ raise_memory_limit(MEMORY_HUGE);
 service::admin_externalpage_setup('tooluploaduser');
 require_capability('moodle/site:uploadusers', context_system::instance());
 
-$returnurl = new moodle_url('/blocks/user_manager/uploaduser/index.php');
-$bulknurl  = new moodle_url('/admin/user/user_bulk.php');
+
+$pageurl = '/blocks/user_manager/user.php';
+$urlparams = array('returnurl' => $returnurl);
+
+$baseurl = new moodle_url($pageurl, $baseurl);
+//$bulknurl  = new moodle_url('/admin/user/user_bulk.php');
 
 // Сответствие 1 к  1
-$input_fields = array(
+/*$input_fields = array(
     'фамилия', 'имя', 'отчество', 'номер зачётной книжки', 'пароль'
 );
-
 $output_fields = array(
     'lastname', 'firstname', 'middlename', 'username', 'password'
-);
+);*/
 
+$STD_FIELDS = array_combine(STD_FIELDS_EN, STD_FIELDS_RU);
+$PRF_FIELDS = uploaduser::get_profile_fields();
 
 $uploaduser_form = new um_admin_uploaduser_form();
 
@@ -67,19 +53,18 @@ if ($formdata = $uploaduser_form->get_data()) {
 
     $content = $uploaduser_form->get_file_content('userfile');
 
-    //print_object($content);
-
     $delimiter = csv_import_reader::get_delimiter($formdata->delimiter_name);
 
     $readcount = $cir->load_csv_content($content, $formdata->encoding, $formdata->delimiter_name);
     $csvloaderror = $cir->get_error();
 
     if (!is_null($csvloaderror)) {
-        print_error('csvloaderror', '', $returnurl, $csvloaderror);
+        print_error('csvloaderror', '', $baseurl, $csvloaderror);
     }
     // test if columns ok
     $columns = $cir->get_columns();
-    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $input_fields, $returnurl);
+    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl);
+    $filecolumns[] = 'password';
     $cir->init();
 
     $users = array();
@@ -87,92 +72,52 @@ if ($formdata = $uploaduser_form->get_data()) {
 
         $user = new stdClass();
 
-        foreach ($line as $keynum => $value) {
+        foreach ($line as $keynum => $value)
+        {
             if (!isset($filecolumns[$keynum])) {
                 // this should not happen
                 continue;
             }
 
-            $inkey = $filecolumns[$keynum];
-            $outkey = $output_fields[$keynum];
+            $key = $filecolumns[$keynum];
 
-            if ($inkey == 'номер зачётной книжки') {
-                $user->$outkey = 'st'. trim($value);
+            if ($key == 'username' || (isset($STD_FIELDS['username']) && ($key == $STD_FIELDS['username']))) {
+                $user->$key = 'st'. trim($value);
             } else {
-                $user->$outkey = trim($value);
+                $user->$key = trim($value);
             }
         }
 
         $user->password = service::generate_password($user);
-        //print_object($user);
         $users[] = $user;
     }
 
-    $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
+    $action = $formdata->action;
 
-    /*$users_csv = new csv_export_writer($formdata->delimiter_name);
-    $users_csv->set_filename($filename);
-
-    $users_csv->add_data($output_fields);
-
-    foreach ($users as $key => $user) {
-        $row = array();
-        foreach ($user as $value)
-            $row[] = $value;
-        $users_csv->add_data($row);
+    if ($action === "2") {
+        // Если выбран экспорт в формате Excel
+        $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
+        $worksheet_name = get_string('users');
+        $users_excel = uploaduser::export_users_excel($users, $filecolumns, $worksheet_name, $filename_excel, true);
     }
 
-    $content = $users_csv->print_csv_data(true);
-
-    $readcount = $cir->load_csv_content($content, 'utf-8', $formdata->delimiter_name);
-    $csvloaderror = $cir->get_error();
-
-    if (!is_null($csvloaderror)) {
-        print_error('csvloaderror', '', $returnurl, $csvloaderror);
-    }*/
-
-
-    $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
-    $users_csv = uploaduser::export_users_csv($users, $output_fields, $returnurl, $filename_csv, $formdata->delimiter_name, true);
-
-    $workbook = new MoodleExcelWorkbook('-');
-    $workbook->send($filename_excel);
-    $users_excel = $workbook->add_worksheet(get_string('users'));
-
-    foreach ($output_fields as $key => $output_field)
-        $users_excel->write_string(0, $key, $output_field);
-
-    foreach ($users as $key => $user) {
-        $j = 0;
-        foreach ($user as $keynum => $value) {
-            $users_excel->write_string($key + 1, $j,  $user->$keynum);
-            $j++;
-        }
+    if ($action === "1" || $action === "3") {
+        // Если выбран экспорт в формате Csv
+        $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+        $users_csv = uploaduser::export_users_csv($users, $filecolumns, $filename_csv, $formdata->delimiter_name, false);
     }
 
-    $content = $users_csv->print_csv_data(true);
-
-    $iid = csv_import_reader::get_new_iid('uploaduser');
-    $cir = new csv_import_reader($iid, 'uploaduser');
-
-    $cir->load_csv_content($content, 'utf-8', $formdata->delimiter_name);
-    $csvloaderror = $cir->get_error();
-
-    if (!is_null($csvloaderror)) {
-        print_error('csvloaderror', '', $returnurl, $csvloaderror);
+    if ($action === "1") {
+        $users_csv->download_file();
     }
 
-    //$cir->close();
-
-    //$workbook->close();
-
-//    redirect(new moodle_url('/admin/tool/uploaduser/index.php', array(
-//        'iid' => $iid,
-//        'previewrows' => $formdata->previewrows,
-//    )));
-
-    //exit;
-} else {
+    if ($action === "3") {
+        // Если выбрана опция "Загрузка пользователей в систему"
+        // будет выполнено переадресация
+        uploaduser::import_users_into_system($users_csv, $baseurl, $formdata->previewrows, $formdata->delimiter_name);
+    }
+}
+else {
     echo $OUTPUT->header();
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
     $uploaduser_form->display();

@@ -17,11 +17,19 @@ class um_admin_uploaduser_form extends admin_uploaduser_form1 {
     /**
      * Form definition
      */
-    /*public function definition() {
+    public function definition() {
         $mform = $this->_form;
         $data  = (object)$this->_customdata;
 
         $mform->addElement('header', 'settingsheader', get_string('upload'));
+
+        $choices = array(
+            1 => 'Экспорт в формате .csv',
+            2 => 'Экспорт в формате .xls (Excel)',
+            3 => 'Загрузка пользователей в систему'
+        );
+        $mform->addElement('select', 'action', get_string('action'), $choices);
+        $mform->setType('action', PARAM_INT);
 
         $mform->addElement('filepicker', 'userfile', get_string('file'));
         $mform->addRule('userfile', null, 'required');
@@ -40,18 +48,22 @@ class um_admin_uploaduser_form extends admin_uploaduser_form1 {
         $mform->addElement('select', 'encoding', get_string('encoding', 'tool_uploaduser'), $choices);
         $mform->setDefault('encoding', 'UTF-8');
 
+        $choices = array('10'=>10, '20'=>20, '100'=>100, '1000'=>1000, '100000'=>100000);
+        $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
+        $mform->setType('previewrows', PARAM_INT);
+
         $this->add_action_buttons(false, get_string('upload'));
 
         $this->set_data($data);
-    }*/
+    }
 
-    public function definition() {
+    /*public function definition() {
         $mform = $this->_form;
         $data  = (object)$this->_customdata;
 
         parent::definition($this, $data);;
 
         $this->set_data($data);
-    }
+    }*/
 
 }

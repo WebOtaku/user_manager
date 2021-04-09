@@ -31,15 +31,15 @@ class db_request {
 
         $sql_request = "
             SELECT (@cnt := @cnt + 1) AS id, u.id AS userid, u.lastname, u.firstname,
-                   cht.id AS chtid, cht.name AS cht_code_mdl, cht1c.group1c AS cht_code, 
-                   cht.description, cht1c.form
+                   cht.id AS chtid, cht.name AS cht_code_mdl/*, cht1c.group1c AS cht_code,
+                   cht.description, cht1c.form*/
             FROM {user} AS u
             INNER JOIN {cohort_members} AS chtm ON chtm.userid = u.id
             LEFT JOIN (
-                SELECT cht.id, cht.name, cht.description 
+                SELECT cht.id, cht.name, cht.description
                 FROM {cohort} AS cht
             ) AS cht ON cht.id = chtm.cohortid
-            LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id
+            /*LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id*/
             CROSS JOIN (SELECT @cnt := 0) AS dummy
             WHERE $select";
 
@@ -70,18 +70,18 @@ class db_request {
         $select = self::form_select($users);
 
         $sql_request = "
-            SELECT (@cnt := @cnt + 1) AS id, u.id AS userid, u.firstname, u.lastname, 
+            SELECT (@cnt := @cnt + 1) AS id, u.id AS userid, u.firstname, u.lastname,
             ra.courseid, ra.course, ra.role, uenr.enrol AS enrol_method
             FROM {user} AS u
             INNER JOIN (
-                SELECT ra.userid AS userid, crs.id AS courseid, r.id AS roleid, 
+                SELECT ra.userid AS userid, crs.id AS courseid, r.id AS roleid,
                 crs.fullname AS course, r.shortname AS role
                 FROM {role_assignments} AS ra
                 INNER JOIN {context} AS c ON c.id = ra.contextid
                 INNER JOIN {course} AS crs ON crs.id = c.instanceid
                 INNER JOIN {role} AS r ON r.id = ra.roleid
                 GROUP BY ra.userid, crs.id, r.id
-            ) AS ra ON ra.userid = u.id 
+            ) AS ra ON ra.userid = u.id
             LEFT JOIN (
                 SELECT uenr.userid AS userid, enr.courseid AS courseid, enr.enrol AS enrol
                 FROM {user_enrolments} AS uenr

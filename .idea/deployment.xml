@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="moodle369/user_manager" preserveTimestamps="false" deleteMissingItems="true">
+  <component name="PublishConfigData" autoUpload="Always" serverName="localhost/moodle/user_manager" preserveTimestamps="false" deleteMissingItems="true">
     <serverData>
+      <paths name="localhost/moodle/user_manager">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="moodle369">
         <serverdata>
           <mappings>
