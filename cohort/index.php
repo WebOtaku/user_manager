@@ -76,6 +76,7 @@ $PAGE->set_url($baseurl, array('contextid' => $context->id));
 
 $returnurl = new moodle_url($returnurl);
 
+// Навигация: Начало
 $backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
 $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
 
@@ -85,7 +86,12 @@ $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_ma
 
 $basenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $baseurl);
 
+$uploaduserurl_params = array('returnurl' => $returnurl);
+$uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+$uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+
 $basenode->make_active();
+// Навигация: Конец
 
 echo $OUTPUT->header();
 
@@ -135,7 +141,7 @@ $editcolumnisempty = true;
 foreach($cohorts['cohorts'] as $cohort) {
     $line = array();
     $cohortcontext = context::instance_by_id($cohort->contextid);
-    
+
     $cohort->description = file_rewrite_pluginfile_urls($cohort->description, 'pluginfile.php', $cohortcontext->id,
             'cohort', 'description', $cohort->id);
 
@@ -191,7 +197,7 @@ foreach($cohorts['cohorts'] as $cohort) {
             $buttons[] = html_writer::link(new moodle_url('/blocks/user_manager/cohort/edit.php', $urlparams),
                 $OUTPUT->pix_icon('t/edit', get_string('edit')),
                 array('title' => get_string('edit')));
-            
+
             // Ссылка ведушая на страницу с пользователями состоящими в группе
             $user_urlparams = array(
                 'chtid' => $cohort->id,

@@ -36,15 +36,14 @@ $returnurl = new moodle_url($returnurl);
 
 $userfilter = $returnurl->get_param('userfilter');
 
+// Навигация: Начало
 if ($userfilter === 'cohort') {
-    $backnode = $PAGE->navigation->add(get_string('back'),
-        (new moodle_url($returnurl->get_param('returnurl')))->get_param('returnurl')
-    );
+    $backurl = (new moodle_url($returnurl->get_param('returnurl')))->get_param('returnurl');
+
+    $backnode = $PAGE->navigation->add(get_string('back'), $backurl);
     $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
 
-    $userstableurl_params = array(
-        'returnurl' => (new moodle_url($returnurl->get_param('returnurl')))->get_param('returnurl')
-    );
+    $userstableurl_params = array('returnurl' => $backurl);
     $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
     $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
 
@@ -54,19 +53,31 @@ if ($userfilter === 'cohort') {
     $userschttablenode = $chtstablenode->add($cht->name, $returnurl);
 
     $basenode = $userschttablenode->add(get_string('addtochtshort', 'block_user_manager'), $baseurl);
+
+    $uploaduserurl_params = array('returnurl' => $backurl);
+    $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
 } else {
-    $backnode = $PAGE->navigation->add(get_string('back'), $returnurl->get_param('returnurl'));
+    $backurl = $returnurl->get_param('returnurl');
+
+    $backnode = $PAGE->navigation->add(get_string('back'), $backurl);
     $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
     $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $returnurl);
 
-    $chtstableurl_params = array('returnurl' => $returnurl->get_param('returnurl'));
+    $chtstableurl_params = array('returnurl' => $backurl);
     $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
     $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
 
     $basenode = $userstablenode->add(get_string('addtochtshort', 'block_user_manager'), $baseurl);
+
+    $uploaduserurl_params = array('returnurl' => $backurl);
+    $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
 }
 
 $basenode->make_active();
+// Навигация: Конец
+
 
 if (!$user = $DB->get_record('user', array('id' => $userid))) {
     print_error('invaliduser');

@@ -16,9 +16,6 @@ require_once('user_form.php');
 require_once('../locallib.php');
 require_once($CFG->libdir.'/excellib.class.php');
 
-//$iid         = optional_param('iid', '', PARAM_INT);
-//$previewrows = optional_param('previewrows', 10, PARAM_INT);
-
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
 core_php_time_limit::raise(60 * 60); // 1 hour should be enough
@@ -28,24 +25,35 @@ service::admin_externalpage_setup('tooluploaduser');
 require_capability('moodle/site:uploadusers', context_system::instance());
 
 
-$pageurl = '/blocks/user_manager/user.php';
+$pageurl = '/blocks/user_manager/uploaduser/index.php';
 $urlparams = array('returnurl' => $returnurl);
 
-$baseurl = new moodle_url($pageurl, $baseurl);
-//$bulknurl  = new moodle_url('/admin/user/user_bulk.php');
+$baseurl = new moodle_url($pageurl, $urlparams);
 
-// Сответствие 1 к  1
-/*$input_fields = array(
-    'фамилия', 'имя', 'отчество', 'номер зачётной книжки', 'пароль'
-);
-$output_fields = array(
-    'lastname', 'firstname', 'middlename', 'username', 'password'
-);*/
+$pagetitle = get_string('uploadusers', 'tool_uploaduser');
+$PAGE->set_url($baseurl);
+
+// Навигация: Начало
+$backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
+$usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
+
+$userstableurl_params = array('returnurl' => $returnurl);
+$userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
+$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+
+$chtstableurl_params = array('returnurl' => $returnurl);
+$chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
+$chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+
+$basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $baseurl);
+
+$basenode->make_active();
+// Навигация: Конец
 
 $STD_FIELDS = array_combine(STD_FIELDS_EN, STD_FIELDS_RU);
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-$uploaduser_form = new um_admin_uploaduser_form();
+$uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS));
 
 if ($formdata = $uploaduser_form->get_data()) {
     $iid = csv_import_reader::get_new_iid('uploaduser');
@@ -121,5 +129,22 @@ else {
     echo $OUTPUT->header();
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
     $uploaduser_form->display();
+
+    $PAGE->requires->js_amd_inline("
+        require(['jquery'], function($) {
+            if ($('#id_action').val() !== '3') {
+                $('#id_previewrows').parent().parent().css({display: 'none'});
+            }
+
+            $('#id_action').change(function() {
+                if ($('#id_action').val() === '3') {
+                    $('#id_previewrows').parent().parent().css({display: 'flex'});
+                } else {
+                    $('#id_previewrows').parent().parent().css({display: 'none'});
+                }
+            });
+        });"
+    );
+
     echo $OUTPUT->footer();
 }

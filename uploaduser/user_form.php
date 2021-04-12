@@ -19,7 +19,47 @@ class um_admin_uploaduser_form extends admin_uploaduser_form1 {
      */
     public function definition() {
         $mform = $this->_form;
-        $data  = (object)$this->_customdata;
+        list($stdfields) = $this->_customdata;
+
+        $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
+
+        $instruction = '
+            <div class="instruction">Инструкция</div>
+        ';
+
+        $mform->addElement('html', $instruction);
+        $mform->setExpanded('instructionheader', false);
+
+        $mform->addElement('header', 'validfieldsheader', get_string('validfields', 'block_user_manager'));
+
+        $validfields = '
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>'.get_string('systemfields', 'block_user_manager').'</th>
+                        <th>'.get_string('associatedfields', 'block_user_manager').'</th>
+                    </tr>
+                </thead>
+                <tbody>';
+                foreach ($stdfields as $systemfield => $associatedfields) {
+                    $validfields .= "<tr>";
+                    $validfields .= "<td>$systemfield</td>";
+
+                    $validfields .= "<td>";
+                    if (is_array($associatedfields)) {
+                        $validfields .= implode(', ', $associatedfields);
+                    } else $validfields .= $associatedfields;
+                    $validfields .= "</td>";
+
+                    $validfields .= "</tr>";
+                }
+        $validfields .= '
+                </tbody>
+            </table>
+        ';
+
+        $mform->addElement('html', $validfields);
+        $mform->setExpanded('validfieldsheader', false);
 
         $mform->addElement('header', 'settingsheader', get_string('upload'));
 
@@ -48,13 +88,13 @@ class um_admin_uploaduser_form extends admin_uploaduser_form1 {
         $mform->addElement('select', 'encoding', get_string('encoding', 'tool_uploaduser'), $choices);
         $mform->setDefault('encoding', 'UTF-8');
 
-        $choices = array('10'=>10, '20'=>20, '100'=>100, '1000'=>1000, '100000'=>100000);
+        $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
         $this->add_action_buttons(false, get_string('upload'));
 
-        $this->set_data($data);
+        //$this->set_data($data);
     }
 
     /*public function definition() {

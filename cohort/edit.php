@@ -62,7 +62,7 @@ if ($delete and $cohort->id) {
     $strheading = get_string('delcohort', 'cohort');
 }
 
-// Навигация
+// Навигация: Начало
 $backnode = $PAGE->navigation->add(get_string('back'), $blockurl);
 
 $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
@@ -94,7 +94,13 @@ if ($delete and $cohort->id) {
 $baseurl = new moodle_url($pageurl, $urlparams);
 
 $basenode = $chtstablenode->add($strheading, $baseurl);
+
+$uploaduserurl_params = array('returnurl' => $blockurl);
+$uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+$uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+
 $basenode->make_active();
+// Навигация: Конец
 
 if (!empty($cohort->component)) {
     // We can not manually edit cohorts that were created by external systems, sorry.

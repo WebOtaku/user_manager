@@ -31,15 +31,15 @@ class db_request {
 
         $sql_request = "
             SELECT (@cnt := @cnt + 1) AS id, u.id AS userid, u.lastname, u.firstname,
-                   cht.id AS chtid, cht.name AS cht_code_mdl/*, cht1c.group1c AS cht_code,
-                   cht.description, cht1c.form*/
+                   cht.id AS chtid, cht.name AS cht_code_mdl, cht1c.group1c AS cht_code,
+                   cht.description, cht1c.form
             FROM {user} AS u
             INNER JOIN {cohort_members} AS chtm ON chtm.userid = u.id
             LEFT JOIN (
                 SELECT cht.id, cht.name, cht.description
                 FROM {cohort} AS cht
             ) AS cht ON cht.id = chtm.cohortid
-            /*LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id*/
+            LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id
             CROSS JOIN (SELECT @cnt := 0) AS dummy
             WHERE $select";
 

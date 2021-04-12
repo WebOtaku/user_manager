@@ -14,7 +14,12 @@ $string['chts_table'] = 'Список глобальных групп';
 
 $string['cht_users_table'] = 'Список пользователей';
 
+// Форма загрузки пользователей
 $string['uploaduser'] = 'Загрузка пользователей';
+$string['validfields'] = 'Допустимые поля';
+$string['instruction'] = 'Инструкция';
+$string['systemfields'] = 'Системные поля';
+$string['associatedfields'] = 'Ассоциированные поля';
 
 // Форма добавления пользователя в группу
 $string['add'] = 'Добавить';

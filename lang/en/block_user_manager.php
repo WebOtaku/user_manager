@@ -14,7 +14,12 @@ $string['chts_table'] = 'Cohorts List';
 
 $string['cht_users_table'] = 'User List';
 
+// Форма загрузки пользователей
 $string['uploaduser'] = 'Upload users';
+$string['validfields'] = 'Valid fields';
+$string['instruction'] = 'Instruction';
+$string['systemfields'] = 'System fields';
+$string['associatedfields'] = 'Associated fields';
 
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';

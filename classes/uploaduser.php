@@ -29,13 +29,17 @@ class uploaduser
             $field = trim($field);
             $lcfield = core_text::strtolower($field);
 
-            if (array_key_exists($field, $stdfields) || array_key_exists($lcfield, $stdfields))
-            {
+            //print_object(self::field_exist($field, $stdfields));
+
+            /*if (array_key_exists($field, $stdfields) || array_key_exists($lcfield, $stdfields)) {
                 // standard fields are only lowercase
                 $newfield = $lcfield;
-
-            } else if (in_array($field, $stdfields) || in_array($lcfield, $stdfields)){
+            }
+            else if (in_array($field, $stdfields) || in_array($lcfield, $stdfields)) {
                 $newfield = array_search($lcfield, $stdfields);
+            }*/
+            if ($newfield = self::field_exist($field, $stdfields)) {
+                // empty
             }
             else if (in_array($field, $profilefields)) {
                 // exact profile field name match - these are case sensitive
@@ -116,7 +120,7 @@ class uploaduser
 
     public static function import_users_into_system(
         csv_export_writer $users_csv, moodle_url $returnurl, int $previewrows = 10,
-        string $delimiter_name = 'semicolon', string $encoding = 'utf-8')
+        string $delimiter_name = 'semicolon', string $encoding = 'UTF-8')
     {
         $content = $users_csv->print_csv_data(true);
 
@@ -138,7 +142,8 @@ class uploaduser
         redirect($useruploadurl);
     }
 
-    public static function get_profile_fields() {
+    public static function get_profile_fields()
+    {
         global $DB;
 
         $PRF_FIELDS = array();
@@ -154,5 +159,25 @@ class uploaduser
         }
 
         return $PRF_FIELDS;
+    }
+
+    public static function field_exist($field, $stdfields)
+    {
+        $lcfield = core_text::strtolower($field);
+
+        if (array_key_exists($field, $stdfields) || array_key_exists($lcfield, $stdfields))
+            return $lcfield;
+
+        if (in_array($field, $stdfields) || in_array($lcfield, $stdfields))
+            return array_search($lcfield, $stdfields);
+
+
+        foreach ($stdfields as $systemfield => $associatedfields) {
+            if (is_array($associatedfields))
+                if (in_array($field, $associatedfields) || in_array($lcfield, $associatedfields))
+                    return $systemfield;
+        }
+
+        return false;
     }
 }

@@ -22,6 +22,13 @@ class block_user_manager extends block_base {
         $linksparams = [];
         $keyslangfile = [];
 
+        if (self::has_access_to_users())
+        {
+            $links[] = '/blocks/user_manager/user.php';
+            $linksparams[] = ['returnurl' => $this->page->url];
+            $keyslangfile[] = 'users_table';
+        }
+
         if (self::has_access_to_cohorts())
         {
             $links[] = '/blocks/user_manager/cohort/index.php';
@@ -29,12 +36,6 @@ class block_user_manager extends block_base {
             $keyslangfile[] = 'chts_table';
         }
 
-        if (self::has_access_to_users())
-        {
-            $links[] = '/blocks/user_manager/user.php';
-            $linksparams[] = ['returnurl' => $this->page->url];
-            $keyslangfile[] = 'users_table';
-        }
 
         if (self::has_access_to_uploadusers())
         {

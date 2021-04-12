@@ -90,6 +90,7 @@ $PAGE->set_pagelayout('admin');*/
 
 $returnurl = new moodle_url($returnurl);
 
+// Навигация: Начало
 if ($userfilter == 'cohort')  {
     $cht = $DB->get_record('cohort', array('id' => $chtid));
     $backnode = $PAGE->navigation->add(get_string('back'), $returnurl->get_param('returnurl'));
@@ -98,9 +99,14 @@ if ($userfilter == 'cohort')  {
     $userstableurl = new moodle_url($baseurl);
     $userstableurl->remove_params('userfilter', 'chtid');
     $userstableurl->param('returnurl', (new moodle_url($userstableurl->get_param('returnurl')))->get_param('returnurl'));
+
     $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
 
     $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $returnurl);
+
+    $uploaduserurl_params = array('returnurl' => $userstableurl->get_param('returnurl'));
+    $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
 
     $basenode = $chtstablenode->add($cht->name, $baseurl);
     $basenode->make_active();
@@ -114,9 +120,14 @@ else {
     $chtstableurl_params = array('returnurl' => $returnurl);
     $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
     $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+
+    $uploaduserurl_params = array('returnurl' => $returnurl);
+    $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
+    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
 }
 
 $basenode->make_active();
+// Навигация: Конец
 
 // The $user variable is also used outside of these if statements.
 $user = null;
