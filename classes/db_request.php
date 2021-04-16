@@ -25,21 +25,36 @@ class db_request {
     public static function get_users_cohorts(array $users = null) {
         global $DB;
 
-        // TODO: Добавить условие на наличие таблицы - block_cohort1c_synch
+
+        $dbman = $DB->get_manager();
+
+        $table1c = "block_cohort1c_synch";
 
         $select = self::form_select($users);
 
         $sql_request = "
             SELECT (@cnt := @cnt + 1) AS id, u.id AS userid, u.lastname, u.firstname,
-                   cht.id AS chtid, cht.name AS cht_code_mdl, cht1c.group1c AS cht_code,
-                   cht.description, cht1c.form
+                   cht.id AS chtid, cht.name AS cht_code_mdl";
+
+        if ($dbman->table_exists($table1c)) {
+            $sql_request .= ", cht1c.group1c AS cht_code,
+                   cht.description, cht1c.form";
+        }
+
+        $sql_request .= "
             FROM {user} AS u
             INNER JOIN {cohort_members} AS chtm ON chtm.userid = u.id
             LEFT JOIN (
                 SELECT cht.id, cht.name, cht.description
                 FROM {cohort} AS cht
-            ) AS cht ON cht.id = chtm.cohortid
-            LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id
+            ) AS cht ON cht.id = chtm.cohortid";
+
+        if ($dbman->table_exists($table1c)) {
+            $sql_request .= "
+                LEFT JOIN {block_cohort1c_synch} AS cht1c ON cht1c.cohortid = cht.id";
+        }
+
+        $sql_request .= "
             CROSS JOIN (SELECT @cnt := 0) AS dummy
             WHERE $select";
 

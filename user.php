@@ -481,7 +481,7 @@ if (!$users) {
         $users = $nusers;
     }
 
-    echo '<link rel="stylesheet" href="'.new moodle_url('/blocks/user_manager/main.css').'">';
+    echo '<link rel="stylesheet" href="'.new moodle_url('/blocks/user_manager/css/user.css').'">';
 
     $table = new html_table();
     $table->head = array ();

@@ -21,6 +21,9 @@ $string['instruction'] = 'Инструкция';
 $string['systemfields'] = 'Системные поля';
 $string['associatedfields'] = 'Ассоциированные поля';
 
+$string['exportcsv'] = 'Экспорт в формате .csv';
+$string['exportxls'] = 'Экспорт в формате .xls (Excel)';
+
 // Форма добавления пользователя в группу
 $string['add'] = 'Добавить';
 $string['addtocht'] = 'Добавление в глобальные группы';

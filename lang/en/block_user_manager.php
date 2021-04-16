@@ -21,6 +21,9 @@ $string['instruction'] = 'Instruction';
 $string['systemfields'] = 'System fields';
 $string['associatedfields'] = 'Associated fields';
 
+$string['exportcsv'] = 'Export in .csv format';
+$string['exportxls'] = 'Export in .xls (Excel) format';
+
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';
 $string['addtocht'] = 'Adding to cohorts';

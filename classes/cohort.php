@@ -1,9 +1,7 @@
 <?php
 namespace block_user_manager;
 
-use stdClass;
-use html_writer;
-use moodle_url;
+use stdClass, html_writer, moodle_url;
 
 class cohort
 {
@@ -44,28 +42,40 @@ class cohort
                 $group_users_cohorts[$userid]->cht_codes_mdl = array();
 
             // Группируем cht_code
-            if (isset($group_users_cohorts[$userid]->cht_codes) && $user_cohort->cht_code)
-                $group_users_cohorts[$userid]->cht_codes[] = $user_cohort->cht_code;
-            elseif (!isset($group_users_cohorts[$userid]->cht_codes) && $user_cohort->cht_code)
-                $group_users_cohorts[$userid]->cht_codes = array($user_cohort->cht_code);
-            elseif (!isset($group_users_cohorts[$userid]->cht_codes))
+            if (isset($user_cohort->cht_code)) {
+                if (isset($group_users_cohorts[$userid]->cht_codes) && $user_cohort->cht_code)
+                    $group_users_cohorts[$userid]->cht_codes[] = $user_cohort->cht_code;
+                elseif (!isset($group_users_cohorts[$userid]->cht_codes) && $user_cohort->cht_code)
+                    $group_users_cohorts[$userid]->cht_codes = array($user_cohort->cht_code);
+                elseif (!isset($group_users_cohorts[$userid]->cht_codes))
+                    $group_users_cohorts[$userid]->cht_codes = array();
+            } else {
                 $group_users_cohorts[$userid]->cht_codes = array();
+            }
 
             // Группируем description
-            if (isset($group_users_cohorts[$userid]->descriptions) && $user_cohort->description)
-                $group_users_cohorts[$userid]->descriptions[] = $user_cohort->description;
-            elseif (!isset($group_users_cohorts[$userid]->descriptions) && $user_cohort->description)
-                $group_users_cohorts[$userid]->descriptions = array($user_cohort->description);
-            elseif (!isset($group_users_cohorts[$userid]->descriptions))
+            if (isset($user_cohort->descriptions)) {
+                if (isset($group_users_cohorts[$userid]->descriptions) && $user_cohort->description)
+                    $group_users_cohorts[$userid]->descriptions[] = $user_cohort->description;
+                elseif (!isset($group_users_cohorts[$userid]->descriptions) && $user_cohort->description)
+                    $group_users_cohorts[$userid]->descriptions = array($user_cohort->description);
+                elseif (!isset($group_users_cohorts[$userid]->descriptions))
+                    $group_users_cohorts[$userid]->descriptions = array();
+            } else {
                 $group_users_cohorts[$userid]->descriptions = array();
+            }
 
             // Группируем form
-            if (isset($group_users_cohorts[$userid]->forms) && $user_cohort->form)
-                $group_users_cohorts[$userid]->forms[] = $user_cohort->form;
-            elseif (!isset($group_users_cohorts[$userid]->forms) && $user_cohort->form)
-                $group_users_cohorts[$userid]->forms = array($user_cohort->form);
-            elseif (!isset($group_users_cohorts[$userid]->forms))
+            if (isset($user_cohort->forms)) {
+                if (isset($group_users_cohorts[$userid]->forms) && $user_cohort->form)
+                    $group_users_cohorts[$userid]->forms[] = $user_cohort->form;
+                elseif (!isset($group_users_cohorts[$userid]->forms) && $user_cohort->form)
+                    $group_users_cohorts[$userid]->forms = array($user_cohort->form);
+                elseif (!isset($group_users_cohorts[$userid]->forms))
+                    $group_users_cohorts[$userid]->forms = array();
+            } else {
                 $group_users_cohorts[$userid]->forms = array();
+            }
         }
 
         return $group_users_cohorts;

@@ -109,4 +109,34 @@ class table
 
         return $result_table_str;
     }
+
+    public static function generate_valid_fields_table($stdfields)
+    {
+        $result_table_str = '
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>'.get_string('systemfields', 'block_user_manager').'</th>
+                    <th>'.get_string('associatedfields', 'block_user_manager').'</th>
+                </tr>
+            </thead>
+            <tbody>';
+            foreach ($stdfields as $systemfield => $associatedfields) {
+                $result_table_str .= "<tr>";
+                $result_table_str .= "<td>$systemfield</td>";
+
+                $result_table_str .= "<td>";
+                if (is_array($associatedfields)) {
+                    $result_table_str .= implode(', ', $associatedfields);
+                } else $result_table_str .= $associatedfields;
+                $result_table_str .= "</td>";
+
+                $result_table_str .= "</tr>";
+            }
+        $result_table_str .= '
+            </tbody>
+        </table>';
+
+        return $result_table_str;
+    }
 }
