@@ -21,6 +21,8 @@ $string['instruction'] = 'Instruction';
 $string['systemfields'] = 'System fields';
 $string['associatedfields'] = 'Associated fields';
 $string['customfields'] = 'Custom fields';
+$string['emailrequired'] = 'Email required';
+$string['prffields'] = 'Profile fields (custom fields)';
 
 $string['exportcsv'] = 'Export in .csv format';
 $string['exportxls'] = 'Export in .xls (Excel) format';
@@ -32,6 +34,11 @@ $string['complete'] = 'Complete';
 $string['uniquefields'] = 'System fields must be unique';
 $string['changessaved'] = 'Changes saved';
 $string['unknown'] = 'Unknown';
+$string['empty'] = 'Empty';
+
+$string['norequiredfields'] = 'The file is missing required fields: {$a->missingfields}. Add the appropriate association to the table of valid fields.';
+$string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}';
+$string['emptyfile'] = 'File contains no entries.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 

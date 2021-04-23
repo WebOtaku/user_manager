@@ -136,7 +136,7 @@ class table
         return $html_str;
     }
 
-    public static function generate_valid_fields_table(array $stdfields, array $systemfields, moodle_url $baseurl, array $helpfields = []): string
+    public static function generate_valid_fields_table(array $stdfields, array $systemfields, array $helpfields = [], array $prffields = []): string
     {
         global $PAGE;
 
@@ -161,7 +161,7 @@ class table
           rows="2" cols="60">'.implode(',', $associatedfields).'</textarea>';
                 } else $result_table_str .= '<textarea class="um-validfields-text" id="umValidFieldsText_'.$id.'" name="umValidFieldsText_'.$id.'"
           rows="2" cols="60">'.$associatedfields.'</textarea>';
-                $result_table_str .= '<div class="input-info">'. get_string('inputdelimiter', 'block_user_manager') .'</div>';
+                $result_table_str .= '<div class="um-input-info">'. get_string('inputdelimiter', 'block_user_manager') .'</div>';
                 $result_table_str .= "</td>";
                 $result_table_str .= '
                     <td class="um-table__cell">
@@ -174,8 +174,8 @@ class table
             $result_table_str .= '
                 <tr class="um-table__row">
                     <td class="um-table__cell">
-                        <button type="button" class="btn btn-primary um-validfields-btn-add" id="umValidFieldsBtnAdd">Добавить</button>
-                        <button type="button" class="btn btn-secondary um-validfields-btn-save" id="umValidFieldsBtnSave">Сохранить</button>
+                        <button type="button" class="btn btn-primary um-validfields-btn-add" id="umValidFieldsBtnAdd">'. get_string('add') .'</button>
+                        <button type="button" class="btn btn-secondary um-validfields-btn-save" id="umValidFieldsBtnSave">'. get_string('save') .'</button>
                     </td>
                     <td class="um-table__cell"><div id="umValidFieldsMessage" role="alert"></div></td>
                     <td class="um-table__cell"></td>
@@ -184,6 +184,21 @@ class table
             $result_table_str .= '
             </tbody>
         </table>';
+
+        if (count($prffields)) {
+            $result_table_str .= '
+                <div class="um-prf-fields">
+                    <h5>'.get_string('prffields', 'block_user_manager').'</h5>
+                    <ul class="um-sublist um-list-ul">';
+            foreach ($prffields as $prffield) {
+                $result_table_str .= '            
+                    <li class="um-sublist__item">'.$prffield.'</li>';
+            }
+
+            $result_table_str .= '            
+                    </ul>
+                </div>';
+        }
 
         $PAGE->requires->js_amd_inline("
             require(['jquery'], function($) {
@@ -261,7 +276,7 @@ class table
                     var btnDelEl = $(document.createElement('button'));
                     
                     var textareaInfoEl = $(document.createElement('div'));
-                    textareaInfoEl.addClass('input-info');
+                    textareaInfoEl.addClass('um-input-info');
                     textareaInfoEl.text('". get_string('inputdelimiter', 'block_user_manager') ."');
                     
                     var allRows = $('#umValidFieldsTable tbody tr').get();

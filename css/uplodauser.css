@@ -1,4 +1,13 @@
-.input-info {
+.um-input-info {
     font-size: 12px;
     color: #383d41;
+}
+
+.um-alert-inform {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.um-alert-link {
+    text-align: center;
 }

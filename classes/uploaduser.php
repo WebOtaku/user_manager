@@ -10,7 +10,8 @@ use csv_import_reader, csv_export_writer,
 
 class uploaduser
 {
-    public static function um_validate_user_upload_columns(csv_import_reader $cir, array $stdfields,array $profilefields, moodle_url $returnurl): array
+    public static function um_validate_user_upload_columns(csv_import_reader $cir, array $stdfields,array $profilefields,
+                                                           moodle_url $returnurl, $passwordkey = 'password', $usernamekey = 'username'): array
     {
         $columns = $cir->get_columns();
 
@@ -59,6 +60,12 @@ class uploaduser
             $processed[$key] = $newfield;
         }
 
+        /*if (!in_array($usernamekey, $processed))
+            array_push($processed, $usernamekey);*/
+
+        if (!in_array($passwordkey, $processed))
+            array_push($processed, $passwordkey);
+
         return $processed;
     }
 
@@ -86,7 +93,7 @@ class uploaduser
         redirect($useruploadurl);
     }
 
-    public static function get_profile_fields()
+    public static function get_profile_fields(): array
     {
         global $DB;
 
@@ -145,15 +152,15 @@ class uploaduser
     {
        $instruction = '
             <div class="um-instruction">
-                <ol class="um-instruction__list">
-                    <li class="um-instruction__list-item">
+                <ol class="um-list um-list-ol">
+                    <li class="um-list__item">
                         <p><b>Выберите действие</b> которое необходимо выполнить над файлом:</p>
                         <p><b>Экспорт в формате .csv</b> - данные из загруженного файла будут обработаны и экспортированны в формате .csv (кодировка UTF-8) <b>(начнётся скачивание файла)</b></p>
                         <p><b>Экспорт в формате .xls (Excel)</b> - данные из загруженного файла будут обработаны и экспортированны в формате .xls (.xlsx) <b>(начнётся скачивание файла)</b></p>
                         <p><b>Загрузка пользователей в систему</b> - данные из загруженного файла будут обработаны и выполнится переадресация на стандартную форму загрузки пользователей <b>(будет выполнена переадресация)</b></p>
                         <p><b>Обработка загруженного файла</b> включает в себя:</p>
-                        <ul class="um-instruction__sublist">
-                            <li class="um-instruction__sublist-item">
+                        <ul class="um-sublist um-list-ul">
+                            <li class="um-sublist__item">
                                 <p>Добавление к данным из поля ассоцириованного с именем пользователя (например: номер зачётной книжки, логин) приставки "st"</p>
                             </li>
                             <li>
@@ -161,39 +168,39 @@ class uploaduser
                             </li>
                         </ul>
                     </li>
-                    <li class="um-instruction__list-item">
+                    <li class="um-list__item">
                         <p><b>Выберите файл</b></p>
                         <p><b>Требования к формату файла (.csv):</b></p>
-                        <ul class="um-instruction__sublist">
-                            <li class="um-instruction__sublist-item">
+                        <ul class="um-sublist um-list-ul">
+                            <li class="um-sublist__item">
                                 <p>Каждая строка файла содержит одну запись</p>
                             </li>
-                            <li class="um-instruction__sublist-item">
+                            <li class="um-sublist__item">
                                 <p>Каждая запись - ряд данных, разделенных запятыми (или другими разделителями)</p>
                             </li>
-                            <li class="um-instruction__sublist-item">
+                            <li class="um-sublist__item">
                                 <p>Первая запись содержит список имен полей, определяющих формат остальной части файла</p>
                             </li>
                         </ul>
                         <p><b>Требования к содержимому файла:</b></p>
-                        <ul class="um-instruction__sublist">
-                            <li class="um-instruction__sublist-item">
+                        <ul class="um-sublist um-list-ul">
+                            <li class="um-sublist__item">
                                 <p>Названия полей должны соотвествовать названиям из таблицы "Допустимые поля", иначе они будут проигнорированы</p>
                             </li>
-                            <li class="um-instruction__sublist-item">
+                            <li class="um-sublist__item">
                                 <p>Рекомендуемыми именами полей являются: username, password, firstname, lastname, middlename, email (логин, пароль, фамилия, имя, отчество, адрес электронной почты)</p>
                                 <p>Фамилия, имя и отчество необходимы для генерации пароля пользователя и регистрации его в системе</p>
                                 <p>Логин (или например: номер зачётной книжки) и адрес электронной почты необходимы для регистрации пользователя в системе</p>
                             </li>
                         </ul>
                     </li>
-                    <li class="um-instruction__list-item">
+                    <li class="um-list__item">
                         <p><b>Выберите разделитель</b> используемый в загружаемом файле</p>
                     </li>
-                    <li class="um-instruction__list-item">
+                    <li class="um-list__item">
                         <p><b>Выберите кодировку</b> используемую в загружаемом файле (для .csv созданного с помощью Excel это обычно будет - WINDOWS-1251)</p>
                     </li>
-                    <li class="um-instruction__list-item">
+                    <li class="um-list__item">
                         <p><b>Выберите количество строк предпросмотра</b> кол-во записей из файла которое будет показано на форме загрузки пользователей (в случае выбора пункта <b>"Загрузка пользователей в систему"</b>)</p>
                     </li>
                 </ol>
@@ -208,13 +215,8 @@ class uploaduser
     {
         global $USER;
 
-        $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl);
-
-        if (!in_array($passwordkey, $filecolumns))
-            $filecolumns[] = $passwordkey;
-
-        if (!in_array($usernamekey, $filecolumns))
-            $filecolumns[] = $usernamekey;
+        $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl, $passwordkey, $usernamekey);
+        $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
  
         $cir->init();
 
@@ -247,17 +249,22 @@ class uploaduser
                 }
 
                 if ($key === $usernamekey) {
-                    if (!preg_match('/^(st).*?$/', trim($value))) {
-                        $user->$key = 'st'. trim($value);
-                        continue;
-                    }
+                    if (!empty(trim($value))) {
+                        if (!preg_match('/^(st).*?$/', trim($value))) {
+                            $user->$key = 'st' . trim($value);
+                            continue;
+                        }
+                    } else $user->$key = $emptystr;
                 }
 
-                $user->$key = trim($value);
+                if (empty(trim($value)))
+                    $user->$key = $emptystr;
+                else
+                    $user->$key = trim($value);
             }
 
-            if (!isset($user->username))
-                $user->username = 'пусто';
+            /*if (!isset($user->username))
+                $user->username = $emptystr;*/
 
             if (!isset($user->password))
                 $user->password = service::generate_password($user);
@@ -270,7 +277,7 @@ class uploaduser
         return array($users, $filecolumns);
     }
 
-    public static function get_stdfields($db_userfields): array
+    public static function get_stdfields(array $db_userfields, array $required_fields = []): array
     {
         $stdfileds = array();
 
@@ -284,6 +291,27 @@ class uploaduser
             $stdfileds[$userfield->system_field] = $associated_fields;
         }
 
+        foreach ($required_fields as $required_field) {
+            if (!array_key_exists($required_field, $stdfileds))
+                $stdfileds[$required_field] = array();
+        }
+
         return $stdfileds;
+    }
+
+    public static function check_required_fields(array $filecolumns, array $required_fields): array
+    {
+        $missingfields = array();
+
+        foreach ($required_fields as $required_field)
+            if (!in_array($required_field, $filecolumns))
+                array_push($missingfields, $required_field);
+
+        return $missingfields;
+    }
+
+    public static function get_field_helper($stdfields_en, $stdfields_ru, $field) {
+        $key = array_search($field, $stdfields_en);
+        return ($key >= 0)? $stdfields_ru[$key] : '';
     }
 }

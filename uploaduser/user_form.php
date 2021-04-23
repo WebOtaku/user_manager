@@ -15,7 +15,7 @@ class um_admin_uploaduser_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($stdfields, $systemfields, $helpfields, $baseurl) = $this->_customdata;
+        list($stdfields, $systemfields, $helpfields, $required_fields, $prffields) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -26,12 +26,25 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'validfieldsheader', get_string('validfields', 'block_user_manager'));
 
-        $validfields = table::generate_valid_fields_table($stdfields, $systemfields, $baseurl, $helpfields);
+        $validfields = table::generate_valid_fields_table($stdfields, $systemfields, $helpfields, $prffields);
 
         $mform->addElement('html', $validfields);
         $mform->setExpanded('validfieldsheader', false);
 
         $mform->addElement('header', 'settingsheader', get_string('upload'));
+
+        foreach ($required_fields as $key => $required_field) {
+            $required_fields[$key] = $required_field . ' (' . uploaduser::get_field_helper($systemfields, $helpfields, $required_field) . ')';
+        }
+
+        $a = new stdClass();
+        $a->emailhelper = uploaduser::get_field_helper($systemfields, $helpfields, 'email');
+        $a->requiredfields = implode(', ', $required_fields);
+
+        $mform->addElement('html', '<div class="alert alert-primary um-alert-inform" role="alert">
+            '. get_string('requiredfields', 'block_user_manager', $a) .'</div>');
+
+        $mform->addElement('checkbox', 'email_required', get_string('emailrequired', 'block_user_manager'));
 
         $mform->addElement('filepicker', 'userfile', get_string('file'));
         $mform->addRule('userfile', null, 'required');

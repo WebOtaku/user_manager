@@ -13,6 +13,7 @@ require_once('../locallib.php');
 $iid         = optional_param('iid', '', PARAM_INT);
 $previewrows = optional_param('previewrows', null, PARAM_INT);
 $delimiter_name = optional_param('delimiter_name', null, PARAM_TEXT);
+$email_required = optional_param('email_required', null, PARAM_INT);
 
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
@@ -64,19 +65,20 @@ $usernamekey = 'username';
 
 $db_userfields = $DB->get_records("block_user_manager_ufields");
 
-$STD_FIELDS = uploaduser::get_stdfields($db_userfields);
+$REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
+
+if ($email_required)
+    array_push($REQUIRED_FIELDS, 'email');
+
+$STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
 
 // TODO: Надо вывести под таблицей допустимых полей
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-$REQUIRED_FIELDS = array(
-    'lastname' ,'firstname', 'middlename', 'username'
-);
-
-// 'email'
+/*print_object($PRF_FIELDS);*/
 
 if (!$iid) {
-    $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $baseurl));
+    $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
 
     if ($formdata = $uploaduser_form->get_data()) {
         $iid = csv_import_reader::get_new_iid('uploaduser');
@@ -93,52 +95,80 @@ if (!$iid) {
             print_error('csvloaderror', '', $baseurl, $csvloaderror);
         }
 
+        /*print_object($STD_FIELDS);*/
+
         list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
-        print_object($users);
+        $missingfields = uploaduser::check_required_fields($filecolumns, $REQUIRED_FIELDS);
 
-        /*if (count($users)) {
-            $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
-            $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $formdata->delimiter_name, false);
+        /*print_object($filecolumns);
+        print_object($missingfields);*/
+        //print_object($users);
 
-            $content = $users_csv->print_csv_data(true);
+        if (!count($missingfields)) {
+            if (count($users)) {
+                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+                $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $formdata->delimiter_name, false);
 
-            $cir->load_csv_content($content, 'UTF-8', $formdata->delimiter_name);
-            $csvloaderror = $cir->get_error();
+                $content = $users_csv->print_csv_data(true);
 
-            if (!is_null($csvloaderror)) {
-                print_error('csvloaderror', '', $baseurl, $csvloaderror);
+                $cir->load_csv_content($content, 'UTF-8', $formdata->delimiter_name);
+                $csvloaderror = $cir->get_error();
+
+                if (!is_null($csvloaderror)) {
+                    print_error('csvloaderror', '', $baseurl, $csvloaderror);
+                }
+
+                $urlparams = $urlparams + array(
+                    'iid' => $iid,
+                    'previewrows' => $formdata->previewrows
+                );
+
+                if (isset($formdata->email_required) && $formdata->email_required)
+                    $urlparams['email_required'] = $formdata->email_required;
+
+                $baseurl = new moodle_url($pageurl, $urlparams);
+
+                redirect($baseurl);
+            } else {
+                echo $OUTPUT->header();
+                echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+                echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+                echo service::print_error(get_string('emptyfile', 'block_user_manager'), $baseurl);
+                echo $OUTPUT->footer();
+            }
+        } else {
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+            echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+            $a = new stdClass();
+
+            foreach ($missingfields as $key => $missingfield) {
+                $missingfields[$key] = $missingfield . ' (' . uploaduser::get_field_helper(STD_FIELDS_EN, STD_FIELDS_RU, $missingfield) . ')';
             }
 
-            $urlparams = $urlparams + array(
-                'iid' => $iid,
-                'previewrows' => $formdata->previewrows
-            );
-
-            $baseurl = new moodle_url($pageurl, $urlparams);
-
-            redirect($baseurl);
-        }*/
+            $a->missingfields = implode(', ', $missingfields);
+            echo service::print_error(get_string('norequiredfields', 'block_user_manager', $a), $baseurl);
+            $cir->cleanup(true);
+            echo $OUTPUT->footer();
+        }
     }
     else {
         echo $OUTPUT->header();
         echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-
         echo '<link rel="stylesheet" href="../css/uplodauser.css">';
-
         $uploaduser_form->display();
-
         echo $OUTPUT->footer();
     }
 } else {
     $cir = new csv_import_reader($iid, 'uploaduser');
-    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl);
+    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
     $selectaction_form = new um_select_selectaction_form($baseurl);
 
     if ($selectaction_form->is_cancelled()) {
         $cir->cleanup(true);
-        $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name']);
+        $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required']);
         redirect($baseurl);
     }
     elseif ($formdata = $selectaction_form->get_data()) {

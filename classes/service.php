@@ -229,4 +229,12 @@ class service
 
         return $initials.$rand_symbol.$rand_number.$rand_capital_en.$rand_lowercase_en;
     }
+
+    public static function print_error($message, $baseurl): string
+    {
+        return '
+            <div class="alert alert-danger um-alert-inform" role="alert">'. $message .'</div>
+            <div class="um-alert-link"><a href="'.$baseurl.'">'.get_string('continue').'</a></div>
+        ';
+    }
 }

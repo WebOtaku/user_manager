@@ -21,6 +21,8 @@ $string['instruction'] = 'Инструкция';
 $string['systemfields'] = 'Системные поля';
 $string['associatedfields'] = 'Ассоциированные поля';
 $string['customfields'] = 'Пользовательские поля';
+$string['emailrequired'] = 'Электроная почта обязательна';
+$string['prffields'] = 'Поля профиля (настраиваемые поля)';
 
 $string['exportcsv'] = 'Экспорт в формате .csv';
 $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
@@ -32,6 +34,11 @@ $string['complete'] = 'Выполнить';
 $string['uniquefields'] = 'Системные поля должны быть уникальными';
 $string['changessaved'] = 'Изменения сохранены';
 $string['unknown'] = 'Неизвестно';
+$string['empty'] = 'Пусто';
+
+$string['norequiredfields'] = 'В файле отсутствуют необходимые поля: {$a->missingfields}. Добавьте соотвествующие ассоциации в таблицу допустимых полей.';
+$string['requiredfields'] = 'Обязательные поля (включая "еmail ({$a->emailhelper})", если выбрано): {$a->requiredfields}';
+$string['emptyfile'] = 'Файл не содержит записей.';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 
