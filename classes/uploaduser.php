@@ -32,15 +32,6 @@ class uploaduser
             $field = trim($field);
             $lcfield = core_text::strtolower($field);
 
-            //print_object(self::field_exist($field, $stdfields));
-
-            /*if (array_key_exists($field, $stdfields) || array_key_exists($lcfield, $stdfields)) {
-                // standard fields are only lowercase
-                $newfield = $lcfield;
-            }
-            else if (in_array($field, $stdfields) || in_array($lcfield, $stdfields)) {
-                $newfield = array_search($lcfield, $stdfields);
-            }*/
             if ($newfield = self::field_exist($field, $stdfields)) {
                 // empty
             }
@@ -57,9 +48,6 @@ class uploaduser
                 $newfield = $lcfield;
 
             } else {
-                /*$cir->close();
-                $cir->cleanup();
-                print_error('invalidfieldname', 'error', $returnurl, $field);*/
                 continue;
             }
 
@@ -153,7 +141,7 @@ class uploaduser
         return false;
     }
 
-    public static function get_uploaduser_instruction()
+    public static function get_uploaduser_instruction(): string
     {
        $instruction = '
             <div class="um-instruction">
@@ -218,11 +206,16 @@ class uploaduser
     public static function get_userlist(csv_import_reader $cir, array $stdfields, array $prffields,
         moodle_url $baseurl, string $passwordkey, string $usernamekey): array
     {
+        global $USER;
+
         $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl);
 
         if (!in_array($passwordkey, $filecolumns))
             $filecolumns[] = $passwordkey;
 
+        if (!in_array($usernamekey, $filecolumns))
+            $filecolumns[] = $usernamekey;
+ 
         $cir->init();
 
         $users = array();
@@ -240,8 +233,21 @@ class uploaduser
 
                 $key = $filecolumns[$keynum];
 
+                if (strpos($key, 'profile_field_') === 0) {
+                    //NOTE: bloody mega hack alert!!
+                    if (isset($USER->$key) and is_array($USER->$key)) {
+                        // this must be some hacky field that is abusing arrays to store content and format
+                        $user->$key = array();
+                        $user->{$key['text']}   = $value;
+                        $user->{$key['format']} = FORMAT_MOODLE;
+                    } else {
+                        $user->$key = trim($value);
+                    }
+                    continue;
+                }
+
                 if ($key === $usernamekey) {
-                    if (!preg_match('/^(st).*?$/', trim($value), $matches)) {
+                    if (!preg_match('/^(st).*?$/', trim($value))) {
                         $user->$key = 'st'. trim($value);
                         continue;
                     }
@@ -250,12 +256,34 @@ class uploaduser
                 $user->$key = trim($value);
             }
 
+            if (!isset($user->username))
+                $user->username = 'пусто';
+
             if (!isset($user->password))
                 $user->password = service::generate_password($user);
 
             $users[] = $user;
         }
 
+        $cir->close();
+
         return array($users, $filecolumns);
+    }
+
+    public static function get_stdfields($db_userfields): array
+    {
+        $stdfileds = array();
+
+        foreach ($db_userfields as $userfield) {
+            $associated_fields = explode(',', $userfield->associated_fields);
+
+            foreach ($associated_fields as $key => $associated_field) {
+                $associated_fields[$key] = mb_strtolower(trim($associated_field));
+            }
+
+            $stdfileds[$userfield->system_field] = $associated_fields;
+        }
+
+        return $stdfileds;
     }
 }

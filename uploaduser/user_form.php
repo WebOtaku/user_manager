@@ -15,7 +15,7 @@ class um_admin_uploaduser_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($stdfields) = $this->_customdata;
+        list($stdfields, $systemfields, $helpfields, $baseurl) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -26,7 +26,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'validfieldsheader', get_string('validfields', 'block_user_manager'));
 
-        $validfields = table::generate_valid_fields_table($stdfields);
+        $validfields = table::generate_valid_fields_table($stdfields, $systemfields, $baseurl, $helpfields);
 
         $mform->addElement('html', $validfields);
         $mform->setExpanded('validfieldsheader', false);
@@ -56,26 +56,16 @@ class um_admin_uploaduser_form extends moodleform {
 
         $this->add_action_buttons(false, get_string('upload'));
     }
-
-    /*public function definition() {
-        $mform = $this->_form;
-        $data  = (object)$this->_customdata;
-
-        parent::definition($this, $data);;
-
-        $this->set_data($data);
-    }*/
 }
 
-class um_select_exportformat_form extends moodleform {
+class um_select_selectaction_form extends moodleform {
     /**
      * Form definition
      */
     public function definition() {
         $mform = $this->_form;
 
-        // Заменить на get_string()
-        $mform->addElement('header', 'settingsheader', 'Выбор действия');
+        $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
 
         $choices = array(
             1 => get_string('exportcsv', 'block_user_manager'),
@@ -89,7 +79,6 @@ class um_select_exportformat_form extends moodleform {
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
-        // Заменить на get_string()
-        $this->add_action_buttons(true, 'Complete');
+        $this->add_action_buttons(true, get_string('complete', 'block_user_manager'));
     }
 }

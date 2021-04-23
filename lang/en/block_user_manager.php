@@ -20,9 +20,20 @@ $string['validfields'] = 'Valid fields';
 $string['instruction'] = 'Instruction';
 $string['systemfields'] = 'System fields';
 $string['associatedfields'] = 'Associated fields';
+$string['customfields'] = 'Custom fields';
 
 $string['exportcsv'] = 'Export in .csv format';
 $string['exportxls'] = 'Export in .xls (Excel) format';
+
+$string['selectaction'] = 'Select action';
+$string['complete'] = 'Complete';
+
+// Сообщения/ошибки "Форма загрузки пользователей"
+$string['uniquefields'] = 'System fields must be unique';
+$string['changessaved'] = 'Changes saved';
+$string['unknown'] = 'Unknown';
+
+$string['inputdelimiter'] = 'Field names separated by commas';
 
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';

@@ -112,7 +112,6 @@ if ($cohorts['allcohorts'] > 0) {
 
 echo $OUTPUT->heading(get_string('cohortsin', 'cohort', $context->get_context_name()).$count);
 
-// TODO:: Необходима собственная реализации (url у табов жёстко прописан в функции)
 if ($editcontrols = service::cohort_edit_controls($context, $baseurl)) {
     echo $OUTPUT->render($editcontrols);
 }

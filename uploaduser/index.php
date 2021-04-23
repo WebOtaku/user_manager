@@ -2,16 +2,11 @@
 
 use block_user_manager\service;
 use block_user_manager\uploaduser;
-use block_user_manager\userfields;
 use block_user_manager\exportformat;
+use block_user_manager\table;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
-/*require_once($CFG->dirroot.'/user/profile/lib.php');
-require_once($CFG->dirroot.'/user/lib.php');
-require_once($CFG->dirroot.'/group/lib.php');
-require_once($CFG->dirroot.'/cohort/lib.php');
-require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');*/
 require_once('user_form.php');
 require_once('../locallib.php');
 
@@ -67,11 +62,21 @@ $basenode->make_active();
 $passwordkey = 'password';
 $usernamekey = 'username';
 
-$STD_FIELDS = array_combine(STD_FIELDS_EN, STD_FIELDS_RU);
+$db_userfields = $DB->get_records("block_user_manager_ufields");
+
+$STD_FIELDS = uploaduser::get_stdfields($db_userfields);
+
+// TODO: Надо вывести под таблицей допустимых полей
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
+$REQUIRED_FIELDS = array(
+    'lastname' ,'firstname', 'middlename', 'username'
+);
+
+// 'email'
+
 if (!$iid) {
-    $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS));
+    $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $baseurl));
 
     if ($formdata = $uploaduser_form->get_data()) {
         $iid = csv_import_reader::get_new_iid('uploaduser');
@@ -90,7 +95,9 @@ if (!$iid) {
 
         list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
-        if (count($users)) {
+        print_object($users);
+
+        /*if (count($users)) {
             $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
             $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $formdata->delimiter_name, false);
 
@@ -111,11 +118,14 @@ if (!$iid) {
             $baseurl = new moodle_url($pageurl, $urlparams);
 
             redirect($baseurl);
-        }
+        }*/
     }
     else {
         echo $OUTPUT->header();
         echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+
+        echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+
         $uploaduser_form->display();
 
         echo $OUTPUT->footer();
@@ -124,13 +134,14 @@ if (!$iid) {
     $cir = new csv_import_reader($iid, 'uploaduser');
     $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl);
 
-    $selectexportformat_form = new um_select_exportformat_form($baseurl, array($STD_FIELDS));
+    $selectaction_form = new um_select_selectaction_form($baseurl);
 
-    if ($selectexportformat_form->is_cancelled()) {
+    if ($selectaction_form->is_cancelled()) {
+        $cir->cleanup(true);
         $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name']);
         redirect($baseurl);
     }
-    elseif ($formdata = $selectexportformat_form->get_data()) {
+    elseif ($formdata = $selectaction_form->get_data()) {
         list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
         $action = $formdata->action;
@@ -160,7 +171,10 @@ if (!$iid) {
     } else {
         echo $OUTPUT->header();
         echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-        $selectexportformat_form->display();
+
+        echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
+
+        $selectaction_form->display();
 
         $PAGE->requires->js_amd_inline("
             require(['jquery'], function($) {

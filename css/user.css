@@ -63,26 +63,26 @@
 }
 
 /* Bootstrap tabel. Styles redefined */
-#umTable {
+.um-table {
     margin-bottom: 0;
 }
 
-#umTable .um-table-body .um-table-cell,
-#umTable .um-table-head .um-table-header-cell {
+.um-table .um-table__body .um-table__cell,
+.um-table .um-table__head .um-table__header-cell {
     padding: 2px 0;
     font-size: 13px;
 }
 
-#umTable .um-table-head .um-table-header-cell  {
+.um-table .um-table__head .um-table__header-cell  {
     color: #035d96;
 }
 
-#umTable .um-table-body .um-table-row:nth-of-type(odd),
-#umTable .um-table-head .um-table-row:nth-of-type(odd){
+.um-table .um-table__body .um-table__row:nth-of-type(odd),
+.um-table .um-table__head .um-table__row:nth-of-type(odd){
     background-color: #fff;
 }
 
-#umTable .um-table-head .um-table-header-cell  {
+.um-table .um-table__head .um-table__header-cell  {
     border-top: none;
     border-bottom-width: 1px;
 }

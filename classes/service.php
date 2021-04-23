@@ -65,7 +65,7 @@ class service
 
         //navigation_node::require_admin_tree();
 
-        // $PAGE->set_extra_button($extrabutton); TODO
+        // $PAGE->set_extra_button($extrabutton);
 
         if (!$actualurl) {
             $actualurl = $extpage->url;
