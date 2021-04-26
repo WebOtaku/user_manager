@@ -95,15 +95,9 @@ if (!$iid) {
             print_error('csvloaderror', '', $baseurl, $csvloaderror);
         }
 
-        /*print_object($STD_FIELDS);*/
-
         list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
         $missingfields = uploaduser::check_required_fields($filecolumns, $REQUIRED_FIELDS);
-
-        /*print_object($filecolumns);
-        print_object($missingfields);*/
-        //print_object($users);
 
         if (!count($missingfields)) {
             if (count($users)) {
@@ -164,7 +158,7 @@ if (!$iid) {
     $cir = new csv_import_reader($iid, 'uploaduser');
     $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
 
-    $selectaction_form = new um_select_selectaction_form($baseurl);
+    $selectaction_form = new um_select_selectaction_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS));
 
     if ($selectaction_form->is_cancelled()) {
         $cir->cleanup(true);

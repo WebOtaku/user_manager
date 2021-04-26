@@ -753,7 +753,7 @@ if (!empty($table)) {
 
 if (has_capability('moodle/user:create', $context) ) {
     if ($userfilter == 'cohort')
-        $url = new moodle_url('/cohort/addtocht.php', array('id' => $chtid, 'returnurl' => $baseurl));
+        $url = new moodle_url('/cohort/assign.php', array('id' => $chtid, 'returnurl' => $baseurl));
     else
         $url = new moodle_url('/user/editadvanced.php', array('id' => -1, 'returnto' => $baseurl));
 

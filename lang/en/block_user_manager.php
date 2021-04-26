@@ -36,8 +36,8 @@ $string['changessaved'] = 'Changes saved';
 $string['unknown'] = 'Unknown';
 $string['empty'] = 'Empty';
 
-$string['norequiredfields'] = 'The file is missing required fields: {$a->missingfields}. Add the appropriate association to the table of valid fields.';
-$string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}';
+$string['norequiredfields'] = 'The file is missing required fields: {$a->missingfields}. Add a field(s) to the file, and if the field name in the file differs from the standard one, add the appropriate associations to the table of valid fields.';
+$string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}. These fields are required to register users in the system.';
 $string['emptyfile'] = 'File contains no entries.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';

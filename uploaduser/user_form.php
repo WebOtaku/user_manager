@@ -19,7 +19,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
-        $instruction = uploaduser::get_uploaduser_instruction();
+        $instruction = uploaduser::get_uploaduser_instruction($systemfields, $helpfields, $required_fields);
 
         $mform->addElement('html', $instruction);
         $mform->setExpanded('instructionheader', false);
@@ -33,9 +33,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'settingsheader', get_string('upload'));
 
-        foreach ($required_fields as $key => $required_field) {
-            $required_fields[$key] = $required_field . ' (' . uploaduser::get_field_helper($systemfields, $helpfields, $required_field) . ')';
-        }
+        $required_fields = uploaduser::get_fields_helper($systemfields, $helpfields, $required_fields);
 
         $a = new stdClass();
         $a->emailhelper = uploaduser::get_field_helper($systemfields, $helpfields, 'email');
@@ -46,7 +44,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('checkbox', 'email_required', get_string('emailrequired', 'block_user_manager'));
 
-        $mform->addElement('filepicker', 'userfile', get_string('file'));
+        $mform->addElement('filepicker', 'userfile', get_string('file') . ' (.csv)');
         $mform->addRule('userfile', null, 'required');
 
         $choices = csv_import_reader::get_delimiter_list();
@@ -77,6 +75,14 @@ class um_select_selectaction_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
+        list($systemfields, $helpfields, $required_fields) = $this->_customdata;
+
+        $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
+
+        $instruction = uploaduser::get_uploaduser_instruction($systemfields, $helpfields, $required_fields);
+
+        $mform->addElement('html', $instruction);
+        $mform->setExpanded('instructionheader', false);
 
         $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
 

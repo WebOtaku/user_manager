@@ -2,13 +2,13 @@
 
 namespace block_user_manager;
 
-use html_writer, html_table, moodle_url, csv_import_reader, core_user;
+use html_writer, html_table, moodle_url, csv_import_reader, core_user, stdClass;
 
 require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 
 class table
 {
-    public static function generate_table_from_object(array  $grouped_user_data = [], array $object_fields_names = [],
+    public static function generate_table_from_object(stdClass $grouped_user_data, array $object_fields_names = [],
                                                       array $actions = [], string $action_add = ''): string
     {
         $result_table_str = '<table class="table um-table">';
