@@ -690,10 +690,10 @@ if (!$users) {
                 <div class="um-user__additional-info">
                     <ul class="nav nav-tabs um-nav-tabs" id="tablist-'.$i.'" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link um-nav-link" id="courses-tab-'.$i.'" data-toggle="tab" href="#courses-'.$i.'" role="tab" aria-controls="courses" aria-selected="true">Courses</a>
+                            <a class="nav-link um-nav-link" id="courses-tab-'.$i.'" data-toggle="tab" href="#courses-'.$i.'" role="tab" aria-controls="courses" aria-selected="true">'.get_string('courses').'</a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link um-nav-link" id="cohorts-tab-'.$i.'" data-toggle="tab" href="#cohorts-'.$i.'" role="tab" aria-controls="cohorts" aria-selected="false">Cohorts</a>
+                            <a class="nav-link um-nav-link" id="cohorts-tab-'.$i.'" data-toggle="tab" href="#cohorts-'.$i.'" role="tab" aria-controls="cohorts" aria-selected="false">'.get_string('cohorts', 'cohort').'</a>
                         </li>
                     </ul>
                     <div class="tab-content um-tab-content">

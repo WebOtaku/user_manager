@@ -33,7 +33,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'settingsheader', get_string('upload'));
 
-        $required_fields = uploaduser::get_fields_helper($systemfields, $helpfields, $required_fields);
+        $required_fields = uploaduser::get_fields_with_helper($systemfields, $helpfields, $required_fields);
 
         $a = new stdClass();
         $a->emailhelper = uploaduser::get_field_helper($systemfields, $helpfields, 'email');
@@ -75,7 +75,7 @@ class um_select_selectaction_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields) = $this->_customdata;
+        list($systemfields, $helpfields, $required_fields, $faculties) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -88,11 +88,16 @@ class um_select_selectaction_form extends moodleform {
 
         $choices = array(
             1 => get_string('exportcsv', 'block_user_manager'),
-            2 => get_string('exportxls', 'block_user_manager'),
-            3 => get_string('uploaduser', 'block_user_manager')
+            2 => get_string('exportcsvad', 'block_user_manager'),
+            3 => get_string('exportxls', 'block_user_manager'),
+            4 => get_string('uploaduser', 'block_user_manager')
         );
         $mform->addElement('select', 'action', get_string('action'), $choices);
         $mform->setType('action', PARAM_INT);
+
+        $choices = array_combine($faculties, $faculties);
+        $mform->addElement('select', 'faculty', get_string('faculty', 'block_user_manager'), $choices);
+        $mform->setType('faculty', PARAM_TEXT);
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);

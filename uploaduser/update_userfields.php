@@ -16,66 +16,80 @@ if (isset($_POST['systemfields']))
 {
     $systemfields = $_POST['systemfields'];
 
-    $associatedfields = [];
-    if (isset($_POST['associatedfields'])) {
-        $associatedfields = $_POST['associatedfields'];
-    }
+    if ($systemfields !== '')
+    {
+        $associatedfields = [];
+        if (isset($_POST['associatedfields'])) {
+            $associatedfields = $_POST['associatedfields'];
+        }
 
-    list($systemfields, $associatedfields) = filterEmptyValues($systemfields, $associatedfields);
-    $systemfieldscounter = array_count_values($systemfields);
+        list($systemfields, $associatedfields) = filterEmptyValues($systemfields, $associatedfields);
+        $systemfieldscounter = array_count_values($systemfields);
 
-    if (in_array(2, $systemfieldscounter)) {
-        $response_code = 400;
+        if (in_array(2, $systemfieldscounter)) {
+            $response_code = 400;
+            $data = array(
+                'data' => get_string('uniquefields', 'block_user_manager'),
+                'status' => $response_code
+            );
+            returnJsonHttpResponse($data, $response_code);
+        }
+
+        $fields = array_combine($systemfields, $associatedfields);
+        $filterfields = [];
+
+        foreach ($fields as $system => $associated) {
+            if (in_array($system, STD_FIELDS_EN)) {
+                $filterfields[$system] = $associated;
+
+                $key = array_search($system, $db_systemfields);
+                if ($key !== false) {
+                    array_splice($db_systemfields, $key, 1);
+                }
+
+                if ($record = $DB->get_record($tablename, array('system_field' => $system))) {
+                    $record->associated_fields = $associated;
+                    $DB->update_record($tablename, $record);
+                } else {
+                    $record = new stdClass();
+                    $record->system_field = $system;
+                    $record->associated_fields = $associated;
+                    $DB->insert_record($tablename, $record);
+                }
+            }
+        }
+
+        deleteSystemFields($tablename, $db_systemfields);
+
+        $response_code = 200;
         $data = array(
-            'data' => get_string('uniquefields', 'block_user_manager'),
+            'data' => get_string('changessaved', 'block_user_manager'),
             'status' => $response_code
         );
         returnJsonHttpResponse($data, $response_code);
     }
+    else {
+        deleteSystemFields($tablename, $db_systemfields);
 
-    $fields = array_combine($systemfields, $associatedfields);
-    $filterfields = [];
-
-    foreach ($fields as $system => $associated) {
-        if (in_array($system, STD_FIELDS_EN)) {
-            $filterfields[$system] = $associated;
-
-            $key = array_search($system, $db_systemfields);
-            if ($key !== false) {
-                array_splice($db_systemfields, $key, 1);
-            }
-
-            if ($record = $DB->get_record($tablename, array('system_field' => $system))) {
-                $record->associated_fields = $associated;
-                $DB->update_record($tablename, $record);
-            } else {
-                $record = new stdClass();
-                $record->system_field = $system;
-                $record->associated_fields = $associated;
-                $DB->insert_record($tablename, $record);
-            }
-        }
+        $response_code = 200;
+        $data = array(
+            'data' => get_string('changessaved', 'block_user_manager'),
+            'status' => $response_code
+        );
+        returnJsonHttpResponse($data, $response_code);
     }
-
+} else {
     deleteSystemFields($tablename, $db_systemfields);
 
-    $response_code = 200;
+    $response_code = 400;
     $data = array(
-        'data' => get_string('changessaved', 'block_user_manager'),
+        'data' => get_string('emptyrequest', 'block_user_manager'),
         'status' => $response_code
     );
-    returnJsonHttpResponse($data, $response_code);
-}
-else {
-    deleteSystemFields($tablename, $db_systemfields);
 
-    $response_code = 200;
-    $data = array(
-        'data' => get_string('changessaved', 'block_user_manager'),
-        'status' => $response_code
-    );
     returnJsonHttpResponse($data, $response_code);
 }
+
 
 function filterEmptyValues($systemfields, $associatedfields) {
     $filtered_systemfields = [];

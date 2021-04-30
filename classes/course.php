@@ -59,7 +59,7 @@ class course
                 isset($group_users_courses_temp[$userid]->roles) && $users_course->role)
             {
                 $group_users_courses_temp[$userid]->roles[$users_course->courseid][] =
-                    $users_course->role;
+                    self::get_role_localised_name($users_course->role);
                 $group_users_courses_temp[$userid]->roles[$users_course->courseid] =
                     array_unique($group_users_courses_temp[$userid]->roles[$users_course->courseid]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
@@ -70,10 +70,10 @@ class course
                     isset($group_users_courses_temp[$userid]->roles)) && $users_course->role)
             {
                 $group_users_courses_temp[$userid]->roles =
-                    array($users_course->courseid => [$users_course->role]);
+                    array($users_course->courseid => [self::get_role_localised_name($users_course->role)]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
                 $group_users_courses[$userid]->roles =
-                    array($id_in_coursids => ''.$users_course->role);
+                    array($id_in_coursids => self::get_role_localised_name($users_course->role));
             }
             elseif (!(isset($group_users_courses[$userid]->roles) &&
                 isset($group_users_courses_temp[$userid]->roles)))
@@ -87,7 +87,7 @@ class course
                 isset($group_users_courses_temp[$userid]->enrol_methods) && $users_course->enrol_method)
             {
                 $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid][] =
-                    $users_course->enrol_method;
+                    get_string('pluginname', 'enrol_'.$users_course->enrol_method);
                 $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid] =
                     array_unique($group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
@@ -98,10 +98,10 @@ class course
                     isset($group_users_courses_temp[$userid]->enrol_methods)) && $users_course->enrol_method)
             {
                 $group_users_courses_temp[$userid]->enrol_methods =
-                    array($users_course->courseid => [$users_course->enrol_method]);
+                    array($users_course->courseid => [get_string('pluginname', 'enrol_'.$users_course->enrol_method)]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
                 $group_users_courses[$userid]->enrol_methods =
-                    array($id_in_coursids => ''.$users_course->enrol_method);
+                    array($id_in_coursids => ''.get_string('pluginname', 'enrol_'.$users_course->enrol_method));
             }
             elseif (!(isset($group_users_courses[$userid]->enrol_methods) &&
                 isset($group_users_courses_temp[$userid]->enrol_methods)))
@@ -124,5 +124,22 @@ class course
         $group_user_courses->enrol_methods = array();
 
         return $group_user_courses;
+    }
+
+    public static function get_role_localised_name(string $archetype): string {
+        switch ($archetype) {
+            case 'manager':         $rolename = get_string('manager', 'role'); break;
+            case 'coursecreator':   $rolename = get_string('coursecreators'); break;
+            case 'editingteacher':  $rolename = get_string('defaultcourseteacher'); break;
+            case 'teacher':         $rolename = get_string('noneditingteacher'); break;
+            case 'student':         $rolename = get_string('defaultcoursestudent'); break;
+            case 'guest':           $rolename = get_string('guest'); break;
+            case 'user':            $rolename = get_string('authenticateduser'); break;
+            case 'frontpage':       $rolename = get_string('frontpageuser', 'role'); break;
+            // We should not get here, the role UI should require the name for custom roles!
+            default:                $rolename = $archetype; break;
+        }
+
+        return $rolename;
     }
 }

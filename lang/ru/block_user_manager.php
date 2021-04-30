@@ -23,8 +23,11 @@ $string['associatedfields'] = 'Ассоциированные поля';
 $string['customfields'] = 'Пользовательские поля';
 $string['emailrequired'] = 'Электроная почта обязательна';
 $string['prffields'] = 'Поля профиля (настраиваемые поля)';
+$string['faculties'] = 'Факультеты';
+$string['faculty'] = 'Факультет';
 
 $string['exportcsv'] = 'Экспорт в формате .csv';
+$string['exportcsvad'] = 'Экспорт в формате .csv (AD)';
 $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
 
 $string['selectaction'] = 'Выбор действия';
@@ -33,12 +36,14 @@ $string['complete'] = 'Выполнить';
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'Системные поля должны быть уникальными';
 $string['changessaved'] = 'Изменения сохранены';
+$string['emptyrequest'] = 'Пустой запрос (данных нет)';
 $string['unknown'] = 'Неизвестно';
 $string['empty'] = 'Пусто';
 
 $string['norequiredfields'] = 'В файле отсутствуют необходимые поля: {$a->missingfields}. Добавьте поле(-я) в файл и в случае если название поля в файле отличается от стандартного внесите соотвествующие ассоциации в таблицу допустимых полей.';
 $string['requiredfields'] = 'Обязательные поля (включая "еmail ({$a->emailhelper})", если выбрано): {$a->requiredfields}. Данные поля необходимы для регистрации пользователей в системе.';
 $string['emptyfile'] = 'Файл не содержит записей.';
+$string['emptyfaculty'] = 'Должен быть указан факультет.';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

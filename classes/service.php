@@ -3,7 +3,7 @@
 namespace block_user_manager;
 
 use context_system, admin_externalpage, moodle_url,
-    print_object, tabobject, tabtree, context, csv_import_reader;
+    print_object, tabobject, tabtree, context, csv_import_reader, stdClass;
 
 class service
 {
@@ -196,8 +196,11 @@ class service
         return null;
     }
 
-    public static function generate_password($user)
+    public static function generate_password(stdClass $user, string $emptystr = ''): string
     {
+        if (empty($emptystr))
+            $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
+
         $symbols = array('#', '$', '%', '&');
         $en_alphabet_capitals = range('A', 'Z');
         $en_alphabet_lowercase = range('a', 'z');
@@ -207,7 +210,7 @@ class service
         $initials = '';
 
         foreach ($initials_fields as $initials_field) {
-            if (isset($user->$initials_field) && !empty($user->$initials_field)) {
+            if (isset($user->$initials_field) && !empty($user->$initials_field) && $user->$initials_field !== $emptystr) {
                 $initial = strtolower(transliteration::translit_ru_en($user->$initials_field));
                 $initials .= $initial[0];
             }
@@ -230,9 +233,9 @@ class service
         return $initials.$rand_symbol.$rand_number.$rand_capital_en.$rand_lowercase_en;
     }
 
-    public static function print_error($message, $baseurl): string
+    public static function print_error(string $message, moodle_url $baseurl)
     {
-        return '
+        echo '
             <div class="alert alert-danger um-alert-inform" role="alert">'. $message .'</div>
             <div class="um-alert-link"><a href="'.$baseurl.'">'.get_string('continue').'</a></div>
         ';

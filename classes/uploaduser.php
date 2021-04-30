@@ -11,7 +11,7 @@ use csv_import_reader, csv_export_writer,
 class uploaduser
 {
     public static function um_validate_user_upload_columns(csv_import_reader $cir, array $stdfields,array $profilefields,
-                                                           moodle_url $returnurl, $passwordkey = 'password', $usernamekey = 'username'): array
+                                                           moodle_url $returnurl, $passwordkey = 'password'): array
     {
         $columns = $cir->get_columns();
 
@@ -148,9 +148,9 @@ class uploaduser
         return false;
     }
 
-    public static function get_uploaduser_instruction(array $stdfields_en, array $stdfields_ru, array $required_fields): string
+    public static function get_uploaduser_instruction(array $stdfields, array $stdfields_assoc, array $required_fields): string
     {
-        $required_fields = self::get_fields_helper($stdfields_en, $stdfields_ru, $required_fields);
+        $required_fields = self::get_fields_with_helper($stdfields, $stdfields_assoc, $required_fields);
 
         $instruction = '
             <div class="um-instruction">
@@ -199,7 +199,7 @@ class uploaduser
                         <p><b>Требования к содержимому файла:</b></p>
                         <ul class="um-sublist um-list-ul">
                             <li class="um-sublist__item">
-                                <p>Файл должен содержать следующие обязательные поля (включая "еmail ('.self::get_field_helper($stdfields_en, $stdfields_ru, 'email').')", если выбрано): '. implode(', ',$required_fields) .'. Данные поля необходимы для регистрации пользователей в системе</p>
+                                <p>Файл должен содержать следующие обязательные поля (включая "еmail ('.self::get_field_helper($stdfields, $stdfields_assoc, 'email').')", если выбрано): '. implode(', ',$required_fields) .'. Данные поля необходимы для регистрации пользователей в системе</p>
                             </li>
                             <li class="um-sublist__item">
                                 <p>Названия полей в файле должны соотвествовать названиям из таблицы "Допустимые поля", иначе они будут проигнорированы</p>
@@ -241,6 +241,9 @@ class uploaduser
                         <p><b>Загрузка пользователей </b> - будет выполнена переадресация на стандартную форму загрузки пользователей с текущими данными <b>(будет выполнена переадресация)</b></p>
                     </li>
                     <li class="um-list__item">
+                        <p><b>Выберите количество строк предпросмотра</b> (если выбран пункт "Загрузка пользователей") - кол-во записей из файла которое будет показано на форме загрузки пользователей</p>
+                    </li>
+                    <li class="um-list__item">
                         <p><b>Нажмите кнопку "Выполнить"</b></p>
                     </li>
                     <li class="um-list__item">
@@ -254,12 +257,13 @@ class uploaduser
     }
 
     public static function get_userlist(csv_import_reader $cir, array $stdfields, array $prffields,
-        moodle_url $baseurl, string $passwordkey, string $usernamekey): array
+        moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = ''): array
     {
         global $USER;
 
-        $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl, $passwordkey, $usernamekey);
-        $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
+        $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl, $passwordkey);
+        if (empty($emptystr))
+            $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
  
         $cir->init();
 
@@ -306,11 +310,8 @@ class uploaduser
                     $user->$key = trim($value);
             }
 
-            /*if (!isset($user->username))
-                $user->username = $emptystr;*/
-
             if (!isset($user->password))
-                $user->password = service::generate_password($user);
+                $user->password = service::generate_password($user, $emptystr);
 
             $users[] = $user;
         }
@@ -353,17 +354,39 @@ class uploaduser
         return $missingfields;
     }
 
-    public static function get_field_helper(array $stdfields_en, array $stdfields_ru, string $field) {
-        $key = array_search($field, $stdfields_en);
-        return ($key >= 0)? $stdfields_ru[$key] : '';
+    public static function get_field_helper(array $stdfields, array $stdfields_assoc, string $field) {
+        $key = array_search($field, $stdfields);
+        return ($key >= 0)? $stdfields[$key] : '';
     }
 
-    public static function get_fields_helper(array $stdfields_en, array $stdfields_ru, array $fields): array
+    public static function get_fields_helpers(array $stdfields, array $stdfields_assoc, array $fields): array
+    {
+        $helpers = array();
+
+        foreach ($fields as $field) {
+            $helpers[$field] = uploaduser::get_field_helper($stdfields, $stdfields_assoc, $field);
+        }
+
+        return $helpers;
+    }
+
+    public static function get_fields_with_helper(array $stdfields, array $stdfields_assoc, array $fields): array
     {
         foreach ($fields as $key => $field) {
-            $fields[$key] = $field . ' (' . uploaduser::get_field_helper($stdfields_en, $stdfields_ru, $field) . ')';
+            $fields[$key] = $field . ' (' . uploaduser::get_field_helper($stdfields, $stdfields_assoc, $field) . ')';
         }
 
         return $fields;
+    }
+
+    public static function print_error(string $message, moodle_url $baseurl) {
+        global $OUTPUT;
+
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+        echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+        service::print_error($message, $baseurl);
+        echo $OUTPUT->footer();
+        die;
     }
 }

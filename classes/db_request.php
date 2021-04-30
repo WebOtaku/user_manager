@@ -90,7 +90,7 @@ class db_request {
             FROM {user} AS u
             INNER JOIN (
                 SELECT ra.userid AS userid, crs.id AS courseid, r.id AS roleid,
-                crs.fullname AS course, r.shortname AS role
+                crs.fullname AS course, r.archetype AS role
                 FROM {role_assignments} AS ra
                 INNER JOIN {context} AS c ON c.id = ra.contextid
                 INNER JOIN {course} AS crs ON crs.id = c.instanceid

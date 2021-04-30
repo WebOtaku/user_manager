@@ -378,10 +378,20 @@ class table
                         });
                     }
                     
-                    $.post( '". (new moodle_url('/blocks/user_manager/uploaduser/update_userfields.php')) ."', {
-                        'systemfields[]': selectedvalues,
-                        'associatedfields[]': textvalues
-                    })
+                    var data = {}
+                    
+                    if (selectedvalues.length) {
+                        data = {
+                            'systemfields[]': selectedvalues,
+                            'associatedfields[]': textvalues
+                        }
+                    } else {
+                        data = {
+                            'systemfields': ''
+                        }
+                    }
+                    
+                    $.post( '". (new moodle_url('/blocks/user_manager/uploaduser/update_userfields.php')) ."', data)
                         .done(function(response) {
                             console.log(response.data);
                             printMessage(response.data, 'alert alert-success', 'umValidFieldsMessage');

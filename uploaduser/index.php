@@ -4,6 +4,7 @@ use block_user_manager\service;
 use block_user_manager\uploaduser;
 use block_user_manager\exportformat;
 use block_user_manager\table;
+use block_user_manager\cohort1c_lib1c;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -60,22 +61,30 @@ $basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), 
 $basenode->make_active();
 // Навигация: Конец
 
+$firstnamekey = 'firstname';
+$lastnamekey = 'lastname';
+$middlenamekey = 'middlename';
 $passwordkey = 'password';
 $usernamekey = 'username';
+$emailkey = 'email';
+$facultykey = 'faculty';
+$dnamekey = 'dname';
+
+$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
 
 $db_userfields = $DB->get_records("block_user_manager_ufields");
 
 $REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
+//$AD_FIELDS = ['lastname', 'firstname', 'middlename', 'username', 'password', 'email', 'faculty'];
 
 if ($email_required)
     array_push($REQUIRED_FIELDS, 'email');
 
 $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
 
-// TODO: Надо вывести под таблицей допустимых полей
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-/*print_object($PRF_FIELDS);*/
+$FACULTIES = cohort1c_lib1c::GetFaculties();
 
 if (!$iid) {
     $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
@@ -95,7 +104,7 @@ if (!$iid) {
             print_error('csvloaderror', '', $baseurl, $csvloaderror);
         }
 
-        list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
+        list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
 
         $missingfields = uploaduser::check_required_fields($filecolumns, $REQUIRED_FIELDS);
 
@@ -125,26 +134,14 @@ if (!$iid) {
 
                 redirect($baseurl);
             } else {
-                echo $OUTPUT->header();
-                echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-                echo '<link rel="stylesheet" href="../css/uplodauser.css">';
-                echo service::print_error(get_string('emptyfile', 'block_user_manager'), $baseurl);
-                echo $OUTPUT->footer();
+                uploaduser::print_error(get_string('emptyfile', 'block_user_manager'), $baseurl);
             }
         } else {
-            echo $OUTPUT->header();
-            echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-            echo '<link rel="stylesheet" href="../css/uplodauser.css">';
-            $a = new stdClass();
-
-            foreach ($missingfields as $key => $missingfield) {
-                $missingfields[$key] = $missingfield . ' (' . uploaduser::get_field_helper(STD_FIELDS_EN, STD_FIELDS_RU, $missingfield) . ')';
-            }
-
-            $a->missingfields = implode(', ', $missingfields);
-            echo service::print_error(get_string('norequiredfields', 'block_user_manager', $a), $baseurl);
             $cir->cleanup(true);
-            echo $OUTPUT->footer();
+
+            $a = new stdClass();
+            $a->missingfields = implode(', ', uploaduser::get_fields_with_helper(STD_FIELDS_EN, STD_FIELDS_RU, $missingfields));
+            uploaduser::print_error(get_string('norequiredfields', 'block_user_manager', $a), $baseurl);
         }
     }
     else {
@@ -156,9 +153,9 @@ if (!$iid) {
     }
 } else {
     $cir = new csv_import_reader($iid, 'uploaduser');
-    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
+    $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
-    $selectaction_form = new um_select_selectaction_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS));
+    $selectaction_form = new um_select_selectaction_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES));
 
     if ($selectaction_form->is_cancelled()) {
         $cir->cleanup(true);
@@ -166,55 +163,122 @@ if (!$iid) {
         redirect($baseurl);
     }
     elseif ($formdata = $selectaction_form->get_data()) {
-        list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey);
-
+        list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
         $action = $formdata->action;
 
+
+        // TODO: Дописать инструкции для действия 2
+        /*
+         * $action = 1 - Export in .csv format
+         * $action = 2 - Export in .csv format (AD)
+         * $action = 3 - Export in .xls (Excel) format
+         * $action = 4 - Upload users
+        */
+
         if ($action === "2") {
+            if (!isset($formdata->faculty) || empty($formdata->faculty)) {
+                uploaduser::print_error(get_string('emptyfaculty', 'block_user_manager'), $baseurl);
+            }
+            $newusers = array();
+            foreach ($users as $user) {
+                $newuser = new stdClass();
+                foreach ($user as $key => $value) {
+                    $value = trim($value);
+
+                    if (!in_array($key, AD_FIELDS)) continue;
+                    //if (!empty($value) && $value !== $emptystr) $newuser->$key = $value;
+                    $newuser->$key = $value;
+                }
+
+                if (!isset($user->$emailkey) || $user->$emailkey === $emptystr) {
+                    $newuser->$emailkey = trim($user->$usernamekey) . '@no-email.local';
+                }
+
+                $newuser->$dnamekey = '';
+                if (!isset($newuser->$lastnamekey) || $newuser->$lastnamekey !== $emptystr)
+                    $newuser->$dnamekey .= $newuser->$lastnamekey;
+                if (!isset($newuser->$firstnamekey) || $newuser->$firstnamekey !== $emptystr)
+                    $newuser->$dnamekey .= ' '.$newuser->$firstnamekey;
+                if (!isset($newuser->$middlenamekey) || $newuser->$middlenamekey !== $emptystr)
+                    $newuser->$dnamekey .= ' '.$newuser->$middlenamekey;
+                $newuser->$dnamekey = trim($newuser->$dnamekey);
+
+                $newuser->$facultykey = trim($formdata->faculty);
+
+                $newusers[] = $newuser;
+            }
+            $users = $newusers;
+
+            $newfilecolumns = array();
+            foreach ($filecolumns as $filecolumn) {
+                if (in_array($filecolumn, AD_FIELDS))
+                    $newfilecolumns[] = $filecolumn;
+            }
+
+            $filecolumns = $newfilecolumns;
+            $filecolumns = array_merge($filecolumns, array_diff(AD_FIELDS, $filecolumns));
+
+            $filecolumns = array_values(uploaduser::get_fields_helpers(AD_FIELDS, AD_FIELDS_ASSOC, $filecolumns));
+        }
+
+        if ($action === "3") {
             // Если выбран экспорт в формате .xls
             $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
             $worksheet_name = get_string('users');
             $users_excel = exportformat::export_excel($users, $filecolumns, $worksheet_name, $filename_excel, true);
         }
 
-        if ($action === "1" || $action === "3") {
+        if ($action === "1" || $action === "2" || $action === "4") {
             // Если выбран экспорт в формате .csv
             $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
             $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $delimiter_name, false);
         }
 
-        if ($action === "1") {
+        if ($action === "1" || $action === "2") {
             $users_csv->download_file();
         }
 
-        if ($action === "3") {
+        if ($action === "4") {
             // Если выбрана опция "Загрузка пользователей в систему"
             // будет выполнено переадресация
+
+            if (!isset($formdata->previewrows) || empty($formdata->previewrows))
+                $formdata->previewrows = 10;
+
             uploaduser::import_users_into_system($users_csv, $baseurl, $formdata->previewrows, $delimiter_name);
         }
     } else {
         echo $OUTPUT->header();
         echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-
         echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
-
-        $selectaction_form->display();
 
         $PAGE->requires->js_amd_inline("
             require(['jquery'], function($) {
-                if ($('#id_action').val() !== '3') {
-                    $('#id_previewrows').parent().parent().css({display: 'none'});
+                function elHide(id) {
+                    $('#'+id).parent().parent().css({display: 'none'});
                 }
-
+                
+                function elShow(id) {
+                    $('#'+id).parent().parent().css({display: 'flex'});
+                }
+                
+                var previewrowsId = 'id_previewrows';
+                var facultyId = 'id_faculty';
+            
+                if ($('#id_action').val() !== '4') elHide(previewrowsId);
+                if ($('#id_action').val() !== '2') elHide(facultyId);
+    
                 $('#id_action').change(function() {
-                    if ($('#id_action').val() === '3') {
-                        $('#id_previewrows').parent().parent().css({display: 'flex'});
-                    } else {
-                        $('#id_previewrows').parent().parent().css({display: 'none'});
-                    }
+                    if ($('#id_action').val() === '4') elShow(previewrowsId); 
+                    else elHide(previewrowsId);
+                    
+                    if ($('#id_action').val() === '2') elShow(facultyId); 
+                    else elHide(facultyId);
                 });
             });"
         );
+
+        $selectaction_form->display();
 
         echo $OUTPUT->footer();
     }

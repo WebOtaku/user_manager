@@ -6,8 +6,7 @@ function xmldb_block_user_manager_upgrade($oldversion) {
 
     $result = TRUE;
 
-    if ($oldversion < 2021041620) {
-
+    if ($oldversion < 2021042614) {
         // Define table block_user_manager_ufields to be created.
         $table = new xmldb_table('block_user_manager_ufields');
 
@@ -26,7 +25,7 @@ function xmldb_block_user_manager_upgrade($oldversion) {
         }
 
         // User_manager savepoint reached.
-        upgrade_block_savepoint(true, 2021041620, 'user_manager');
+        upgrade_block_savepoint(true, 2021042614, 'user_manager');
     }
 
 
