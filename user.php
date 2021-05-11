@@ -319,7 +319,7 @@ $context = context_system::instance();*/
 
 // These columns are always shown in the users list.
 $requiredcolumns = array(
-    'course', 'roles', 'lastaccess', 'cht_code_mdl', 'cht_code', 'form', 'enrol_method'
+    'course', 'roles', 'lastaccess', 'cht_code_mdl', 'cht_code', 'form', 'enrol_method', 'username'
 );
 // Extra columns containing the extra user fields, excluding the required columns (city and country, to be specific).
 $extracolumns = get_extra_user_fields($context, $requiredcolumns);
@@ -486,7 +486,7 @@ if (!$users) {
     $table = new html_table();
     $table->head = array ();
     $table->colclasses = array();
-    $table->head[] = $fullnamedisplay . ' | ' . $lastaccess;
+    $table->head[] = $fullnamedisplay . ' | ' . $username . ' | ' . $lastaccess;
     $table->attributes['class'] = 'admintable generaltable um-generaltable';
     $table->colclasses[] = 'centeralign';
 

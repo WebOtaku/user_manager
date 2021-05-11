@@ -481,9 +481,11 @@ class table
         $table->data = $data;
 
         $table->head[] = get_string('uucsvline', 'tool_uploaduser');
+
         foreach ($filecolumns as $column) {
             $table->head[] = $column;
         }
+
         $table->head[] = get_string('status');
 
         return html_writer::tag('div', html_writer::table($table), array('class'=>'flexible-wrap'));

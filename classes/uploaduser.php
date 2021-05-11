@@ -11,7 +11,7 @@ use csv_import_reader, csv_export_writer,
 class uploaduser
 {
     public static function um_validate_user_upload_columns(csv_import_reader $cir, array $stdfields,array $profilefields,
-                                                           moodle_url $returnurl, $passwordkey = 'password'): array
+        moodle_url $returnurl, string $passwordkey = ''): array
     {
         $columns = $cir->get_columns();
 
@@ -237,8 +237,12 @@ class uploaduser
                     <li class="um-list__item">
                         <p><b>Выберите действие</b> которое необходимо выполнить над файлом:</p>
                         <p><b>Экспорт в формате .csv</b> - данные будут экспортированны в формате .csv (кодировка UTF-8) <b>(начнётся скачивание файла)</b></p>
+                        <p><b>Экспорт в формате .csv (AD)</b> - данные будут подготовлены и экспортированны в формате .csv (кодировка UTF-8) для загрузки в AD <b>(начнётся скачивание файла)</b></p> 
                         <p><b>Экспорт в формате .xls (Excel)</b> - данные будут экспортированны в формате .xls (.xlsx) <b>(начнётся скачивание файла)</b></p>
                         <p><b>Загрузка пользователей </b> - будет выполнена переадресация на стандартную форму загрузки пользователей с текущими данными <b>(будет выполнена переадресация)</b></p>
+                    </li>
+                    <li class="um-list__item">
+                        <p><b>Выберите факультет</b> (если выбран пункт "Экспорт в формате .csv (AD)") - поле с указанным факультетом будет добавлено всем записям</p>
                     </li>
                     <li class="um-list__item">
                         <p><b>Выберите количество строк предпросмотра</b> (если выбран пункт "Загрузка пользователей") - кол-во записей из файла которое будет показано на форме загрузки пользователей</p>
@@ -354,9 +358,58 @@ class uploaduser
         return $missingfields;
     }
 
+    public static function prepare_data_for_ad(array $users, array $filecolumns, stdClass $formdata, string $email_domain, array $strings = [
+        'emptystring' => '', 'emailkey' => '', 'usernamekey' => '', 'dnamekey' => '',
+        'lastnamekey' => '', 'firstnamekey' => '', 'middlenamekey' => '', 'facultykey' => '']
+    ): array
+    {
+        $newusers = array();
+
+        foreach ($users as $user) {
+            $newuser = new stdClass();
+            foreach ($user as $key => $value) {
+                $value = trim($value);
+
+                if (!in_array($key, AD_FIELDS)) continue;
+                //if (!empty($value) && $value !== $emptystr) $newuser->$key = $value;
+                $newuser->$key = $value;
+            }
+
+            if (!isset($user->{$strings['emailkey']}) || $user->{$strings['emailkey']} === $strings['emptystring']) {
+                $newuser->{$strings['emailkey']} = trim($user->{$strings['usernamekey']}) . '@' . $email_domain;
+            }
+
+            $newuser->{$strings['dnamekey']} = '';
+
+            if (!isset($newuser->{$strings['lastnamekey']}) || $newuser->{$strings['lastnamekey']} !== $strings['emptystring'])
+                $newuser->{$strings['dnamekey']} .= $newuser->{$strings['lastnamekey']};
+            if (!isset($newuser->{$strings['firstnamekey']}) || $newuser->{$strings['firstnamekey']} !== $strings['emptystring'])
+                $newuser->{$strings['dnamekey']} .= ' '.$newuser->{$strings['firstnamekey']};
+            if (!isset($newuser->{$strings['middlenamekey']}) || $newuser->{$strings['middlenamekey']} !== $strings['emptystring'])
+                $newuser->{$strings['dnamekey']} .= ' '.$newuser->{$strings['middlenamekey']};
+
+            $newuser->{$strings['dnamekey']} = trim($newuser->{$strings['dnamekey']});
+
+            $newuser->{$strings['facultykey']} = trim($formdata->faculty);
+
+            $newusers[] = $newuser;
+        }
+
+        $newfilecolumns = array();
+        foreach ($filecolumns as $filecolumn) {
+            if (in_array($filecolumn, AD_FIELDS))
+                $newfilecolumns[] = $filecolumn;
+        }
+
+        $newfilecolumns = array_merge($newfilecolumns, array_diff(AD_FIELDS, $newfilecolumns));
+        $newfilecolumns = array_values(self::get_fields_helpers(AD_FIELDS, AD_FIELDS_ASSOC, $newfilecolumns));
+
+        return [$newusers, $newfilecolumns];
+    }
+
     public static function get_field_helper(array $stdfields, array $stdfields_assoc, string $field) {
         $key = array_search($field, $stdfields);
-        return ($key >= 0)? $stdfields[$key] : '';
+        return ($key >= 0)? $stdfields_assoc[$key] : '';
     }
 
     public static function get_fields_helpers(array $stdfields, array $stdfields_assoc, array $fields): array

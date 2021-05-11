@@ -33,6 +33,8 @@ $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
 $string['selectaction'] = 'Выбор действия';
 $string['complete'] = 'Выполнить';
 
+$string['previewheader'] = 'Предпросмотр';
+
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'Системные поля должны быть уникальными';
 $string['changessaved'] = 'Изменения сохранены';
@@ -67,6 +69,7 @@ $string['email'] = 'E-mail';
 $string['city'] = 'Город';
 $string['country'] = 'Страна';
 $string['lastaccess'] = 'Последний вход';
+$string['username'] = 'Логин';
 
 // Добавленные поля
 $string['course'] = 'Курс';

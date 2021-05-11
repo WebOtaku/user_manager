@@ -32,7 +32,6 @@ class exportformat
         return $csv;
     }
 
-
     public static function export_excel(
         array $objects, array $fields, string $worksheet_name = 'default',
         string $filename = 'default.xls', bool $download = false): MoodleExcelWorkbook

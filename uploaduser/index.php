@@ -72,6 +72,12 @@ $dnamekey = 'dname';
 
 $emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
 
+$strings = [
+    'emptystring' => $emptystr, 'emailkey' => $emailkey, 'usernamekey' => $usernamekey,
+    'dnamekey' => $dnamekey, 'lastnamekey' => $lastnamekey, 'firstnamekey' => $firstnamekey,
+    'middlenamekey' => $middlenamekey, 'facultykey' => $facultykey
+];
+
 $db_userfields = $DB->get_records("block_user_manager_ufields");
 
 $REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
@@ -166,65 +172,32 @@ if (!$iid) {
         list($users, $filecolumns) = uploaduser::get_userlist($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
         $action = $formdata->action;
 
-
-        // TODO: Дописать инструкции для действия 2
         /*
          * $action = 1 - Export in .csv format
          * $action = 2 - Export in .csv format (AD)
          * $action = 3 - Export in .xls (Excel) format
          * $action = 4 - Upload users
-        */
-
+         */
         if ($action === "2") {
+            $email_domain = 'no-email.local';
+
             if (!isset($formdata->faculty) || empty($formdata->faculty)) {
                 uploaduser::print_error(get_string('emptyfaculty', 'block_user_manager'), $baseurl);
             }
-            $newusers = array();
-            foreach ($users as $user) {
-                $newuser = new stdClass();
-                foreach ($user as $key => $value) {
-                    $value = trim($value);
 
-                    if (!in_array($key, AD_FIELDS)) continue;
-                    //if (!empty($value) && $value !== $emptystr) $newuser->$key = $value;
-                    $newuser->$key = $value;
-                }
-
-                if (!isset($user->$emailkey) || $user->$emailkey === $emptystr) {
-                    $newuser->$emailkey = trim($user->$usernamekey) . '@no-email.local';
-                }
-
-                $newuser->$dnamekey = '';
-                if (!isset($newuser->$lastnamekey) || $newuser->$lastnamekey !== $emptystr)
-                    $newuser->$dnamekey .= $newuser->$lastnamekey;
-                if (!isset($newuser->$firstnamekey) || $newuser->$firstnamekey !== $emptystr)
-                    $newuser->$dnamekey .= ' '.$newuser->$firstnamekey;
-                if (!isset($newuser->$middlenamekey) || $newuser->$middlenamekey !== $emptystr)
-                    $newuser->$dnamekey .= ' '.$newuser->$middlenamekey;
-                $newuser->$dnamekey = trim($newuser->$dnamekey);
-
-                $newuser->$facultykey = trim($formdata->faculty);
-
-                $newusers[] = $newuser;
-            }
-            $users = $newusers;
-
-            $newfilecolumns = array();
-            foreach ($filecolumns as $filecolumn) {
-                if (in_array($filecolumn, AD_FIELDS))
-                    $newfilecolumns[] = $filecolumn;
-            }
-
-            $filecolumns = $newfilecolumns;
-            $filecolumns = array_merge($filecolumns, array_diff(AD_FIELDS, $filecolumns));
-
-            $filecolumns = array_values(uploaduser::get_fields_helpers(AD_FIELDS, AD_FIELDS_ASSOC, $filecolumns));
+            list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings);
         }
 
         if ($action === "3") {
             // Если выбран экспорт в формате .xls
             $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
             $worksheet_name = get_string('users');
+            $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
+
+            foreach ($filecolumns as $key => $filecolumn) {
+                $filecolumns[$key] = mb_convert_case($filecolumn , MB_CASE_TITLE);
+            }
+
             $users_excel = exportformat::export_excel($users, $filecolumns, $worksheet_name, $filename_excel, true);
         }
 
@@ -250,6 +223,7 @@ if (!$iid) {
     } else {
         echo $OUTPUT->header();
         echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+
         echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
 
         $PAGE->requires->js_amd_inline("
@@ -279,7 +253,6 @@ if (!$iid) {
         );
 
         $selectaction_form->display();
-
         echo $OUTPUT->footer();
     }
 }

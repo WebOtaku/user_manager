@@ -37,10 +37,8 @@
     margin-left: 0.4em;
 }
 
-/* TODO: Заменить нижнее подчёркивание на что-то другое или убрать */
-
 .um-user__fullname a {
-    text-decoration: underline;
+    text-decoration: none;
     border: 1px none transparent;
     border-bottom-style: solid;
     /*border-radius: 0.25em;*/
@@ -48,7 +46,7 @@
     padding-bottom: 0.1em;
     transition: border 0.25s linear;
     font-weight: bold;
-    color: #035d96;
+    /*color: #035d96;*/
     font-size: 14px;
 }
 
@@ -103,7 +101,7 @@
 .um-nav-tabs .um-nav-link {
     position: relative;
     padding: 0 4px;
-    color: #035d96;
+    /*color: #035d96;*/
     font-size: 13px;
     line-height: 20px;
     border-top-left-radius: .25rem;
@@ -116,13 +114,15 @@
 .um-nav-tabs .um-nav-link:hover,
 .um-nav-tabs .um-nav-link:focus {
     border: 1px solid transparent;
-    color: #0a94ee;
+    /*color: #0a94ee;*/
+    filter: brightness(125%);
 }
 
 .um-nav-tabs .um-nav-link.active:hover,
 .um-nav-tabs .um-nav-link.active:focus {
     border-color: #dee2e6 #dee2e6 #fff;
-    color: #495057;
+    /*color: #495057;*/
+    filter: brightness(100%);
 }
 
 .um-tab-close {
