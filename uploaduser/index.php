@@ -6,7 +6,7 @@ use block_user_manager\exportformat;
 use block_user_manager\table;
 use block_user_manager\cohort1c_lib1c;
 
-require('../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once('user_form.php');
 require_once('../locallib.php');
@@ -90,7 +90,46 @@ $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
 
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-$FACULTIES = cohort1c_lib1c::GetFaculties();
+//$FACULTIES = cohort1c_lib1c::GetFaculties();
+
+// Заглушка. TODO: Получать данные из 1с
+$FACULTIES = FACULTIES;
+
+// Заглушка. TODO: Получать данные из 1с
+$GROUPS = array(
+    'ПИ-33' => [
+        'Факультет' => 'Физико-математический',
+        'Направление подготовки' => 'Прикладная математика и информатика',
+        'Профиль' => 'Физика конденсированного состояния вещества',
+        'Уровень подготовки' => 'Академический бакалавр',
+        'Форма обучения' => 'Очная',
+        'Год поступления' => '2018 год'
+    ],
+    'МР-14' => [
+        'Факультет' => 'Физико-математический',
+        'Направление подготовки' => 'Математика',
+        'Профиль' => 'Физика конденсированного состояния вещества',
+        'Уровень подготовки' => 'Академический бакалавр',
+        'Форма обучения' => 'Очная',
+        'Год поступления' => '2020 год'
+    ],
+    'СИ-35' => [
+        'Факультет' => 'Физико-математический',
+        'Направление подготовки' => 'Прикладная математика и информатика',
+        'Профиль' => 'Физика конденсированного состояния вещества',
+        'Уровень подготовки' => 'Академический бакалавр',
+        'Форма обучения' => 'Очная',
+        'Год поступления' => '2018 год'
+    ],
+    'ОС-23' => [
+        'Факультет' => 'Физико-математический',
+        'Направление подготовки' => 'Прикладная математика и информатика',
+        'Профиль' => 'Физика конденсированного состояния вещества',
+        'Уровень подготовки' => 'Академический бакалавр',
+        'Форма обучения' => 'Очная',
+        'Год поступления' => '2019 год'
+    ]
+);
 
 if (!$iid) {
     $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
@@ -161,7 +200,10 @@ if (!$iid) {
     $cir = new csv_import_reader($iid, 'uploaduser');
     $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
-    $selectaction_form = new um_select_selectaction_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES));
+
+    $selectaction_form = new um_select_selectaction_form($baseurl, array(
+        STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, array_keys($GROUPS)
+    ));
 
     if ($selectaction_form->is_cancelled()) {
         $cir->cleanup(true);
@@ -189,6 +231,10 @@ if (!$iid) {
         }
 
         if ($action === "3") {
+            if (!isset($formdata->group) || empty($formdata->group)) {
+                uploaduser::print_error(get_string('emptygroup', 'block_user_manager'), $baseurl);
+            }
+
             // Если выбран экспорт в формате .xls
             $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
             $worksheet_name = get_string('users');
@@ -198,7 +244,9 @@ if (!$iid) {
                 $filecolumns[$key] = mb_convert_case($filecolumn , MB_CASE_TITLE);
             }
 
-            $users_excel = exportformat::export_excel($users, $filecolumns, $worksheet_name, $filename_excel, true);
+            $header = $GROUPS[$formdata->group];
+
+            $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
         }
 
         if ($action === "1" || $action === "2" || $action === "4") {
@@ -238,19 +286,25 @@ if (!$iid) {
                 
                 var previewrowsId = 'id_previewrows';
                 var facultyId = 'id_faculty';
+                var groupId = 'id_group';
             
-                if ($('#id_action').val() !== '4') elHide(previewrowsId);
                 if ($('#id_action').val() !== '2') elHide(facultyId);
+                if ($('#id_action').val() !== '3') elHide(groupId);
+                if ($('#id_action').val() !== '4') elHide(previewrowsId);
     
                 $('#id_action').change(function() {
-                    if ($('#id_action').val() === '4') elShow(previewrowsId); 
-                    else elHide(previewrowsId);
-                    
                     if ($('#id_action').val() === '2') elShow(facultyId); 
                     else elHide(facultyId);
+                    
+                    if ($('#id_action').val() === '3') elShow(groupId); 
+                    else elHide(groupId);
+                    
+                    if ($('#id_action').val() === '4') elShow(previewrowsId); 
+                    else elHide(previewrowsId);
                 });
             });"
         );
+        //print_object($FACULTIES);
 
         $selectaction_form->display();
         echo $OUTPUT->footer();

@@ -75,7 +75,7 @@ class um_select_selectaction_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields, $faculties) = $this->_customdata;
+        list($systemfields, $helpfields, $required_fields, $faculties, $groups) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -98,6 +98,10 @@ class um_select_selectaction_form extends moodleform {
         $choices = array_combine($faculties, $faculties);
         $mform->addElement('select', 'faculty', get_string('faculty', 'block_user_manager'), $choices);
         $mform->setType('faculty', PARAM_TEXT);
+
+        $choices = array_combine($groups, $groups);
+        $mform->addElement('select', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->setType('group', PARAM_TEXT);
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);

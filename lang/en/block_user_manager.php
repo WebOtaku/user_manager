@@ -25,6 +25,7 @@ $string['emailrequired'] = 'Email required';
 $string['prffields'] = 'Profile fields (custom fields)';
 $string['faculties'] = 'Faculties';
 $string['faculty'] = 'Faculty';
+$string['group'] = 'Group';
 
 $string['exportcsv'] = 'Export in .csv format';
 $string['exportcsvad'] = 'Export in .csv format (AD)';
@@ -46,6 +47,7 @@ $string['norequiredfields'] = 'The file is missing required fields: {$a->missing
 $string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}. These fields are required to register users in the system.';
 $string['emptyfile'] = 'File contains no entries.';
 $string['emptyfaculty'] = 'Faculty must be specified.';
+$string['emptygroup'] = 'Group must be specified.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 

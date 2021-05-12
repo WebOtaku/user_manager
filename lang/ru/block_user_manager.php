@@ -25,6 +25,7 @@ $string['emailrequired'] = 'Электроная почта обязательн
 $string['prffields'] = 'Поля профиля (настраиваемые поля)';
 $string['faculties'] = 'Факультеты';
 $string['faculty'] = 'Факультет';
+$string['group'] = 'Группа';
 
 $string['exportcsv'] = 'Экспорт в формате .csv';
 $string['exportcsvad'] = 'Экспорт в формате .csv (AD)';
@@ -46,6 +47,7 @@ $string['norequiredfields'] = 'В файле отсутствуют необхо
 $string['requiredfields'] = 'Обязательные поля (включая "еmail ({$a->emailhelper})", если выбрано): {$a->requiredfields}. Данные поля необходимы для регистрации пользователей в системе.';
 $string['emptyfile'] = 'Файл не содержит записей.';
 $string['emptyfaculty'] = 'Должен быть указан факультет.';
+$string['emptygroup'] = 'Должна быть указана группа.';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

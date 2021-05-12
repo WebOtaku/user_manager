@@ -442,4 +442,45 @@ class uploaduser
         echo $OUTPUT->footer();
         die;
     }
+
+    public static function export_excel(
+        array $objects, array $fields, array $header = [], int $header_offset = 1, string $worksheet_name = 'default',
+        string $filename = 'default.xls', bool $download = false): MoodleExcelWorkbook
+    {
+        $workbook = new MoodleExcelWorkbook('-');
+        $workbook->send($filename);
+        $worksheet = $workbook->add_worksheet($worksheet_name);
+
+        $i = 0;
+
+        $format = array('size' => 11);
+        foreach ($header as $key => $value) {
+            $worksheet->write_string($i, 0, $key, $format + array('bold' => 500));
+            $worksheet->write_string($i, 1, $value, $format);
+            $i++;
+        }
+
+        if (count($header)) $i += $header_offset;
+
+        $format = array('size' => 11, 'bold' => 500, 'border' => 1, 'align' => 'center');
+        foreach ($fields as $key => $field) {
+            $worksheet->write_string($i, $key, $field, $format);
+        }
+
+        if (count($fields)) $i++;
+
+        $format = array('border' => 1);
+        foreach ($objects as $key => $object) {
+            $j = 0;
+            foreach ($object as $keynum => $value) {
+                $worksheet->write_string($key + $i, $j, $object->$keynum, $format);
+                $j++;
+            }
+        }
+
+        if ($download)
+            $workbook->close();
+
+        return $workbook;
+    }
 }
