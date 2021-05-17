@@ -32,7 +32,8 @@ $resendemail  = optional_param('resendemail', 0, PARAM_INT);
 
 $func         = optional_param('func', '', PARAM_TEXT);
 $chtid        = optional_param('chtid', 0, PARAM_INT);
-$delchtid     = optional_param('chtid', 0, PARAM_INT);
+$delchtid     = optional_param('delchtid', 0, PARAM_INT);
+$delcourseid  = optional_param('delcourseid', 0, PARAM_INT);
 $userid       = optional_param('userid', 0, PARAM_INT);
 
 $userfilter = optional_param('userfilter', '', PARAM_TEXT);
@@ -260,44 +261,89 @@ if ($confirmuser and confirm_sesskey()) {
     }
     redirect($baseurl);
 }
-else if (isset($_GET['func']) and confirm_sesskey()) {
+else if ($func === 'cohort_remove_member' && confirm_sesskey()) {
     require_capability('moodle/cohort:manage', $context);
 
-    if ($_GET['func'] === 'cohort_remove_member') {
-        if (isset($_GET['delchtid']) && isset($_GET['userid'])) {
-            if ($confirm != md5($_GET['userid'])) {
-                global $DB;
+    if ($delchtid && $userid) {
+        if ($confirm != md5($userid)) {
+            global $DB;
+            $cht = $DB->get_record('cohort', ['id' => $delchtid]);
+            $user = $DB->get_record('user', ['id' => $userid]);
 
-                $cht = $DB->get_record('cohort', ['id' => $_GET['delchtid']]);
-                $user = $DB->get_record('user', ['id' => $_GET['userid']]);
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading(get_string('removefromcht_header', 'block_user_manager'));
 
-                echo $OUTPUT->header();
-                echo $OUTPUT->heading(get_string('removefromcht', 'block_user_manager'));
+            $optionsyes = array(
+                'userid' => $userid, 'confirm' => md5($userid),
+                'func' => $func, 'delchtid' => $delchtid, 'sesskey' => sesskey()
+            );
 
-                $optionsyes = array(
-                    'userid' => $_GET['userid'], 'confirm' => md5($_GET['userid']),
-                    'func'=> $_GET['func'], 'delchtid' => $_GET['delchtid'], 'sesskey'=>sesskey()
-                );
+            $deleteurl = new moodle_url($baseurl, $optionsyes);
+            $deletebutton = new single_button($deleteurl, get_string('delete'), 'get');
 
-                $deleteurl = new moodle_url($baseurl, $optionsyes);
-                $deletebutton = new single_button($deleteurl, get_string('delete'), 'get');
+            $messagedata = new stdClass();
+            $messagedata->lastname = $user->lastname;
+            $messagedata->firstname = $user->firstname;
+            $messagedata->middlename = $user->middlename;
+            $messagedata->chtname = $cht->name;
 
-                $messagedata = new stdClass();
-                $messagedata->lastname = $user->lastname;
-                $messagedata->firstname = $user->firstname;
-                $messagedata->middlename = $user->middlename;
-                $messagedata->chtname = $cht->name;
+            echo $OUTPUT->confirm(
+                get_string('removefromcht_warning', 'block_user_manager', $messagedata),
+                $deletebutton, $baseurl
+            );
+            echo $OUTPUT->footer();
+            die;
+        } else  {
+            cohort_remove_member($delchtid, $userid);
+            redirect($baseurl);
+        }
+    }
+}
+else if ($func === 'remove_manual_enrol_user' && confirm_sesskey()) {
+    if ($delcourseid && $userid) {
+        $instance = $DB->get_record('enrol', array('courseid' => $delcourseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+        $context = context_course::instance($delcourseid, MUST_EXIST);
 
-                echo $OUTPUT->confirm(
-                    get_string('removeuserchtwarning', 'block_user_manager', $messagedata),
-                    $deletebutton, $baseurl
-                );
-                echo $OUTPUT->footer();
-                die;
-            } else  {
-                cohort_remove_member($_GET['delchtid'], $_GET['userid']);
-                redirect($baseurl);
-            }
+        $canunenrol = has_capability('enrol/manual:unenrol', $context);
+        if (!$canunenrol) {
+            require_capability('enrol/manual:unenrol', $context);
+        }
+
+        if (!$enrol_manual = enrol_get_plugin('manual')) {
+            throw new coding_exception('Can not instantiate enrol_manual');
+        }
+
+        if ($confirm != md5($userid)) {
+            global $DB;
+            $course = $DB->get_record('course', ['id' => $delcourseid]);
+            $user = $DB->get_record('user', ['id' => $userid]);
+
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading(get_string('removemanualenroluser_header', 'block_user_manager'));
+
+            $optionsyes = array(
+                'userid' => $userid, 'confirm' => md5($userid),
+                'func' => $func, 'delcourseid' => $delcourseid, 'sesskey' => sesskey()
+            );
+
+            $deleteurl = new moodle_url($baseurl, $optionsyes);
+            $deletebutton = new single_button($deleteurl, get_string('delete'), 'get');
+
+            $messagedata = new stdClass();
+            $messagedata->lastname = $user->lastname;
+            $messagedata->firstname = $user->firstname;
+            $messagedata->middlename = $user->middlename;
+            $messagedata->coursename = $course->fullname;
+
+            echo $OUTPUT->confirm(
+                get_string('removemanualenroluser_warning', 'block_user_manager', $messagedata), // TODO: #2
+                $deletebutton, $baseurl
+            );
+            echo $OUTPUT->footer();
+            die;
+        } else  {
+            $enrol_manual->unenrol_user($instance, $userid);
+            redirect($baseurl);
         }
     }
 }
@@ -424,7 +470,7 @@ $users_cohorts = db_request::get_users_cohorts($users);
 $grouped_users_cohorts = cohort::group_users_cohorts_by_users($users_cohorts);
 
 $users_courses = db_request::get_users_courses($users);
-$grouped_users_courses = course::group_users_courses_by_users($users_courses);
+list($grouped_users_courses, $course_translations) = course::group_users_courses_by_users($users_courses);
 
 if ($extrasql !== '') {
     if ($userfilter == 'cohort')
@@ -580,6 +626,18 @@ if (!$users) {
 
         $row = array ();
 
+        $courses_actions = array();
+        if (has_capability('moodle/cohort:manage', $context)) {
+            $remove_params = new remove_entry_params($user->id, $baseurl);
+            $courses_actions[] = array(
+                'idfield' => 'courseids',
+                'closure' => course::get_remove_manual_enrol_user_link()->bindTo($remove_params),
+                'conds' => array(
+                    'enrol_methods' => array($course_translations['enrol_methods']['manual'])
+                )
+            );
+        }
+
         if (isset($grouped_users_courses[$user->id]))
             $grouped_user_data = $grouped_users_courses[$user->id];
         else
@@ -606,7 +664,7 @@ if (!$users) {
                     'fieldname' => $enrol_method,
                     'type' => 'text'
                 ],
-            ]
+            ], $courses_actions
         );
 
         $cohorts_actions = array();
@@ -614,7 +672,7 @@ if (!$users) {
             $remove_params = new remove_entry_params($user->id, $baseurl);
             $cohorts_actions[] = array(
                 'idfield' => 'chtids',
-                'closure' => cohort::get_cohort_remove_member_link()->bindTo($remove_params)
+                'closure' => cohort::get_remove_member_link()->bindTo($remove_params)
             );
         }
 

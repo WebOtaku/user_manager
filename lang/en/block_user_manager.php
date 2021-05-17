@@ -57,8 +57,14 @@ $string['addtocht'] = 'Adding to cohorts';
 $string['addtochtshort'] = 'Adding to cohorts';
 
 // Удаление пользователя из глобальной группы
-$string['removefromcht'] = 'Removing from cohort';
-$string['removeuserchtwarning'] = 'Are you sure you want to delete user {$a->lastname} {$a->firstname} {$a->middlename} from cohort {$a->chtname}';
+$string['removefromcht_header'] = 'Removing from cohort';
+$string['removefromcht_alt'] = 'Remove from cohort';
+$string['removefromcht_warning'] = 'Are you sure you want to delete user {$a->lastname} {$a->firstname} {$a->middlename} from cohort {$a->chtname}';
+
+// Удаление пользователя зачисленного вручную из курса
+$string['removemanualenroluser_header'] = 'Removing manual enrolled user';
+$string['removemanualenroluser_alt'] = 'Remove manual enrolled user';
+$string['removemanualenroluser_warning'] = 'Are you sure you want to delete manual enrolled user {$a->lastname} {$a->firstname} {$a->middlename} from course {$a->coursename}';
 
 // Поля в списке пользователей
 $string['firstname'] = 'First name';

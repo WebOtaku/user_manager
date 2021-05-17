@@ -5,7 +5,8 @@ use stdClass, html_writer, moodle_url;
 
 class cohort
 {
-    public static function group_users_cohorts_by_users($users_cohorts) {
+    public static function group_users_cohorts_by_users(array $users_cohorts): array
+    {
         $group_users_cohorts = array();
 
         foreach ($users_cohorts as $user_cohort) {
@@ -81,7 +82,8 @@ class cohort
         return $group_users_cohorts;
     }
 
-    public static function get_empty_group_user_cohorts_obj() {
+    public static function get_empty_group_user_cohorts_obj(): stdClass
+    {
         $group_user_cohorts = new stdClass();
         $group_user_cohorts->lastname = '';
         $group_user_cohorts->firstname = '';
@@ -94,7 +96,8 @@ class cohort
         return $group_user_cohorts;
     }
 
-    public static function get_cohort_remove_member_link() {
+    public static function get_remove_member_link(): \Closure
+    {
         return function ($chtid) {
             global $OUTPUT;
             return html_writer::link(new moodle_url($this->url, array(
@@ -102,11 +105,12 @@ class cohort
                 'delchtid' => $chtid,
                 'userid' => $this->id,
                 'sesskey' => sesskey()
-            )), $OUTPUT->pix_icon('t/delete', get_string('delete', 'block_user_manager')));
+            )), $OUTPUT->pix_icon('t/delete', get_string('removefromcht_alt', 'block_user_manager')));
         };
     }
 
-    public static function form_cohort_members_select($cohort_members) {
+    public static function form_cohort_members_select(array $cohort_members): string
+    {
 
         if (count($cohort_members))
         {

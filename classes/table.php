@@ -88,12 +88,28 @@ class table
                 }
 
                 foreach ($actions as $action) {
-                    if (isset($action['idfield'])) {
-                        $field = $action['idfield'];
-                        if (isset($grouped_user_data->$field) && is_array($grouped_user_data->$field)) {
-                            if (isset($action['closure'])) {
-                                $closure = $action['closure'];
-                                $result_table_str .= '<td class="um-table__cell">' . $closure($grouped_user_data->$field[$i]) . '</td>';
+                    $is_print = true;
+
+                    if (isset($action['conds']) && is_array($action['conds'])) {
+                        foreach ($action['conds'] as $field => $values) {
+                            if (is_array($values)) {
+                                foreach ($values as $value) {
+                                    $is_print = self::field_takes_value($grouped_user_data, $field, $i, $value);
+                                }
+                            } else {
+                                $is_print = self::field_takes_value($grouped_user_data, $field, $i, $values);
+                            }
+                        }
+                    }
+
+                    if ($is_print) {
+                        if (isset($action['idfield'])) {
+                            $idfield = $action['idfield'];
+                            if (isset($grouped_user_data->$idfield) && is_array($grouped_user_data->$idfield)) {
+                                if (isset($action['closure'])) {
+                                    $closure = $action['closure'];
+                                    $result_table_str .= '<td class="um-table__cell">' . $closure($grouped_user_data->$idfield[$i]) . '</td>';
+                                }
                             }
                         }
                     }
@@ -111,6 +127,17 @@ class table
         $result_table_str .= '</tbody></table>';
 
         return $result_table_str;
+    }
+
+    private static function field_takes_value(stdClass $grouped_user_data, string $field, int $index, $value): bool {
+        $flag = false;
+
+        if (isset($grouped_user_data->$field)) {
+            if (is_array($grouped_user_data->$field) && isset($grouped_user_data->$field[$index]) &&
+                (strpos($grouped_user_data->$field[$index], $value) !== false)) $flag = true;
+        }
+
+        return $flag;
     }
 
     public static function generate_system_userfileds_selector(array $systemfields, string $systemfield, array $helpfields = [],
@@ -410,7 +437,7 @@ class table
         return $result_table_str;
     }
 
-    public static function generate_userspreview_table(csv_import_reader $cir, array $filecolumns, int $previewrows) {
+    public static function generate_userspreview_table(csv_import_reader $cir, array $filecolumns, int $previewrows): string {
         global $DB, $CFG;
         $stremailduplicate = get_string('useremailduplicate', 'error');
         // preview table data

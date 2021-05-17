@@ -15,7 +15,8 @@ class html_list_view
      * @param string[] $keyslangfile - ключи в языковом файле (названия ссылок).
      * @return string html строка.
      * */
-    public static function get_html_list_links($links = [], $linksparams = [], $langfile = '', $keyslangfile = []) {
+    public static function get_html_list_links(array $links = [], array $linksparams = [], string $langfile = '', array $keyslangfile = []): string
+    {
         $html_str = '<ul style="list-style: none; margin-left: -15px;">';
         foreach ($links as $key => $link) {
             $html_str .= '<li>';

@@ -57,8 +57,14 @@ $string['addtocht'] = 'Добавление в глобальные группы
 $string['addtochtshort'] = 'Доб. в глоб. группы';
 
 // Удаление пользователя из глобальной группы
-$string['removefromcht'] = 'Удаление из глобальной группы';
-$string['removeuserchtwarning'] = 'Вы действительно удалить пользователя {$a->lastname} {$a->firstname} {$a->middlename} из глобальной группы {$a->chtname}';
+$string['removefromcht_header'] = 'Удаление из глобальной группы';
+$string['removefromcht_alt'] = 'Удалить из глобальной группы';
+$string['removefromcht_warning'] = 'Вы действительно хотите удалить пользователя {$a->lastname} {$a->firstname} {$a->middlename} из глобальной группы {$a->chtname}';
+
+// Удаление пользователя зачисленного вручную из курса
+$string['removemanualenroluser_header'] = 'Удаление зачисленного вручную пользователя';
+$string['removemanualenroluser_alt'] = 'Удалить зачисленного вручную пользователя';
+$string['removemanualenroluser_warning'] = 'Вы действительно хотите удалить зачисленного вручную пользователя {$a->lastname} {$a->firstname} {$a->middlename} из курса {$a->coursename}';
 
 // Поля в списке пользователей
 $string['firstname'] = 'Имя';
@@ -89,4 +95,4 @@ $string['noentries'] = 'Записи отсутствуют';
 $string['invaliddata'] = 'Неверные данные';
 
 // Действия
-$string['delete'] = 'Delete';
+$string['delete'] = 'Удалить';

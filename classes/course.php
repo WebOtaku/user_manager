@@ -2,14 +2,15 @@
 
 namespace block_user_manager;
 
-use stdClass;
-use html_writer;
+use stdClass, html_writer, moodle_url;
 
 class course
 {
-    public static function group_users_courses_by_users($users_courses) {
+    public static function group_users_courses_by_users(array $users_courses): array
+    {
         $group_users_courses = array();
         $group_users_courses_temp = array();
+        $translations = array();
 
         foreach ($users_courses as $users_course) {
             $userid = $users_course->userid;
@@ -58,8 +59,9 @@ class course
             if (isset($group_users_courses[$userid]->roles) &&
                 isset($group_users_courses_temp[$userid]->roles) && $users_course->role)
             {
-                $group_users_courses_temp[$userid]->roles[$users_course->courseid][] =
-                    self::get_role_localised_name($users_course->role);
+                $translation = self::get_role_localised_name($users_course->role);
+                $translations['roles'][$users_course->role] = $translation;
+                $group_users_courses_temp[$userid]->roles[$users_course->courseid][] = $translation;
                 $group_users_courses_temp[$userid]->roles[$users_course->courseid] =
                     array_unique($group_users_courses_temp[$userid]->roles[$users_course->courseid]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
@@ -69,11 +71,11 @@ class course
             elseif (!(isset($group_users_courses[$userid]->roles) &&
                     isset($group_users_courses_temp[$userid]->roles)) && $users_course->role)
             {
-                $group_users_courses_temp[$userid]->roles =
-                    array($users_course->courseid => [self::get_role_localised_name($users_course->role)]);
+                $translation = self::get_role_localised_name($users_course->role);
+                $translations['roles'][$users_course->role] = $translation;
+                $group_users_courses_temp[$userid]->roles = array($users_course->courseid => [$translation]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
-                $group_users_courses[$userid]->roles =
-                    array($id_in_coursids => self::get_role_localised_name($users_course->role));
+                $group_users_courses[$userid]->roles = array($id_in_coursids => $translation);
             }
             elseif (!(isset($group_users_courses[$userid]->roles) &&
                 isset($group_users_courses_temp[$userid]->roles)))
@@ -86,8 +88,10 @@ class course
             if (isset($group_users_courses[$userid]->enrol_methods) &&
                 isset($group_users_courses_temp[$userid]->enrol_methods) && $users_course->enrol_method)
             {
-                $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid][] =
-                    get_string('pluginname', 'enrol_'.$users_course->enrol_method);
+                $translation = get_string('pluginname', 'enrol_'.$users_course->enrol_method);
+                $translations['enrol_methods'][$users_course->enrol_method] = $translation;
+                $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid][] = $translation;
+
                 $group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid] =
                     array_unique($group_users_courses_temp[$userid]->enrol_methods[$users_course->courseid]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
@@ -97,11 +101,11 @@ class course
             elseif (!(isset($group_users_courses[$userid]->enrol_methods) &&
                     isset($group_users_courses_temp[$userid]->enrol_methods)) && $users_course->enrol_method)
             {
-                $group_users_courses_temp[$userid]->enrol_methods =
-                    array($users_course->courseid => [get_string('pluginname', 'enrol_'.$users_course->enrol_method)]);
+                $translation = get_string('pluginname', 'enrol_'.$users_course->enrol_method);
+                $translations['enrol_methods'][$users_course->enrol_method] = $translation;
+                $group_users_courses_temp[$userid]->enrol_methods = array($users_course->courseid => [$translation]);
                 $id_in_coursids = array_search($users_course->courseid, $group_users_courses[$userid]->courseids);
-                $group_users_courses[$userid]->enrol_methods =
-                    array($id_in_coursids => ''.get_string('pluginname', 'enrol_'.$users_course->enrol_method));
+                $group_users_courses[$userid]->enrol_methods = array($id_in_coursids => ''.$translation);
             }
             elseif (!(isset($group_users_courses[$userid]->enrol_methods) &&
                 isset($group_users_courses_temp[$userid]->enrol_methods)))
@@ -111,10 +115,11 @@ class course
             }
         }
 
-        return $group_users_courses;
+        return [$group_users_courses, $translations];
     }
 
-    public static function get_empty_group_user_courses_obj() {
+    public static function get_empty_group_user_courses_obj(): stdClass
+    {
         $group_user_courses = new stdClass();
         $group_user_courses->lastname = '';
         $group_user_courses->firstname = '';
@@ -141,5 +146,18 @@ class course
         }
 
         return $rolename;
+    }
+
+    public static function get_remove_manual_enrol_user_link(): \Closure
+    {
+        return function ($courseid) {
+            global $OUTPUT;
+            return html_writer::link(new moodle_url($this->url, array(
+                'func' => 'remove_manual_enrol_user',
+                'delcourseid' => $courseid,
+                'userid' => $this->id,
+                'sesskey' => sesskey()
+            )), $OUTPUT->pix_icon('t/delete', get_string('removemanualenroluser_alt', 'block_user_manager')));
+        };
     }
 }
