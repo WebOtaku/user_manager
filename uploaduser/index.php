@@ -90,13 +90,13 @@ $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
 
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-//$FACULTIES = cohort1c_lib1c::GetFaculties();
+// Заглушка. TODO: Получать данные из 1с
+//$FACULTIES = FACULTIES;
+
+$FACULTIES = cohort1c_lib1c::GetFaculties();
 
 // Заглушка. TODO: Получать данные из 1с
-$FACULTIES = FACULTIES;
-
-// Заглушка. TODO: Получать данные из 1с
-$GROUPS = array(
+/*$GROUPS = array(
     'ПИ-33' => [
         'Факультет' => 'Физико-математический',
         'Направление подготовки' => 'Прикладная математика и информатика',
@@ -129,7 +129,9 @@ $GROUPS = array(
         'Форма обучения' => 'Очная',
         'Год поступления' => '2019 год'
     ]
-);
+);*/
+
+$GROUPS = cohort1c_lib1c::GetGroupsWithInfo();
 
 if (!$iid) {
     $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
@@ -236,7 +238,7 @@ if (!$iid) {
             }
 
             // Если выбран экспорт в формате .xls
-            $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . gmdate("Ymd_Hi") . '.xls');
+            $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . $formdata->group . '_' . gmdate("Ymd_Hi") . '.xls');
             $worksheet_name = get_string('users');
             $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
 
@@ -304,7 +306,6 @@ if (!$iid) {
                 });
             });"
         );
-        //print_object($FACULTIES);
 
         $selectaction_form->display();
         echo $OUTPUT->footer();

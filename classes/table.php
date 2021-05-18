@@ -134,7 +134,7 @@ class table
 
         if (isset($grouped_user_data->$field)) {
             if (is_array($grouped_user_data->$field) && isset($grouped_user_data->$field[$index]) &&
-                (strpos($grouped_user_data->$field[$index], $value) !== false)) $flag = true;
+                !empty($value) && (strpos($grouped_user_data->$field[$index], $value) !== false)) $flag = true;
         }
 
         return $flag;

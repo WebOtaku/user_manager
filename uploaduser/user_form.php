@@ -100,7 +100,7 @@ class um_select_selectaction_form extends moodleform {
         $mform->setType('faculty', PARAM_TEXT);
 
         $choices = array_combine($groups, $groups);
-        $mform->addElement('select', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
         $mform->setType('group', PARAM_TEXT);
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);

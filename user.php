@@ -36,9 +36,13 @@ $delchtid     = optional_param('delchtid', 0, PARAM_INT);
 $delcourseid  = optional_param('delcourseid', 0, PARAM_INT);
 $userid       = optional_param('userid', 0, PARAM_INT);
 
-$userfilter = optional_param('userfilter', '', PARAM_TEXT);
+$addfilter    = optional_param('addfilter', '', PARAM_TEXT);
+$removeall    = optional_param('removeall', '', PARAM_TEXT);
+$removeselected = optional_param('removeselected', '', PARAM_TEXT);
 
-$returnurl = required_param('returnurl', PARAM_LOCALURL);
+$userfilter   = optional_param('userfilter', '', PARAM_TEXT);
+
+$returnurl    = required_param('returnurl', PARAM_LOCALURL);
 
 service::admin_externalpage_setup('editusers');
 
@@ -358,6 +362,12 @@ $fieldnames = array('realname' => 0, 'lastname' => 1, 'firstname' => 1, 'usernam
 $filterurl = new moodle_url($baseurl);
 $filterurl->param('page', 0);
 $ufiltering = new user_filtering($fieldnames, $filterurl);
+
+if ($addfilter || $removeall || $removeselected) {
+    $baseurl->remove_params(['addfilter', 'removeselected', 'removeall']);
+    redirect($baseurl);
+}
+
 echo $OUTPUT->header();
 
 /*// Carry on with the user listing
@@ -629,11 +639,16 @@ if (!$users) {
         $courses_actions = array();
         if (has_capability('moodle/cohort:manage', $context)) {
             $remove_params = new remove_entry_params($user->id, $baseurl);
+
+            $manualstr = '';
+            if (isset($course_translations['enrol_methods']) &&
+                isset($course_translations['enrol_methods']['manual'])) $manualstr = $course_translations['enrol_methods']['manual'];
+
             $courses_actions[] = array(
                 'idfield' => 'courseids',
                 'closure' => course::get_remove_manual_enrol_user_link()->bindTo($remove_params),
                 'conds' => array(
-                    'enrol_methods' => array($course_translations['enrol_methods']['manual'])
+                    'enrol_methods' => array($manualstr)
                 )
             );
         }

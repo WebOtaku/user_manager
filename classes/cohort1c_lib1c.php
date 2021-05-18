@@ -94,7 +94,8 @@ class cohort1c_lib1c
         return $return;
     }
 
-    public static function GetFaculties(): array {
+    public static function GetFormStructure(): array
+    {
         $client = self::Connect1C();
 
         if (!$client) {
@@ -108,6 +109,28 @@ class cohort1c_lib1c
         // сортировка списка по факультетм и группам, удаление некорректных значений
         $tree = self::FormStructure($UniversityStructure->Struct);
 
+        return $tree;
+    }
+
+    public static function GetFaculties(): array {
+        $tree = self::GetFormStructure();
         return array_keys($tree);
+    }
+
+    public static function GetGroupsWithInfo(): array
+    {
+        $tree = self::GetFormStructure();
+
+        $groups_with_info = array();
+
+        foreach ($tree as $faculty => $groups) {
+            foreach ($groups as $group) {
+                $groups_with_info[$group] = array(
+                    'Факультет' => $faculty
+                );
+            }
+        }
+
+        return $groups_with_info;
     }
 }
