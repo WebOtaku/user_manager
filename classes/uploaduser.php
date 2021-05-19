@@ -443,6 +443,62 @@ class uploaduser
         die;
     }
 
+    public static function form_excel_header_from_group_info(stdClass $group_with_info, int $period_end): array {
+        $excel_header = array(
+            'Факультет' => '',
+            'Направление подготовки' => '',
+            'Профиль' => '',
+            'Уровень подготовки' => '',
+            'Форма обучения' => '',
+            'Год поступления' => ''
+        );
+
+        foreach ($group_with_info as $field => $value) {
+            switch ($field) {
+                case 'Факультет':
+                    $excel_header['Факультет'] = $value;
+                    break;
+                case 'Специальность':
+                    $excel_header['Направление подготовки'] = $value;
+                    break;
+                case 'Специализация':
+                    $keyword = 'программа';
+                    $pos_open_parenthesis = strrpos($value, '(' . $keyword);
+                    $pos_closing_parenthesis = strrpos($value, ')',
+                        ($pos_open_parenthesis === false)? 0 : $pos_open_parenthesis + 1);
+
+                    $excel_header['Профиль'] = trim(substr($value, 0,
+                        ($pos_open_parenthesis === false)? strlen($value) : $pos_open_parenthesis));
+                    if ($pos_open_parenthesis !== false && $pos_closing_parenthesis !== false) {
+                        $training_program = explode(' ', trim(substr($value,
+                            $pos_open_parenthesis + 1,
+                            $pos_closing_parenthesis - ($pos_open_parenthesis + 1)
+                        )));
+                        if ($training_program) {
+                            $excel_header['Уровень подготовки'] = mb_convert_case($training_program[0], MB_CASE_TITLE);
+                            foreach ($training_program as $key => $part) {
+                                if ($key === 0) {
+                                    $excel_header['Уровень подготовки'] = mb_convert_case($part, MB_CASE_TITLE);
+                                } else {
+                                    $excel_header['Уровень подготовки'] .= ' ' . $part;
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                case 'ФормаОбучения':
+                    $excel_header['Форма обучения'] = $value;
+                    break;
+                case 'Курс':
+                    $excel_header['Год поступления'] = ($period_end - COURSE_STRING[$value]) . ' год';
+                    break;
+            }
+        }
+
+        return $excel_header;
+    }
+
     public static function export_excel(
         array $objects, array $fields, array $header = [], int $header_offset = 1, string $worksheet_name = 'default',
         string $filename = 'default.xls', bool $download = false): MoodleExcelWorkbook

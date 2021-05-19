@@ -55,3 +55,12 @@ define('AD_FIELDS', array(
 define('AD_FIELDS_ASSOC', array(
     'LastName', 'FirstName', 'Office', 'SamAccountName', 'Passwd', 'Email', 'DName', 'Department'
 ));
+
+define('COURSE_STRING', array(
+    'Первый' => 1,
+    'Второй' => 2,
+    'Третий' => 3,
+    'Четвертый' => 4,
+    'Пятый' => 5,
+    'Шестой' => 6
+));

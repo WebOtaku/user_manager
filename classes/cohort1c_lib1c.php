@@ -94,6 +94,71 @@ class cohort1c_lib1c
         return $return;
     }
 
+    /**
+     * Получение студентов группы для учебного года.
+     * @param object $idc - client 1C
+     * @param array $param - array('group' =>$group, 'session' => $ini["session"] );
+     * @return object - stdClass Object(return =>
+     *    stdClass Object( Students => Array( [0] => stdClass Object(
+     *        ЗачетнаяКнига: "18110761"
+     *        Имя: "Анастасия"
+     *        Курс: "Первый"
+     *        Отчество: "Игоревна"
+     *        Подгруппа: ""
+     *        Состояние: "Является студентом"
+     *        Специальность: "Продукты питания животного происхождения"
+     *        Факультет: "Аграрно-технологический институт"
+     *        Фамилия: "Бахтина"
+     *        ФормаОбучения: "Заочная"
+     *        Специализация: "Программирование и системный анализ (программа академического бакалавриата)"
+     *    )))
+     */
+    public static function GetData($idc, $param): \stdClass {
+        $result = new \stdClass();
+        if (is_object($idc)) {
+            try {
+                $result = $idc->GetData($param);
+                //return $result;
+            } catch (SoapFault $e) {
+                //print_error('data_error', 'block_cohort1c');
+                //print_object($e);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Получение студента по номеру зачётной книжки
+     * @param object $idc client 1C
+     * @param array $param - array('number' => '18110761', 'session' => '2020 - 2021' );
+     * @return object - stdClass Object(return =>
+     *    stdClass Object(
+     *        ЗачетнаяКнига: "18110761"
+     *        Имя: "Анастасия"
+     *        Курс: "Первый"
+     *        Отчество: "Игоревна"
+     *        Подгруппа: ""
+     *        Состояние: "Является студентом"
+     *        Специальность: "Продукты питания животного происхождения"
+     *        Факультет: "Аграрно-технологический институт"
+     *        Фамилия: "Бахтина"
+     *        ФормаОбучения: "Заочная"
+     *    ))
+     */
+    public static function GetStudent($idc, $param): \stdClass {
+        $result = new \stdClass();
+        if (is_object($idc)) {
+            try {
+                $result = $idc->GetStudent($param);
+            } catch (SoapFault $e) {
+                /*Вывод в случае проверки*/
+                //print_error('data_error', 'block_cohort1c');
+                //print_object($e);
+            }
+        }
+        return $result;
+    }
+
     public static function GetFormStructure(): array
     {
         $client = self::Connect1C();
@@ -117,20 +182,65 @@ class cohort1c_lib1c
         return array_keys($tree);
     }
 
-    public static function GetGroupsWithInfo(): array
-    {
+    public static function GetGroups(): array {
         $tree = self::GetFormStructure();
+        $list_groups = array();
 
-        $groups_with_info = array();
-
-        foreach ($tree as $faculty => $groups) {
+        foreach ($tree as $groups) {
             foreach ($groups as $group) {
-                $groups_with_info[$group] = array(
-                    'Факультет' => $faculty
-                );
+                array_push($list_groups, $group);
             }
         }
 
-        return $groups_with_info;
+        return $list_groups;
+    }
+
+    /**
+     * @param string $group - группа в которой состоят студенты (Например: "ПИ-33")
+     * @param int $period_start - начало учебного года
+     * @param int $period_end - конец учебного года
+     * @return array - массив студентов указанной группы
+     */
+    public static function GetStudentsOfGroup(string $group, int $period_start, int $period_end): array {
+        $client = self::Connect1C();
+
+        if (!$client) {
+            return array();
+        }
+
+        $session = $period_start . ' - ' . $period_end;
+
+        $result = self::GetData($client, array(
+            'group' => $group, // Группа
+            'session' => $session // Учебный год
+        ));
+
+        $students = array();
+
+        if (isset($result->return) && isset($result->return->Students)) {
+            $students = $result->return->Students;
+        }
+
+        return $students;
+    }
+
+    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end): \stdClass
+    {
+        $students = self::GetStudentsOfGroup($group, $period_start, $period_end);
+        $group_fields = array('Факультет', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация');
+
+        $group_with_info = new \stdClass();
+
+        if (count($students)) {
+            $student = $students[0];
+
+            foreach ($student as $field => $value) {
+                if (in_array($field, $group_fields)) {
+                    $group_with_info->$field = trim($value);
+                }
+            }
+        }
+
+        return $group_with_info;
     }
 }

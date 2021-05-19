@@ -104,34 +104,10 @@ $FACULTIES = cohort1c_lib1c::GetFaculties();
         'Уровень подготовки' => 'Академический бакалавр',
         'Форма обучения' => 'Очная',
         'Год поступления' => '2018 год'
-    ],
-    'МР-14' => [
-        'Факультет' => 'Физико-математический',
-        'Направление подготовки' => 'Математика',
-        'Профиль' => 'Физика конденсированного состояния вещества',
-        'Уровень подготовки' => 'Академический бакалавр',
-        'Форма обучения' => 'Очная',
-        'Год поступления' => '2020 год'
-    ],
-    'СИ-35' => [
-        'Факультет' => 'Физико-математический',
-        'Направление подготовки' => 'Прикладная математика и информатика',
-        'Профиль' => 'Физика конденсированного состояния вещества',
-        'Уровень подготовки' => 'Академический бакалавр',
-        'Форма обучения' => 'Очная',
-        'Год поступления' => '2018 год'
-    ],
-    'ОС-23' => [
-        'Факультет' => 'Физико-математический',
-        'Направление подготовки' => 'Прикладная математика и информатика',
-        'Профиль' => 'Физика конденсированного состояния вещества',
-        'Уровень подготовки' => 'Академический бакалавр',
-        'Форма обучения' => 'Очная',
-        'Год поступления' => '2019 год'
     ]
 );*/
 
-$GROUPS = cohort1c_lib1c::GetGroupsWithInfo();
+$GROUPS = cohort1c_lib1c::GetGroups();
 
 if (!$iid) {
     $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
@@ -204,7 +180,7 @@ if (!$iid) {
 
 
     $selectaction_form = new um_select_selectaction_form($baseurl, array(
-        STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, array_keys($GROUPS)
+        STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS
     ));
 
     if ($selectaction_form->is_cancelled()) {
@@ -246,7 +222,11 @@ if (!$iid) {
                 $filecolumns[$key] = mb_convert_case($filecolumn , MB_CASE_TITLE);
             }
 
-            $header = $GROUPS[$formdata->group];
+            $period_end = date("Y");
+            $period_start = $period_end - 1;
+
+            $group_info = cohort1c_lib1c::GetGroupWithInfo($formdata->group, $period_start, $period_end);
+            $header = uploaduser::form_excel_header_from_group_info($group_info, $period_end);
 
             $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
         }
