@@ -6,7 +6,7 @@ use moodle_url, SoapClient, SoapFault;
 
 class cohort1c_lib1c
 {
-    public static function Connect1C()
+    public static function Connect1C(): SoapClient
     {
         $ini = parse_ini_file(new moodle_url('../conf.ini'), true);
         $soap = $ini["soap"];
@@ -43,7 +43,8 @@ class cohort1c_lib1c
     /**
      * Преобразовать структуру факультетов и групп
      */
-    public static function FormStructure($structure){
+    public static function FormStructure($structure): array
+    {
         //сортировка списка по факультетм и группам
         usort($structure, function ($a, $b){
             $encoding = mb_internal_encoding();
