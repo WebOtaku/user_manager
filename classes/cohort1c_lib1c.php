@@ -228,7 +228,7 @@ class cohort1c_lib1c
     public static function GetGroupWithInfo(string $group, int $period_start, int $period_end): \stdClass
     {
         $students = self::GetStudentsOfGroup($group, $period_start, $period_end);
-        $group_fields = array('Факультет', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация');
+        $group_fields = array('Факультет', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация', 'УровеньПодготовки');
 
         $group_with_info = new \stdClass();
 

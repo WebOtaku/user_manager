@@ -462,7 +462,7 @@ class uploaduser
                     $excel_header['Направление подготовки'] = $value;
                     break;
                 case 'Специализация':
-                    $keyword = 'программа';
+                    /*$keyword = 'программа';
                     $pos_open_parenthesis = strrpos($value, '(' . $keyword);
                     $pos_closing_parenthesis = strrpos($value, ')',
                         ($pos_open_parenthesis === false)? 0 : $pos_open_parenthesis + 1);
@@ -484,8 +484,11 @@ class uploaduser
                                 }
                             }
                         }
-                    }
-
+                    }*/
+                    $excel_header['Профиль'] = $value;
+                    break;
+                case 'УровеньПодготовки':
+                    $excel_header['Уровень подготовки'] = $value;
                     break;
                 case 'ФормаОбучения':
                     $excel_header['Форма обучения'] = $value;
