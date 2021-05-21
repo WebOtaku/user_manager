@@ -15,6 +15,7 @@ $iid         = optional_param('iid', '', PARAM_INT);
 $previewrows = optional_param('previewrows', null, PARAM_INT);
 $delimiter_name = optional_param('delimiter_name', null, PARAM_TEXT);
 $email_required = optional_param('email_required', null, PARAM_INT);
+$upload_method = optional_param('upload_method', null, PARAM_TEXT);
 
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
 
@@ -69,6 +70,7 @@ $usernamekey = 'username';
 $emailkey = 'email';
 $facultykey = 'faculty';
 $dnamekey = 'dname';
+$authkey = 'auth';
 
 $emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
 
@@ -83,16 +85,15 @@ $db_userfields = $DB->get_records("block_user_manager_ufields");
 $REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
 //$AD_FIELDS = ['lastname', 'firstname', 'middlename', 'username', 'password', 'email', 'faculty'];
 
-if ($email_required)
+if ($email_required) {
     array_push($REQUIRED_FIELDS, 'email');
+}
 
 $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
-
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
 // Заглушка. TODO: Получать данные из 1с
 //$FACULTIES = FACULTIES;
-
 $FACULTIES = cohort1c_lib1c::GetFaculties();
 
 // Заглушка. TODO: Получать данные из 1с
@@ -106,8 +107,32 @@ $FACULTIES = cohort1c_lib1c::GetFaculties();
         'Год поступления' => '2018 год'
     ]
 );*/
-
 $GROUPS = cohort1c_lib1c::GetGroups();
+
+/*$upload_method_form = new um_select_upload_method_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS));
+if (!$upload_method) {
+    if ($formdata = $upload_method_form->get_data()) {
+        if (isset($formdata->upload_method) && !empty($formdata->upload_method)) {
+            $upload_method = $formdata->upload_method;
+            $baseurl->param('upload_method', $upload_method);
+
+            if ($upload_method === '2') {
+                if (isset($formdata->previewrows) && !empty($formdata->previewrows)) {
+                    $previewrows = $formdata->previewrows;
+                    $baseurl->param('previewrows', $previewrows);
+                }
+            }
+
+            redirect($baseurl);
+        }
+    } else {
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+        echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+        $upload_method_form->display();
+        echo $OUTPUT->footer();
+    }
+}*/
 
 if (!$iid) {
     $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
@@ -178,10 +203,7 @@ if (!$iid) {
     $cir = new csv_import_reader($iid, 'uploaduser');
     $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
-
-    $selectaction_form = new um_select_selectaction_form($baseurl, array(
-        STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS
-    ));
+    $selectaction_form = new um_select_action_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS));
 
     if ($selectaction_form->is_cancelled()) {
         $cir->cleanup(true);
@@ -231,6 +253,10 @@ if (!$iid) {
             $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
         }
 
+        if ($action === "1" || $action === "4") {
+            list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
+        }
+
         if ($action === "1" || $action === "2" || $action === "4") {
             // Если выбран экспорт в формате .csv
             $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
@@ -269,10 +295,13 @@ if (!$iid) {
                 var previewrowsId = 'id_previewrows';
                 var facultyId = 'id_faculty';
                 var groupId = 'id_group';
+                var authId = 'id_auth';
             
                 if ($('#id_action').val() !== '2') elHide(facultyId);
                 if ($('#id_action').val() !== '3') elHide(groupId);
                 if ($('#id_action').val() !== '4') elHide(previewrowsId);
+                if ($('#id_action').val() !== '1' && 
+                    $('#id_action').val() !== '4') elHide(authId);
     
                 $('#id_action').change(function() {
                     if ($('#id_action').val() === '2') elShow(facultyId); 
@@ -283,6 +312,10 @@ if (!$iid) {
                     
                     if ($('#id_action').val() === '4') elShow(previewrowsId); 
                     else elHide(previewrowsId);
+                    
+                    if ($('#id_action').val() === '1' ||
+                        $('#id_action').val() === '4') elShow(authId); 
+                    else elHide(authId);
                 });
             });"
         );

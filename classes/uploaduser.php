@@ -407,6 +407,20 @@ class uploaduser
         return [$newusers, $newfilecolumns];
     }
 
+    public static function prepare_data_for_upload(array $users, array $filecolumns, stdClass $formdata, array $strings = ['authkey' => '']): array
+    {
+        foreach ($users as $user) {
+            if (isset($formdata->{$strings['authkey']}) && !empty($formdata->{$strings['authkey']})) {
+                $user->{$strings['authkey']} = $formdata->{$strings['authkey']};
+                if (!in_array($strings['authkey'], $filecolumns)) {
+                    array_push($filecolumns, $strings['authkey']);
+                }
+            }
+        }
+
+        return [$users, $filecolumns];
+    }
+
     public static function get_field_helper(array $stdfields, array $stdfields_assoc, string $field) {
         $key = array_search($field, $stdfields);
         return ($key >= 0)? $stdfields_assoc[$key] : '';
