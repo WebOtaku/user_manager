@@ -15,7 +15,7 @@ class um_select_upload_method_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields) = $this->_customdata;
+        list($systemfields, $helpfields, $required_fields, $groups) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -27,17 +27,21 @@ class um_select_upload_method_form extends moodleform {
         $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
 
         $choices = array(
-            1 => "Upload from file",
-            2 => "Upload from 1C"
+            '1c' => get_string('upfrom1c', 'block_user_manager'),
+            'file' => get_string('upfromfile', 'block_user_manager'),
         );
-        $mform->addElement('select', 'upload_method', "Upload method", $choices);
+        $mform->addElement('select', 'upload_method', get_string('uploadmethod', 'block_user_manager'), $choices);
         $mform->setType('upload_method', PARAM_INT);
+
+        $choices = array_combine($groups, $groups);
+        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->setType('group', PARAM_TEXT);
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
-        $this->add_action_buttons(true, get_string('complete', 'block_user_manager'));
+        $this->add_action_buttons(false, get_string('complete', 'block_user_manager'));
     }
 }
 
@@ -97,7 +101,7 @@ class um_admin_uploaduser_form extends moodleform {
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
-        $this->add_action_buttons(false, get_string('upload'));
+        $this->add_action_buttons(true, get_string('upload'));
     }
 }
 
@@ -107,7 +111,7 @@ class um_select_action_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields, $faculties, $groups) = $this->_customdata;
+        list($systemfields, $helpfields, $required_fields, $faculties, $groups, $from, $group) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -131,39 +135,17 @@ class um_select_action_form extends moodleform {
         $mform->addElement('select', 'faculty', get_string('faculty', 'block_user_manager'), $choices);
         $mform->setType('faculty', PARAM_TEXT);
 
+        // $groups = array_keys($groups); // TODO: Заглушка
+
         $choices = array_combine($groups, $groups);
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
         $mform->setType('group', PARAM_TEXT);
 
-        $auths = core_component::get_plugin_list('auth');
-        $enabled = get_string('pluginenabled', 'core_plugin');
-        $disabled = get_string('plugindisabled', 'core_plugin');
-        $authoptions = array($enabled => array(), $disabled => array());
-        $cannotchangepass = array();
-        $cannotchangeusername = array();
-        $userid = -1;
-        foreach ($auths as $auth => $unused) {
-            $authinst = get_auth_plugin($auth);
-
-            if (!$authinst->is_internal()) {
-                $cannotchangeusername[] = $auth;
-            }
-
-            $passwordurl = $authinst->change_password_url();
-            if (!($authinst->can_change_password() && empty($passwordurl))) {
-                if ($userid < 1 and $authinst->is_internal()) {
-                    // This is unlikely but we can not create account without password
-                    // when plugin uses passwords, we need to set it initially at least.
-                } else {
-                    $cannotchangepass[] = $auth;
-                }
-            }
-            if (is_enabled_auth($auth)) {
-                $authoptions[$enabled][$auth] = get_string('pluginname', "auth_{$auth}");
-            } else {
-                $authoptions[$disabled][$auth] = get_string('pluginname', "auth_{$auth}");
-            }
+        if ($from === '1c') {
+            $mform->setDefault('group', $group);
         }
+
+        $authoptions = uploaduser::get_auth_selector_options();
 
         $mform->addElement('selectgroups', 'auth', get_string('chooseauthmethod', 'auth'), $authoptions);
         $mform->addHelpButton('auth', 'chooseauthmethod', 'auth');

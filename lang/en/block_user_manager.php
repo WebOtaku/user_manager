@@ -34,6 +34,11 @@ $string['exportxls'] = 'Export in .xls (Excel) format';
 $string['selectaction'] = 'Select action';
 $string['complete'] = 'Complete';
 
+$string['upfromfile'] = 'Upload from file';
+$string['upfrom1c'] = 'Upload from 1C';
+
+$string['uploadmethod'] = 'Upload method';
+
 $string['previewheader'] = 'Preview';
 
 // Сообщения/ошибки "Форма загрузки пользователей"
@@ -46,8 +51,9 @@ $string['empty'] = 'Empty';
 $string['norequiredfields'] = 'The file is missing required fields: {$a->missingfields}. Add a field(s) to the file, and if the field name in the file differs from the standard one, add the appropriate associations to the table of valid fields.';
 $string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}. These fields are required to register users in the system.';
 $string['emptyfile'] = 'File contains no entries.';
-$string['emptyfaculty'] = 'Faculty must be specified.';
-$string['emptygroup'] = 'Group must be specified.';
+$string['emptygroup'] = 'There is no information about the composition of the group';
+$string['nofacultyspecified'] = 'Faculty must be specified.';
+$string['nogroupspecified'] = 'Group must be specified.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 

@@ -240,4 +240,16 @@ class service
             <div class="um-alert-link"><a href="'.$baseurl.'">'.get_string('continue').'</a></div>
         ';
     }
+
+    public static function filter_objs(array $arr_objs, string $field, string $value) {
+        $new_arr_objs = array();
+
+        foreach ($arr_objs as $key => $obj) {
+            if (isset($obj->$field) && $obj->$field === $value) {
+                $new_arr_objs[$key] = $obj;
+            }
+        }
+
+        return $new_arr_objs;
+    }
 }

@@ -6,7 +6,7 @@ require_once($CFG->libdir.'/csvlib.class.php');
 require_once($CFG->libdir.'/excellib.class.php');
 
 use csv_import_reader, csv_export_writer,
-    MoodleExcelWorkbook, moodle_url, core_text, stdClass;
+    MoodleExcelWorkbook, moodle_url, core_text, stdClass, core_component;
 
 class uploaduser
 {
@@ -260,7 +260,7 @@ class uploaduser
         return $instruction;
     }
 
-    public static function get_userlist(csv_import_reader $cir, array $stdfields, array $prffields,
+    public static function get_userlist_from_cir(csv_import_reader $cir, array $stdfields, array $prffields,
         moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = ''): array
     {
         global $USER;
@@ -323,6 +323,41 @@ class uploaduser
         $cir->close();
 
         return array($users, $filecolumns);
+    }
+
+    public static function get_userlist_from_1c(array $users1c, string $emptystr = ''): array {
+        $users = array();
+
+        foreach ($users1c as $user) {
+            $newuser = new stdClass();
+            $newuser->lastname = $emptystr;
+            $newuser->firstname = $emptystr;
+            $newuser->middlename = $emptystr;
+            $newuser->username = $emptystr;
+
+            foreach ($user as $key => $value) {
+                switch ($key) {
+                    case 'Фамилия':
+                        $newuser->lastname = trim($value);
+                        break;
+                    case 'Имя':
+                        $newuser->firstname = trim($value);
+                        break;
+                    case 'Отчество':
+                        $newuser->middlename = trim($value);
+                        break;
+                    case 'ЗачетнаяКнига':
+                        $newuser->username = 'st'.trim($value);
+                        break;
+                }
+            }
+
+            $newuser->password = service::generate_password($newuser, $emptystr);
+
+            $users[] = $newuser;
+        }
+
+        return $users;
     }
 
     public static function get_stdfields(array $db_userfields, array $required_fields = []): array
@@ -508,7 +543,13 @@ class uploaduser
                     $excel_header['Форма обучения'] = $value;
                     break;
                 case 'Курс':
-                    $excel_header['Год поступления'] = ($period_end - COURSE_STRING[$value]) . ' год';
+                    $value = mb_convert_case($value, MB_CASE_LOWER);
+                    if (isset(COURSE_STRING[$value])) {
+
+                        $excel_header['Год поступления'] = ($period_end - COURSE_STRING[$value]) . ' год';
+                    } else {
+                        $excel_header['Год поступления'] = '';
+                    }
                     break;
             }
         }
@@ -555,5 +596,40 @@ class uploaduser
             $workbook->close();
 
         return $workbook;
+    }
+
+    public static function get_auth_selector_options(): array
+    {
+        $auths = core_component::get_plugin_list('auth');
+        $enabled = get_string('pluginenabled', 'core_plugin');
+        $disabled = get_string('plugindisabled', 'core_plugin');
+        $authoptions = array($enabled => array(), $disabled => array());
+        $cannotchangepass = array();
+        $cannotchangeusername = array();
+        $userid = -1;
+        foreach ($auths as $auth => $unused) {
+            $authinst = get_auth_plugin($auth);
+
+            if (!$authinst->is_internal()) {
+                $cannotchangeusername[] = $auth;
+            }
+
+            $passwordurl = $authinst->change_password_url();
+            if (!($authinst->can_change_password() && empty($passwordurl))) {
+                if ($userid < 1 and $authinst->is_internal()) {
+                    // This is unlikely but we can not create account without password
+                    // when plugin uses passwords, we need to set it initially at least.
+                } else {
+                    $cannotchangepass[] = $auth;
+                }
+            }
+            if (is_enabled_auth($auth)) {
+                $authoptions[$enabled][$auth] = get_string('pluginname', "auth_{$auth}");
+            } else {
+                $authoptions[$disabled][$auth] = get_string('pluginname', "auth_{$auth}");
+            }
+        }
+
+        return $authoptions;
     }
 }

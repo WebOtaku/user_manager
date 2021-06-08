@@ -34,6 +34,11 @@ $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
 $string['selectaction'] = 'Выбор действия';
 $string['complete'] = 'Выполнить';
 
+$string['upfromfile'] = 'Загрузка из файла';
+$string['upfrom1c'] = 'Загрузка из 1С';
+
+$string['uploadmethod'] = 'Способ загрузки';
+
 $string['previewheader'] = 'Предпросмотр';
 
 // Сообщения/ошибки "Форма загрузки пользователей"
@@ -46,8 +51,9 @@ $string['empty'] = 'Пусто';
 $string['norequiredfields'] = 'В файле отсутствуют необходимые поля: {$a->missingfields}. Добавьте поле(-я) в файл и в случае если название поля в файле отличается от стандартного внесите соотвествующие ассоциации в таблицу допустимых полей.';
 $string['requiredfields'] = 'Обязательные поля (включая "еmail ({$a->emailhelper})", если выбрано): {$a->requiredfields}. Данные поля необходимы для регистрации пользователей в системе.';
 $string['emptyfile'] = 'Файл не содержит записей.';
-$string['emptyfaculty'] = 'Должен быть указан факультет.';
-$string['emptygroup'] = 'Должна быть указана группа.';
+$string['emptygroup'] = 'Отсутствует информация о составе группы.';
+$string['nofacultyspecified'] = 'Должен быть указан факультет.';
+$string['nogroupspecified'] = 'Должна быть указана группа.';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

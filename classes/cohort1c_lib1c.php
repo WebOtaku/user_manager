@@ -33,7 +33,7 @@ class cohort1c_lib1c
                 $result = $idc->GetStructure();
                 return $result;
             } catch (SoapFault $e) {
-                echo get_string('data_error', 'block_cohort1c');
+                // echo get_string('data_error', 'block_cohort1c');
                 /*Вывод в случае проверки*/
                 //print_object($e);
             }
@@ -202,7 +202,7 @@ class cohort1c_lib1c
      * @param int $period_end - конец учебного года
      * @return array - массив студентов указанной группы
      */
-    public static function GetStudentsOfGroup(string $group, int $period_start, int $period_end): array {
+    public static function GetStudentsOfGroup(string $group, int $period_start, int $period_end, string $status): array {
         $client = self::Connect1C();
 
         if (!$client) {
@@ -221,13 +221,37 @@ class cohort1c_lib1c
         if (isset($result->return) && isset($result->return->Students)) {
             $students = $result->return->Students;
         }
+;
 
-        return $students;
+        $students = self::SliceLastStudents($students);
+        return service::filter_objs($students, 'Состояние', $status);
     }
 
-    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end): \stdClass
+    public static function SliceLastStudents(array $students): array
     {
-        $students = self::GetStudentsOfGroup($group, $period_start, $period_end);
+        $tmp_students = array();
+        $new_students = array();
+
+        foreach ($students as $student) {
+            if (!isset($tmp_students[$student->ЗачетнаяКнига])) {
+                $tmp_students[$student->ЗачетнаяКнига] = $student;
+                $new_students[] = $student;
+            }
+        }
+
+        return $new_students;
+    }
+
+    /**
+     * @param string $group - группа в которой состоят студенты (Например: "ПИ-33")
+     * @param int $period_start - начало учебного года
+     * @param int $period_end - конец учебного года
+     * @param string $status
+     * @return \stdClass - массив студентов указанной группы
+     */
+    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end, string $status): \stdClass
+    {
+        $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $status);
         $group_fields = array('Факультет', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация', 'УровеньПодготовки');
 
         $group_with_info = new \stdClass();

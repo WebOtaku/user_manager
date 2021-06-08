@@ -340,7 +340,7 @@ else if ($func === 'remove_manual_enrol_user' && confirm_sesskey()) {
             $messagedata->coursename = $course->fullname;
 
             echo $OUTPUT->confirm(
-                get_string('removemanualenroluser_warning', 'block_user_manager', $messagedata), // TODO: #2
+                get_string('removemanualenroluser_warning', 'block_user_manager', $messagedata),
                 $deletebutton, $baseurl
             );
             echo $OUTPUT->footer();
