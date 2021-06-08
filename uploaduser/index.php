@@ -106,11 +106,11 @@ if ($email_required) {
 $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
 $PRF_FIELDS = uploaduser::get_profile_fields();
 
-// Заглушка. TODO: Получать данные из 1с
+// TODO: Заглушка.  Получать данные из 1с
 //$FACULTIES = FACULTIES;
 $FACULTIES = cohort1c_lib1c::GetFaculties();
 
-// Заглушка. TODO: Получать данные из 1с
+// TODO: Заглушка. Получать данные из 1с
 /*$GROUPS = array(
     'ПИ-33' => [
         'Факультет' => 'Физико-математический',
@@ -123,8 +123,6 @@ $FACULTIES = cohort1c_lib1c::GetFaculties();
 );*/
 
 $GROUPS = cohort1c_lib1c::GetGroups();
-
-//print_object(cohort1c_lib1c::GetGroups());
 
 $period_end = date("Y");
 $period_start = $period_end - 1;
@@ -173,7 +171,9 @@ if (!$upload_method) {
 
 if ($upload_method === 'file') {
     if (!$iid) {
-        $uploaduser_form = new um_admin_uploaduser_form($baseurl, array($STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS));
+        $uploaduser_form = new um_admin_uploaduser_form($baseurl, array(
+            $STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS
+        ));
 
         if ($uploaduser_form->is_cancelled()) {
             $baseurl->remove_params(['upload_method']);
@@ -247,14 +247,17 @@ if ($upload_method === 'file') {
         $cir = new csv_import_reader($iid, 'uploaduser');
         $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
-        $selectaction_form = new um_select_action_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS, $from, $group));
+        $selectaction_form = new um_select_action_form($baseurl, array(
+            STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS,
+            $from, $group, $period_start, $period_end
+        ));
 
         if ($selectaction_form->is_cancelled()) {
             $cir->cleanup(true);
-            $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required']);
+            $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required', 'group']);
 
             if ($from === '1c') {
-                $baseurl->remove_params(['group', 'upload_method', 'from']);
+                $baseurl->remove_params(['upload_method', 'from']);
             }
 
             redirect($baseurl);
@@ -402,8 +405,8 @@ if ($upload_method === '1c') {
 
             $urlparams = $urlparams + array(
                 'iid' => $iid,
-                'previewrows' => $previewrows,
-                'from' => '1c'
+                'from' => '1c',
+                'delimiter_name' => $delimiter_name
             );
 
             $urlparams['upload_method'] = 'file';

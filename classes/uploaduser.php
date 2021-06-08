@@ -28,7 +28,7 @@ class uploaduser
 
         // test columns
         $processed = array();
-        foreach ($columns as $key=>$unused) {
+        foreach ($columns as $key => $unused) {
             $field = $columns[$key];
             $field = trim($field);
             $lcfield = core_text::strtolower($field);
