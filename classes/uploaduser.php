@@ -154,8 +154,20 @@ class uploaduser
 
         $instruction = '
             <div class="um-instruction">
+                <h5>Форма выбора способа загрузки</h5>
+                <ol class="um-list um-list-ol">
+                    <li class="um-list__item">
+                        <p>Выберите способок загрузки пользователей: <b>из файла</b> или <b>из 1С</b></p>
+                    </li>
+                    <li class="um-list__item">
+                        <p>Если вы выбрали <b>из файла</b>, то просто нажмите кнопку <b>Далее</b></p>
+                    </li>
+                    <li class="um-list__item">
+                        <p>Если вы выбрали <b>из 1c</b>, то вам нужно будет указать группу и кол-во строк предпросмотра, а затем нажать кнопку <b>Далее</b></p>
+                    </li>
+                </ol>
                 <h5>Работа с таблицей "Допустимые поля"</h5>
-                 <ol class="um-list um-list-ol">
+                <ol class="um-list um-list-ol">
                     <li class="um-list__item">
                         <p>Если таблица пуста или вам необходимо добавить новую запись нажмите на кнокпу "Добавить"</p>
                     </li>
@@ -266,8 +278,9 @@ class uploaduser
         global $USER;
 
         $filecolumns = self::um_validate_user_upload_columns($cir, $stdfields, $prffields, $baseurl, $passwordkey);
-        if (empty($emptystr))
-            $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
+
+        //if (empty($emptystr))
+            //$emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
  
         $cir->init();
 
@@ -336,6 +349,8 @@ class uploaduser
             $newuser->username = $emptystr;
 
             foreach ($user as $key => $value) {
+                if (empty($value)) $value = $emptystr;
+
                 switch ($key) {
                     case 'Фамилия':
                         $newuser->lastname = trim($value);
@@ -511,29 +526,6 @@ class uploaduser
                     $excel_header['Направление подготовки'] = $value;
                     break;
                 case 'Специализация':
-                    /*$keyword = 'программа';
-                    $pos_open_parenthesis = strrpos($value, '(' . $keyword);
-                    $pos_closing_parenthesis = strrpos($value, ')',
-                        ($pos_open_parenthesis === false)? 0 : $pos_open_parenthesis + 1);
-
-                    $excel_header['Профиль'] = trim(substr($value, 0,
-                        ($pos_open_parenthesis === false)? strlen($value) : $pos_open_parenthesis));
-                    if ($pos_open_parenthesis !== false && $pos_closing_parenthesis !== false) {
-                        $training_program = explode(' ', trim(substr($value,
-                            $pos_open_parenthesis + 1,
-                            $pos_closing_parenthesis - ($pos_open_parenthesis + 1)
-                        )));
-                        if ($training_program) {
-                            $excel_header['Уровень подготовки'] = mb_convert_case($training_program[0], MB_CASE_TITLE);
-                            foreach ($training_program as $key => $part) {
-                                if ($key === 0) {
-                                    $excel_header['Уровень подготовки'] = mb_convert_case($part, MB_CASE_TITLE);
-                                } else {
-                                    $excel_header['Уровень подготовки'] .= ' ' . $part;
-                                }
-                            }
-                        }
-                    }*/
                     $excel_header['Профиль'] = $value;
                     break;
                 case 'УровеньПодготовки':

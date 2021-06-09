@@ -34,6 +34,8 @@ $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
 $string['selectaction'] = 'Выбор действия';
 $string['complete'] = 'Выполнить';
 
+$string['further'] = 'Далее';
+
 $string['upfromfile'] = 'Загрузка из файла';
 $string['upfrom1c'] = 'Загрузка из 1С';
 

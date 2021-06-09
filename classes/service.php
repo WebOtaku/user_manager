@@ -198,8 +198,8 @@ class service
 
     public static function generate_password(stdClass $user, string $emptystr = ''): string
     {
-        if (empty($emptystr))
-            $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));
+        /*if (empty($emptystr))
+            $emptystr = mb_strtolower(get_string('empty', 'block_user_manager'));*/
 
         $symbols = array('#', '$', '%', '&');
         $en_alphabet_capitals = range('A', 'Z');
@@ -213,6 +213,14 @@ class service
             if (isset($user->$initials_field) && !empty($user->$initials_field) && $user->$initials_field !== $emptystr) {
                 $initial = strtolower(transliteration::translit_ru_en($user->$initials_field));
                 $initials .= $initial[0];
+            } else {
+                if ($initials_field === 'firstname') {
+                    $initials .= 'i';
+                }
+
+                if ($initials_field === 'middlename') {
+                    $initials .= 'o';
+                }
             }
         }
 

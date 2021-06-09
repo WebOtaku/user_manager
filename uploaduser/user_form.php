@@ -42,7 +42,7 @@ class um_select_upload_method_form extends moodleform {
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
-        $this->add_action_buttons(false, get_string('complete', 'block_user_manager'));
+        $this->add_action_buttons(false, get_string('further', 'block_user_manager'));
     }
 }
 
@@ -102,7 +102,7 @@ class um_admin_uploaduser_form extends moodleform {
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
         $mform->setType('previewrows', PARAM_INT);
 
-        $this->add_action_buttons(true, get_string('upload'));
+        $this->add_action_buttons(true, get_string('further', 'block_user_manager'));
     }
 }
 

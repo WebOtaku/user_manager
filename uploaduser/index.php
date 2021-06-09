@@ -86,7 +86,8 @@ $facultykey = 'faculty';
 $dnamekey = 'dname';
 $authkey = 'auth';
 
-$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
+//$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
+$emptystr = '';
 
 $strings = [
     'emptystring' => $emptystr, 'emailkey' => $emailkey, 'usernamekey' => $usernamekey,
@@ -406,6 +407,7 @@ if ($upload_method === '1c') {
             $urlparams = $urlparams + array(
                 'iid' => $iid,
                 'from' => '1c',
+                'previewrows' =>  $previewrows,
                 'delimiter_name' => $delimiter_name
             );
 
