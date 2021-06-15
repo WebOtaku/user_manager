@@ -177,11 +177,12 @@ if ($upload_method === 'file') {
         ));
 
         if ($uploaduser_form->is_cancelled()) {
-            $baseurl->remove_params(['upload_method']);
+            $baseurl->remove_params(['upload_method', 'previewrows', 'delimiter_name']);
             redirect($baseurl);
         } else if ($formdata = $uploaduser_form->get_data()) {
-            $iid = csv_import_reader::get_new_iid('uploaduser');
-            $cir = new csv_import_reader($iid, 'uploaduser');
+            //TODO: изменение названия каталога для временного файла для устранения ошибки с доступок к временному файлу
+            $iid = csv_import_reader::get_new_iid('uploaduser_tmp');
+            $cir = new csv_import_reader($iid, 'uploaduser_tmp');
 
             $content = $uploaduser_form->get_file_content('userfile');
 
@@ -245,12 +246,18 @@ if ($upload_method === 'file') {
             echo $OUTPUT->footer();
         }
     } else {
-        $cir = new csv_import_reader($iid, 'uploaduser');
+        $cir = new csv_import_reader($iid, 'uploaduser_tmp');
         $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
+
+        $group_info = array();
+
+        if ($from === '1c') {
+            $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+        }
 
         $selectaction_form = new um_select_action_form($baseurl, array(
             STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS,
-            $from, $group, $period_start, $period_end
+            $from, $group, $group_info
         ));
 
         if ($selectaction_form->is_cancelled()) {
@@ -279,7 +286,7 @@ if ($upload_method === 'file') {
                     uploaduser::print_error(get_string('nofacultyspecified', 'block_user_manager'), $baseurl);
                 }
 
-                list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings);
+                list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings, $group_info);
             }
 
             if ($action === "3") {
@@ -287,16 +294,25 @@ if ($upload_method === 'file') {
                     uploaduser::print_error(get_string('nogroupspecifed', 'block_user_manager'), $baseurl);
                 }
 
+                $group_info = cohort1c_lib1c::GetGroupWithInfo($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+
+                if (!count($group_info)) {
+                    uploaduser::print_error(get_string('nogroupinfo', 'block_user_manager'), $baseurl);
+                }
+
                 // Если выбран экспорт в формате .xls
                 $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . $formdata->group . '_' . gmdate("Ymd_Hi") . '.xls');
                 $worksheet_name = get_string('users');
+
+                $filecolumns = $REQUIRED_FIELDS;
+                array_push($filecolumns, 'password');
+
                 $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
 
                 foreach ($filecolumns as $key => $filecolumn) {
                     $filecolumns[$key] = mb_convert_case($filecolumn, MB_CASE_TITLE);
                 }
 
-                $group_info = cohort1c_lib1c::GetGroupWithInfo($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
                 //$group_info = (object)$GROUPS[$formdata->group]; // TODO: Заглушка
                 $header = uploaduser::form_excel_header_from_group_info($group_info, $period_end);
 
@@ -381,12 +397,13 @@ if ($upload_method === '1c') {
         $users1c = cohort1c_lib1c::GetStudentsOfGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
         $users = uploaduser::get_userlist_from_1c($users1c, $emptystr);
 
-        $filecolumns = array('lastname', 'firstname', 'middlename', 'username', 'password');
+        $filecolumns = $REQUIRED_FIELDS;
+        array_push($filecolumns, 'password');
 
         if (count($users)) {
             // TODO: возможно стоит сделать в виде одной функции
-            $iid = csv_import_reader::get_new_iid('uploaduser');
-            $cir = new csv_import_reader($iid, 'uploaduser');
+            $iid = csv_import_reader::get_new_iid('uploaduser_tmp');
+            $cir = new csv_import_reader($iid, 'uploaduser_tmp');
             $delimiter_name = 'semicolon';
 
             $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));

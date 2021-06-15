@@ -410,7 +410,7 @@ class uploaduser
 
     public static function prepare_data_for_ad(array $users, array $filecolumns, stdClass $formdata, string $email_domain, array $strings = [
         'emptystring' => '', 'emailkey' => '', 'usernamekey' => '', 'dnamekey' => '',
-        'lastnamekey' => '', 'firstnamekey' => '', 'middlenamekey' => '', 'facultykey' => '']
+        'lastnamekey' => '', 'firstnamekey' => '', 'middlenamekey' => '', 'facultykey' => ''], array $group_info = []
     ): array
     {
         $newusers = array();
@@ -440,7 +440,11 @@ class uploaduser
 
             $newuser->{$strings['dnamekey']} = trim($newuser->{$strings['dnamekey']});
 
-            $newuser->{$strings['facultykey']} = trim($formdata->faculty);
+            if (isset($group_info['Факультет'])) {
+                $newuser->{$strings['facultykey']} = $group_info['Факультет'];
+            } else {
+                $newuser->{$strings['facultykey']} = trim($formdata->faculty);
+            }
 
             $newusers[] = $newuser;
         }
@@ -507,7 +511,7 @@ class uploaduser
         die;
     }
 
-    public static function form_excel_header_from_group_info(stdClass $group_with_info, int $period_end): array {
+    public static function form_excel_header_from_group_info(array $group_with_info, int $period_end): array {
         $excel_header = array(
             'Факультет' => '',
             'Направление подготовки' => '',

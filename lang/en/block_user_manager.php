@@ -53,7 +53,8 @@ $string['empty'] = 'Empty';
 $string['norequiredfields'] = 'The file is missing required fields: {$a->missingfields}. Add a field(s) to the file, and if the field name in the file differs from the standard one, add the appropriate associations to the table of valid fields.';
 $string['requiredfields'] = 'Required fields (including "еmail ({$a->emailhelper})", if selected): {$a->requiredfields}. These fields are required to register users in the system.';
 $string['emptyfile'] = 'File contains no entries.';
-$string['emptygroup'] = 'There is no information about the composition of the group';
+$string['emptygroup'] = 'There is no information about the composition of the group.';
+$string['nogroupinfo'] = 'There is no information about the group.';
 $string['nofacultyspecified'] = 'Faculty must be specified.';
 $string['nogroupspecified'] = 'Group must be specified.';
 

@@ -8,6 +8,7 @@ require_once($CFG->dirroot . '/user/editlib.php');
 require_once($CFG->dirroot.'/admin/tool/uploaduser/user_form.php');
 
 use block_user_manager\cohort1c_lib1c;
+use block_user_manager\service;
 use block_user_manager\table, block_user_manager\uploaduser;
 
 class um_select_upload_method_form extends moodleform {
@@ -112,7 +113,8 @@ class um_select_action_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields, $faculties, $groups, $from, $group, $period_start, $period_end) = $this->_customdata;
+
+        list($systemfields, $helpfields, $required_fields, $faculties, $groups, $from, $group, $group_info) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -144,10 +146,24 @@ class um_select_action_form extends moodleform {
 
         if ($from === '1c') {
             $mform->setDefault('group', $group);
-            $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
-            if (isset($group_info->Факультет) && in_array($group_info->Факультет, $faculties)) {
-                $mform->setDefault('faculty', $group_info->Факультет);
+            /*if (isset($group_info['Факультет']) && in_array($group_info['Факультет'], $faculties)) {
+                $mform->setDefault('faculty', $group_info['Факультет']);
+            }*/
+
+            //print_object(service::first_substr_in_strarr('Институт национальной культуры и межкультурной ком', $faculties));
+
+            if (isset($group_info['Факультет']) && count($faculties))
+            {
+                $faculty = $group_info['Факультет'];
+
+                if (in_array($faculty, $faculties))
+                    $mform->setDefault('faculty', $faculty);
+                else if (($key = service::first_in_strarr_substr_of_str($faculties, $faculty)) >= 0)
+                    $mform->setDefault('faculty', $faculties[$key]);
+                else if (($key = service::first_substr_in_strarr($faculty, $faculties)) >= 0)
+                    $mform->setDefault('faculty', $faculties[$key]);
+                else $mform->setDefault('faculty', $faculties[0]);
             }
         }
 

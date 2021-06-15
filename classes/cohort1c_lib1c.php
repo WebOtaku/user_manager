@@ -249,19 +249,19 @@ class cohort1c_lib1c
      * @param string $status
      * @return \stdClass - массив студентов указанной группы
      */
-    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end, string $status): \stdClass
+    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end, string $status): array
     {
         $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $status);
         $group_fields = array('Факультет', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация', 'УровеньПодготовки');
 
-        $group_with_info = new \stdClass();
+        $group_with_info = array();
 
         if (count($students)) {
             $student = $students[0];
 
             foreach ($student as $field => $value) {
                 if (in_array($field, $group_fields)) {
-                    $group_with_info->$field = trim($value);
+                    $group_with_info[$field] = trim($value);
                 }
             }
         }

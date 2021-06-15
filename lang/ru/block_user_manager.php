@@ -54,6 +54,7 @@ $string['norequiredfields'] = 'В файле отсутствуют необхо
 $string['requiredfields'] = 'Обязательные поля (включая "еmail ({$a->emailhelper})", если выбрано): {$a->requiredfields}. Данные поля необходимы для регистрации пользователей в системе.';
 $string['emptyfile'] = 'Файл не содержит записей.';
 $string['emptygroup'] = 'Отсутствует информация о составе группы.';
+$string['nogroupinfo'] = 'Отсутствует информация о группе.';
 $string['nofacultyspecified'] = 'Должен быть указан факультет.';
 $string['nogroupspecified'] = 'Должна быть указана группа.';
 
