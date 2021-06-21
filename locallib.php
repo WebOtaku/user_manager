@@ -67,5 +67,12 @@ define('COURSE_STRING', array(
 
 define('IS_STUDENT_STATUS_1C', 'Является студентом');
 
+// Upload methods
 define('UPLOAD_METHOD_1C', '1c');
 define('UPLOAD_METHOD_FILE', 'file');
+
+// Actions
+define('ACTION_EXPORTCSV', 'exportcsv');
+define('ACTION_EXPORTCSVAD', 'exportcsvad');
+define('ACTION_EXPORTXLS', 'exportxls');
+define('ACTION_UPLOADUSER', 'uploaduser');

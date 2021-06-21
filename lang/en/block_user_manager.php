@@ -43,6 +43,8 @@ $string['uploadmethod'] = 'Upload method';
 
 $string['previewheader'] = 'Preview';
 
+$string['addupdatecohort'] = 'Add/Update cohort';
+
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'System fields must be unique';
 $string['changessaved'] = 'Changes saved';

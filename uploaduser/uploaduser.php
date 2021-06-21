@@ -135,7 +135,7 @@ $basenode->make_active();
 $today = time();
 $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
 
-// array of all valid fields for validation
+/*// array of all valid fields for validation
 $STD_FIELDS = array('id', 'username', 'email',
         'city', 'country', 'lang', 'timezone', 'mailformat',
         'maildisplay', 'maildigest', 'htmleditor', 'autosubscribe',
@@ -150,20 +150,11 @@ $STD_FIELDS = array('id', 'username', 'email',
         'interests',
     );
 // Include all name fields.
-$STD_FIELDS = array_merge($STD_FIELDS, get_all_user_name_fields());
+$STD_FIELDS = array_merge($STD_FIELDS, get_all_user_name_fields());*/
 
-$PRF_FIELDS = uploaduser::get_profile_fields();
+$STD_FIELDS = STD_FIELDS_EN;
 
-/*if ($proffields = $DB->get_records('user_info_field')) {
-    foreach ($proffields as $key => $proffield) {
-        $profilefieldname = 'profile_field_'.$proffield->shortname;
-        $PRF_FIELDS[] = $profilefieldname;
-        // Re-index $proffields with key as shortname. This will be
-        // used while checking if profile data is key and needs to be converted (eg. menu profile field)
-        $proffields[$profilefieldname] = $proffield;
-        unset($proffields[$key]);
-    }
-}*/
+list($PRF_FIELDS, $proffields) = uploaduser::get_profile_fields();
 
 $cir = new csv_import_reader($iid, 'uploaduser');
 $filecolumns = uu_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl);
@@ -206,7 +197,7 @@ if ($action === 'add_cohort') {
                 );
 
                 $createurl = new moodle_url($baseurl, $optionsyes);
-                $createbutton = new single_button($createurl, 'Create', 'get');
+                $createbutton = new single_button($createurl, get_string('add', 'block_user_manager'), 'get');
 
                 $messagedata = new stdClass();
                 $messagedata->cohort_name = $cohort_name;
@@ -232,6 +223,8 @@ if ($action === 'add_cohort') {
 
                 $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
                 if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
+
+                $cir->cleanup(true);
 
                 redirect($returnurl);
             }
@@ -1230,7 +1223,7 @@ if ($formdata = $mform2->is_cancelled()) {
         }
     }
     $cir->close();
-    //$cir->cleanup(true);  //TODO: Раскоментить после окончания разработки
+    //$cir->cleanup(true);
 
     echo $OUTPUT->box_start('boxwidthnarrow boxaligncenter generalbox', 'uploadresults');
     echo '<p>';
@@ -1255,7 +1248,6 @@ if ($formdata = $mform2->is_cancelled()) {
     echo get_string('errors', 'tool_uploaduser').': '.$userserrors.'</p>';
     echo $OUTPUT->box_end();
 
-    // TODO:  Добавление группы делать тут
     // Добавление/обновление группы и запись в неё пользователей
     if (!$userserrors && $group && count($users)) {
         require_capability('moodle/cohort:manage', $context);
@@ -1263,7 +1255,7 @@ if ($formdata = $mform2->is_cancelled()) {
 
         $baseurl->param('action', 'add_cohort');
 
-        echo $OUTPUT->single_button($baseurl, 'Add cohort');
+        echo $OUTPUT->single_button($baseurl, get_string('addupdatecohort', 'block_user_manager'));
     }
 
     if ($bulk) {

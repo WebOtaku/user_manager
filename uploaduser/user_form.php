@@ -114,18 +114,39 @@ class um_uploaduser_action_form extends admin_uploaduser_form2 {
     /**
      * Form definition
      */
-    public function definition() {
+    public function definition()
+    {
         $mform = $this->_form;
-        $data  = (object)$this->_customdata;
+        $data = (object)$this->_customdata;
 
         parent::definition($this, $data);
 
-        // Убираем действие метода disabledIf(...), т.е. делаем так чтобы поле email не блокировалось
+        // В зависимости от версии moodle в стандартной форме загрузки для скрытия полей используется
+        // метод disabledIf(..) или метод hideIf(..)
+
+        // Убираем действие метода disabledIf(..), т.е. делаем так чтобы поле email не блокировалось
         // при определённых значениях поля uutype: UU_USER_ADD_UPDATE и UU_USER_UPDATE
-        $index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE]);
-        unset($mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE][$index]);
-        $index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_UPDATE]);
-        unset($mform->_dependencies['uutype']['eq'][UU_USER_UPDATE][$index]);
+        if (isset($mform->_dependencies)) {
+            if ($index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE])) {
+                unset($mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE][$index]);
+            }
+            if ($index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_UPDATE])) {
+                unset($mform->_dependencies['uutype']['eq'][UU_USER_UPDATE][$index]);
+            }
+        }
+
+        // ИЛИ
+
+        // Убираем действие метода hideIf(..), т.е. делаем так чтобы поле email не блокировалось
+        // при определённых значениях поля uutype: UU_USER_ADD_UPDATE и UU_USER_UPDATE
+        if (isset($mform->_hideifs)) {
+            if ($index = array_search('email', $mform->_hideifs['uutype']['eq'][UU_USER_ADD_UPDATE])) {
+                unset($mform->_hideifs['uutype']['eq'][UU_USER_ADD_UPDATE][$index]);
+            }
+            if ($index = array_search('email', $mform->_hideifs['uutype']['eq'][UU_USER_UPDATE])) {
+                unset($mform->_hideifs['uutype']['eq'][UU_USER_UPDATE][$index]);
+            }
+        }
 
         $mform->addElement('hidden', 'group');
         $mform->setType('group', PARAM_INT);
@@ -153,32 +174,42 @@ class um_select_action_form extends moodleform {
         $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
 
         $choices = array(
-            1 => get_string('exportcsv', 'block_user_manager'),
-            2 => get_string('exportcsvad', 'block_user_manager'),
-            3 => get_string('exportxls', 'block_user_manager'),
-            4 => get_string('uploaduser', 'block_user_manager')
+            ACTION_EXPORTCSV => get_string(ACTION_EXPORTCSV, 'block_user_manager'),
+            ACTION_EXPORTCSVAD => get_string(ACTION_EXPORTCSVAD, 'block_user_manager'),
+            ACTION_EXPORTXLS => get_string(ACTION_EXPORTXLS, 'block_user_manager'),
+            ACTION_UPLOADUSER => get_string(ACTION_UPLOADUSER, 'block_user_manager')
         );
         $mform->addElement('select', 'action', get_string('action'), $choices);
-        $mform->setType('action', PARAM_INT);
+        $mform->setType('action', PARAM_TEXT);
 
         $choices = array_combine($faculties, $faculties);
         $mform->addElement('select', 'faculty', get_string('faculty', 'block_user_manager'), $choices);
+        $mform->hideIf('faculty', 'action', 'eq', ACTION_EXPORTCSV);
+        $mform->hideIf('faculty', 'action', 'eq', ACTION_EXPORTXLS);
+        $mform->hideIf('faculty', 'action', 'eq', ACTION_UPLOADUSER);
         $mform->setType('faculty', PARAM_TEXT);
 
         // $groups = array_keys($groups); // TODO: Заглушка
 
         $choices = array_combine($groups, $groups);
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
+        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
+        //$mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
         $mform->setType('group', PARAM_TEXT);
 
         if ($from === UPLOAD_METHOD_1C) {
-            $mform->setDefault('group', $group);
+            if ($group) {
+                if (in_array($group, $groups))
+                    $mform->setDefault('group', $group);
+            } else {
+                if (count($groups))
+                    $mform->setDefault('group', $groups[0]);
+            }
 
             /*if (isset($group_info['Факультет']) && in_array($group_info['Факультет'], $faculties)) {
                 $mform->setDefault('faculty', $group_info['Факультет']);
             }*/
-
-            //print_object(service::first_substr_in_strarr('Институт национальной культуры и межкультурной ком', $faculties));
 
             if (isset($group_info['Факультет']) && count($faculties))
             {
@@ -194,13 +225,11 @@ class um_select_action_form extends moodleform {
             }
         }
 
-        // TODO: auth есть на стандартной форме загрузки пользователей
-        //$authoptions = uploaduser::get_auth_selector_options();
-        /*$mform->addElement('selectgroups', 'auth', get_string('chooseauthmethod', 'auth'), $authoptions);
-        $mform->addHelpButton('auth', 'chooseauthmethod', 'auth');*/
-
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
+        $mform->hideIf('previewrows', 'action', 'eq', ACTION_EXPORTCSV);
+        $mform->hideIf('previewrows', 'action', 'eq', ACTION_EXPORTCSVAD);
+        $mform->hideIf('previewrows', 'action', 'eq', ACTION_EXPORTXLS);
         $mform->setType('previewrows', PARAM_INT);
 
         $this->add_action_buttons(true, get_string('complete', 'block_user_manager'));

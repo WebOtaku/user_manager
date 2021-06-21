@@ -18,6 +18,7 @@ $email_required = optional_param('email_required', null, PARAM_INT);
 $upload_method  = optional_param('upload_method', null, PARAM_TEXT);
 $group          = optional_param('group', null, PARAM_TEXT);
 $from           = optional_param('from', null, PARAM_TEXT);
+$action         = optional_param('action', null, PARAM_TEXT);
 
 $returnurl      = required_param('returnurl', PARAM_LOCALURL);
 
@@ -71,7 +72,8 @@ $chtstableurl_params = array('returnurl' => $returnurl);
 $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
 $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
 
-$basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $baseurl);
+$new_baseurl = new moodle_url($pageurl, array('returnurl' => $returnurl));
+$basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $new_baseurl);
 
 $basenode->make_active();
 // Навигация: Конец
@@ -98,14 +100,13 @@ $strings = [
 $db_userfields = $DB->get_records("block_user_manager_ufields");
 
 $REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
-//$AD_FIELDS = ['lastname', 'firstname', 'middlename', 'username', 'password', 'email', 'faculty'];
 
 if ($email_required) {
     array_push($REQUIRED_FIELDS, 'email');
 }
 
 $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
-$PRF_FIELDS = uploaduser::get_profile_fields();
+list($PRF_FIELDS, $proffields) = uploaduser::get_profile_fields();
 
 // TODO: Заглушка.  Получать данные из 1с
 //$FACULTIES = FACULTIES;
@@ -134,38 +135,6 @@ if (!$upload_method) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
     echo '<link rel="stylesheet" href="../css/uplodauser.css">';
-
-    // TODO: Скрытие элементов формы осуществляется стандартными средствами, методом $mform->hideIf(..)
-    /*$PAGE->requires->js_amd_inline("
-        require(['jquery'], function($) {
-            function elHide(id) {
-                $('#'+id).parent().parent().css({display: 'none'});
-            }
-            
-            function elShow(id) {
-                $('#'+id).parent().parent().css({display: 'flex'});
-            }
-            
-            var previewrowsId = 'id_previewrows';
-            var groupId = 'id_group';
-        
-            if ($('#id_upload_method').val() !== '1c') {
-                elHide(previewrowsId);
-                elHide(groupId);
-            }
-
-            $('#id_upload_method').change(function() {
-                if ($('#id_upload_method').val() === '1c') {
-                    elShow(previewrowsId);
-                    elShow(groupId)
-                } else {
-                    elHide(previewrowsId);
-                    elHide(groupId)
-                }
-            });
-        });"
-    );*/
-
     $upload_method_form->display();
     echo $OUTPUT->footer();
     die;
@@ -181,7 +150,7 @@ if ($upload_method === 'file') {
             $baseurl->remove_params(['upload_method', 'previewrows', 'delimiter_name']);
             redirect($baseurl);
         } else if ($formdata = $uploaduser_form->get_data()) {
-            //TODO: изменение названия каталога для временного файла для устранения ошибки с доступок к временному файлу
+            // Изменение названия каталога для временного файла для устранения ошибки с доступок к одному и тому же временному файлу
             $iid = csv_import_reader::get_new_iid('uploaduser_tmp');
             $cir = new csv_import_reader($iid, 'uploaduser_tmp');
 
@@ -252,7 +221,7 @@ if ($upload_method === 'file') {
 
         $group_info = array();
 
-        if ($from === UPLOAD_METHOD_1C) {
+        if ($from === UPLOAD_METHOD_1C && !$action) {
             $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
         }
 
@@ -272,25 +241,26 @@ if ($upload_method === 'file') {
             redirect($baseurl);
         } elseif ($formdata = $selectaction_form->get_data()) {
             list($users, $filecolumns) = uploaduser::get_userlist_from_file($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
+
             $action = $formdata->action;
 
             /*
-             * $action = 1 - Export in .csv format
-             * $action = 2 - Export in .csv format (AD)
-             * $action = 3 - Export in .xls (Excel) format
-             * $action = 4 - Upload users
+             * ACTION_EXPORTCSV - Export in .csv format
+             * ACTION_EXPORTCSVAD - Export in .csv format (AD)
+             * ACTION_EXPORTXLS - Export in .xls (Excel) format
+             * ACTION_UPLOADUSER - Upload users
              */
-            if ($action === "2") {
+            if ($action === ACTION_EXPORTCSVAD) {
                 $email_domain = 'no-email.local';
 
                 if (!isset($formdata->faculty) || empty($formdata->faculty)) {
                     uploaduser::print_error(get_string('nofacultyspecified', 'block_user_manager'), $baseurl);
                 }
 
-                list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings, $group_info);
+                list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings);
             }
 
-            if ($action === "3") {
+            if ($action === ACTION_EXPORTXLS) {
                 if (!isset($formdata->group) || empty($formdata->group)) {
                     uploaduser::print_error(get_string('nogroupspecifed', 'block_user_manager'), $baseurl);
                 }
@@ -306,7 +276,7 @@ if ($upload_method === 'file') {
                 $worksheet_name = get_string('users');
 
                 $filecolumns = $REQUIRED_FIELDS;
-                array_push($filecolumns, 'password');
+                array_push($filecolumns, $passwordkey);
 
                 $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
 
@@ -320,21 +290,22 @@ if ($upload_method === 'file') {
                 $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
             }
 
-            if ($action === "1" || $action === "4") {
+            if ($action === ACTION_EXPORTCSV || $action === ACTION_UPLOADUSER) {
                 // list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
             }
 
-            if ($action === "1" || $action === "2" || $action === "4") {
+            if ($action === ACTION_EXPORTCSV || $action === ACTION_EXPORTCSVAD || $action === ACTION_UPLOADUSER) {
                 // Если выбран экспорт в формате .csv
+
                 $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
                 $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $delimiter_name, false);
             }
 
-            if ($action === "1" || $action === "2") {
+            if ($action === ACTION_EXPORTCSV || $action === ACTION_EXPORTCSVAD) {
                 $users_csv->download_file();
             }
 
-            if ($action === "4") {
+            if ($action === ACTION_UPLOADUSER) {
                 // Если выбрана опция "Загрузка пользователей в систему"
                 // будет выполнено переадресация
 
@@ -346,48 +317,7 @@ if ($upload_method === 'file') {
         } else {
             echo $OUTPUT->header();
             echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
-
             echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
-
-            // TODO: Скрытие элементов формы осуществляется стандартными средствами, методом $mform->hideIf(..)
-            /*$PAGE->requires->js_amd_inline("
-                require(['jquery'], function($) {
-                    function elHide(id) {
-                        $('#'+id).parent().parent().css({display: 'none'});
-                    }
-                    
-                    function elShow(id) {
-                        $('#'+id).parent().parent().css({display: 'flex'});
-                    }
-                    
-                    var previewrowsId = 'id_previewrows';
-                    var facultyId = 'id_faculty';
-                    var groupId = 'id_group';
-                    var authId = 'id_auth';
-                
-                    if ($('#id_action').val() !== '2') elHide(facultyId);
-                    if ($('#id_action').val() !== '3') elHide(groupId);
-                    if ($('#id_action').val() !== '4') elHide(previewrowsId);
-                    if ($('#id_action').val() !== '1' && 
-                        $('#id_action').val() !== '4') elHide(authId);
-        
-                    $('#id_action').change(function() {
-                        if ($('#id_action').val() === '2') elShow(facultyId); 
-                        else elHide(facultyId);
-                        
-                        if ($('#id_action').val() === '3') elShow(groupId); 
-                        else elHide(groupId);
-                        
-                        if ($('#id_action').val() === '4') elShow(previewrowsId); 
-                        else elHide(previewrowsId);
-                        
-                        if ($('#id_action').val() === '1' ||
-                            $('#id_action').val() === '4') elShow(authId); 
-                        else elHide(authId);
-                    });
-                });"
-            );*/
-
             $selectaction_form->display();
             echo $OUTPUT->footer();
         }
@@ -400,7 +330,7 @@ if ($upload_method === UPLOAD_METHOD_1C) {
         $users = uploaduser::get_userlist_from_1c($users1c, $emptystr);
 
         $filecolumns = $REQUIRED_FIELDS;
-        array_push($filecolumns, 'password');
+        array_push($filecolumns, $passwordkey);
 
         if (count($users)) {
             // TODO: возможно стоит сделать в виде одной функции
@@ -426,7 +356,6 @@ if ($upload_method === UPLOAD_METHOD_1C) {
             $urlparams = $urlparams + array(
                 'iid' => $iid,
                 'from' => UPLOAD_METHOD_1C,
-                'previewrows' =>  $previewrows,
                 'delimiter_name' => $delimiter_name
             );
 

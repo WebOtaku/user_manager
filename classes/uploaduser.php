@@ -116,7 +116,7 @@ class uploaduser
             }
         }
 
-        return $PRF_FIELDS;
+        return [$PRF_FIELDS, $proffields];
     }
 
     public static function field_exist(string $field, array $stdfields, string $key = '')
@@ -458,7 +458,7 @@ class uploaduser
 
     public static function prepare_data_for_ad(array $users, array $filecolumns, stdClass $formdata, string $email_domain, array $strings = [
         'emptystring' => '', 'emailkey' => '', 'usernamekey' => '', 'dnamekey' => '',
-        'lastnamekey' => '', 'firstnamekey' => '', 'middlenamekey' => '', 'facultykey' => ''], array $group_info = []
+        'lastnamekey' => '', 'firstnamekey' => '', 'middlenamekey' => '', 'facultykey' => '']
     ): array
     {
         $newusers = array();
@@ -488,11 +488,7 @@ class uploaduser
 
             $newuser->{$strings['dnamekey']} = trim($newuser->{$strings['dnamekey']});
 
-            if (isset($group_info['Факультет'])) {
-                $newuser->{$strings['facultykey']} = $group_info['Факультет'];
-            } else {
-                $newuser->{$strings['facultykey']} = trim($formdata->faculty);
-            }
+            $newuser->{$strings['facultykey']} = trim($formdata->faculty);
 
             $newusers[] = $newuser;
         }

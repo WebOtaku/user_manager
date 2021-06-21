@@ -43,6 +43,8 @@ $string['uploadmethod'] = 'Способ загрузки';
 
 $string['previewheader'] = 'Предпросмотр';
 
+$string['addupdatecohort'] = 'Добавить/Обновить глобальную группу';
+
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'Системные поля должны быть уникальными';
 $string['changessaved'] = 'Изменения сохранены';
