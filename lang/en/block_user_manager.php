@@ -75,6 +75,10 @@ $string['removemanualenroluser_header'] = 'Removing manual enrolled user';
 $string['removemanualenroluser_alt'] = 'Remove manual enrolled user';
 $string['removemanualenroluser_warning'] = 'Are you sure you want to delete manual enrolled user {$a->lastname} {$a->firstname} {$a->middlename} from course {$a->coursename}';
 
+// Добавление глобальной группы и зачисление пользователей
+$string['addcohortwithusers_header'] = 'Adding cohort and assign users';
+$string['addcohortwithusers_warning'] = 'Add / update the global group {$a->cohort_name} and enroll the uploaded users in it. ATTENTION! If the global group already exists and users are enrolled in it, then all users of the global group that do not match the uploaded users will be removed from the global group';
+
 // Поля в списке пользователей
 $string['firstname'] = 'First name';
 $string['lastname'] = 'Surname';

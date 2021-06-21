@@ -6,6 +6,7 @@ require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->dirroot.'/user/lib.php');
 require_once($CFG->dirroot . '/user/editlib.php');
 require_once($CFG->dirroot.'/admin/tool/uploaduser/user_form.php');
+require_once('../locallib.php');
 
 use block_user_manager\cohort1c_lib1c;
 use block_user_manager\service;
@@ -29,18 +30,20 @@ class um_select_upload_method_form extends moodleform {
         $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
 
         $choices = array(
-            '1c' => get_string('upfrom1c', 'block_user_manager'),
-            'file' => get_string('upfromfile', 'block_user_manager'),
+            UPLOAD_METHOD_1C => get_string('upfrom1c', 'block_user_manager'),
+            UPLOAD_METHOD_FILE => get_string('upfromfile', 'block_user_manager'),
         );
         $mform->addElement('select', 'upload_method', get_string('uploadmethod', 'block_user_manager'), $choices);
         $mform->setType('upload_method', PARAM_INT);
 
         $choices = array_combine($groups, $groups);
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->hideIf('group', 'upload_method', 'eq', UPLOAD_METHOD_FILE);
         $mform->setType('group', PARAM_TEXT);
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);
+        $mform->hideIf('previewrows', 'upload_method', 'eq', UPLOAD_METHOD_FILE);
         $mform->setType('previewrows', PARAM_INT);
 
         $this->add_action_buttons(false, get_string('further', 'block_user_manager'));
@@ -107,6 +110,30 @@ class um_admin_uploaduser_form extends moodleform {
     }
 }
 
+class um_uploaduser_action_form extends admin_uploaduser_form2 {
+    /**
+     * Form definition
+     */
+    public function definition() {
+        $mform = $this->_form;
+        $data  = (object)$this->_customdata;
+
+        parent::definition($this, $data);
+
+        // Убираем действие метода disabledIf(...), т.е. делаем так чтобы поле email не блокировалось
+        // при определённых значениях поля uutype: UU_USER_ADD_UPDATE и UU_USER_UPDATE
+        $index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE]);
+        unset($mform->_dependencies['uutype']['eq'][UU_USER_ADD_UPDATE][$index]);
+        $index = array_search('email', $mform->_dependencies['uutype']['eq'][UU_USER_UPDATE]);
+        unset($mform->_dependencies['uutype']['eq'][UU_USER_UPDATE][$index]);
+
+        $mform->addElement('hidden', 'group');
+        $mform->setType('group', PARAM_INT);
+
+        $this->set_data($data);
+    }
+}
+
 class um_select_action_form extends moodleform {
     /**
      * Form definition
@@ -144,7 +171,7 @@ class um_select_action_form extends moodleform {
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
         $mform->setType('group', PARAM_TEXT);
 
-        if ($from === '1c') {
+        if ($from === UPLOAD_METHOD_1C) {
             $mform->setDefault('group', $group);
 
             /*if (isset($group_info['Факультет']) && in_array($group_info['Факультет'], $faculties)) {
@@ -167,10 +194,10 @@ class um_select_action_form extends moodleform {
             }
         }
 
-        $authoptions = uploaduser::get_auth_selector_options();
-
-        $mform->addElement('selectgroups', 'auth', get_string('chooseauthmethod', 'auth'), $authoptions);
-        $mform->addHelpButton('auth', 'chooseauthmethod', 'auth');
+        // TODO: auth есть на стандартной форме загрузки пользователей
+        //$authoptions = uploaduser::get_auth_selector_options();
+        /*$mform->addElement('selectgroups', 'auth', get_string('chooseauthmethod', 'auth'), $authoptions);
+        $mform->addHelpButton('auth', 'chooseauthmethod', 'auth');*/
 
         $choices = array('10' => 10, '20' => 20, '100' => 100, '1000' => 1000, '100000' => 100000);
         $mform->addElement('select', 'previewrows', get_string('rowpreviewnum', 'tool_uploaduser'), $choices);

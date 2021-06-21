@@ -25,7 +25,6 @@ class db_request {
     public static function get_users_cohorts(array $users = null) {
         global $DB;
 
-
         $dbman = $DB->get_manager();
 
         $table1c = "block_cohort1c_synch";
@@ -127,6 +126,22 @@ class db_request {
         else $select .= ' AND u.id = 0';
 
         return $select;
+    }
+
+    public static function get_moodleusers_select($users) {
+        global $DB;
+
+        $select = 'username IN (';
+        foreach ($users as $key => $user) {
+            //print_object($DB->get_record('user', array('username' => $user->username)));
+            if (isset($user->username)) $select .= '\''. $user->username . '\'';
+            if ($key < count($users) - 1) $select .= ',';
+        }
+        $select .= ')';
+
+        $moodleusers = $DB->get_records_select('user', $select);
+
+        return $moodleusers;
     }
 }
 ?>

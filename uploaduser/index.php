@@ -84,7 +84,7 @@ $usernamekey = 'username';
 $emailkey = 'email';
 $facultykey = 'faculty';
 $dnamekey = 'dname';
-$authkey = 'auth';
+//$authkey = 'auth';
 
 //$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
 $emptystr = '';
@@ -135,7 +135,8 @@ if (!$upload_method) {
     echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
     echo '<link rel="stylesheet" href="../css/uplodauser.css">';
 
-    $PAGE->requires->js_amd_inline("
+    // TODO: Скрытие элементов формы осуществляется стандартными средствами, методом $mform->hideIf(..)
+    /*$PAGE->requires->js_amd_inline("
         require(['jquery'], function($) {
             function elHide(id) {
                 $('#'+id).parent().parent().css({display: 'none'});
@@ -163,7 +164,7 @@ if (!$upload_method) {
                 }
             });
         });"
-    );
+    );*/
 
     $upload_method_form->display();
     echo $OUTPUT->footer();
@@ -195,7 +196,7 @@ if ($upload_method === 'file') {
                 print_error('csvloaderror', '', $baseurl, $csvloaderror);
             }
 
-            list($users, $filecolumns) = uploaduser::get_userlist_from_cir($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
+            list($users, $filecolumns) = uploaduser::get_userlist_from_file($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
 
             $missingfields = uploaduser::check_required_fields($filecolumns, $REQUIRED_FIELDS);
 
@@ -251,7 +252,7 @@ if ($upload_method === 'file') {
 
         $group_info = array();
 
-        if ($from === '1c') {
+        if ($from === UPLOAD_METHOD_1C) {
             $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
         }
 
@@ -264,13 +265,13 @@ if ($upload_method === 'file') {
             $cir->cleanup(true);
             $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required', 'group']);
 
-            if ($from === '1c') {
+            if ($from === UPLOAD_METHOD_1C) {
                 $baseurl->remove_params(['upload_method', 'from']);
             }
 
             redirect($baseurl);
         } elseif ($formdata = $selectaction_form->get_data()) {
-            list($users, $filecolumns) = uploaduser::get_userlist_from_cir($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
+            list($users, $filecolumns) = uploaduser::get_userlist_from_file($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
             $action = $formdata->action;
 
             /*
@@ -320,7 +321,7 @@ if ($upload_method === 'file') {
             }
 
             if ($action === "1" || $action === "4") {
-                list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
+                // list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
             }
 
             if ($action === "1" || $action === "2" || $action === "4") {
@@ -340,7 +341,7 @@ if ($upload_method === 'file') {
                 if (!isset($formdata->previewrows) || empty($formdata->previewrows))
                     $formdata->previewrows = 10;
 
-                uploaduser::import_users_into_system($users_csv, $baseurl, $formdata->previewrows, $delimiter_name);
+                uploaduser::import_users_into_system($users_csv, $baseurl, $group, $formdata->previewrows, $delimiter_name);
             }
         } else {
             echo $OUTPUT->header();
@@ -348,7 +349,8 @@ if ($upload_method === 'file') {
 
             echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
 
-            $PAGE->requires->js_amd_inline("
+            // TODO: Скрытие элементов формы осуществляется стандартными средствами, методом $mform->hideIf(..)
+            /*$PAGE->requires->js_amd_inline("
                 require(['jquery'], function($) {
                     function elHide(id) {
                         $('#'+id).parent().parent().css({display: 'none'});
@@ -384,7 +386,7 @@ if ($upload_method === 'file') {
                         else elHide(authId);
                     });
                 });"
-            );
+            );*/
 
             $selectaction_form->display();
             echo $OUTPUT->footer();
@@ -392,7 +394,7 @@ if ($upload_method === 'file') {
     }
 }
 
-if ($upload_method === '1c') {
+if ($upload_method === UPLOAD_METHOD_1C) {
     if ($group) {
         $users1c = cohort1c_lib1c::GetStudentsOfGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
         $users = uploaduser::get_userlist_from_1c($users1c, $emptystr);
@@ -423,7 +425,7 @@ if ($upload_method === '1c') {
 
             $urlparams = $urlparams + array(
                 'iid' => $iid,
-                'from' => '1c',
+                'from' => UPLOAD_METHOD_1C,
                 'previewrows' =>  $previewrows,
                 'delimiter_name' => $delimiter_name
             );

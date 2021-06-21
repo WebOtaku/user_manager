@@ -70,7 +70,7 @@ class uploaduser
     }
 
     public static function import_users_into_system(
-        csv_export_writer $users_csv, moodle_url $returnurl, int $previewrows = 10,
+        csv_export_writer $users_csv, moodle_url $returnurl, string $group = '', int $previewrows = 10,
         string $delimiter_name = 'semicolon', string $encoding = 'UTF-8')
     {
         $content = $users_csv->print_csv_data(true);
@@ -85,10 +85,17 @@ class uploaduser
             print_error('csvloaderror', '', $returnurl, $csvloaderror);
         }
 
-        $useruploadurl = new moodle_url('/admin/tool/uploaduser/index.php', array(
+        $urlparams = array(
             'iid' => $iid,
             'previewrows' => $previewrows,
-        ));
+            'returnurl' => $returnurl
+        );
+
+        if ($group) {
+            $urlparams['group'] = $group;
+        }
+
+        $useruploadurl = new moodle_url('/blocks/user_manager/uploaduser/uploaduser.php', $urlparams);
 
         redirect($useruploadurl);
     }
@@ -272,7 +279,7 @@ class uploaduser
         return $instruction;
     }
 
-    public static function get_userlist_from_cir(csv_import_reader $cir, array $stdfields, array $prffields,
+    public static function get_userlist_from_file(csv_import_reader $cir, array $stdfields, array $prffields,
         moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = ''): array
     {
         global $USER;
@@ -317,8 +324,11 @@ class uploaduser
                         if (!preg_match('/^(st).*?$/', trim($value))) {
                             $user->$key = 'st' . trim($value);
                             continue;
+                        } else {
+                            $user->$key = $value;
                         }
                     } else $user->$key = $emptystr;
+                    continue;
                 }
 
                 if (empty(trim($value)))
@@ -371,6 +381,44 @@ class uploaduser
 
             $users[] = $newuser;
         }
+
+        return $users;
+    }
+
+    public static function get_userlist_from_cir(csv_import_reader $cir, array $filecolumns): array {
+        $cir->init();
+        $users = array();
+
+        while ($line = $cir->next()) {
+            $user = new stdClass();
+
+            // add fields to user object
+            foreach ($line as $keynum => $value)
+            {
+                if (!isset($filecolumns[$keynum])) {
+                    // this should not happen
+                    continue;
+                }
+                $key = $filecolumns[$keynum];
+                if (strpos($key, 'profile_field_') === 0) {
+                    //NOTE: bloody mega hack alert!!
+                    if (isset($USER->$key) and is_array($USER->$key)) {
+                        // this must be some hacky field that is abusing arrays to store content and format
+                        $user->$key = array();
+                        $user->{$key['text']} = $value;
+                        $user->{$key['format']} = FORMAT_MOODLE;
+                    } else {
+                        $user->$key = trim($value);
+                    }
+                } else {
+                    $user->$key = trim($value);
+                }
+            }
+
+            $users[] = $user;
+        }
+
+        $cir->close();
 
         return $users;
     }
@@ -464,12 +512,13 @@ class uploaduser
     public static function prepare_data_for_upload(array $users, array $filecolumns, stdClass $formdata, array $strings = ['authkey' => '']): array
     {
         foreach ($users as $user) {
-            if (isset($formdata->{$strings['authkey']}) && !empty($formdata->{$strings['authkey']})) {
+            // TODO: auth есть на стандартной форме загрузки пользователей
+            /*if (isset($formdata->{$strings['authkey']}) && !empty($formdata->{$strings['authkey']})) {
                 $user->{$strings['authkey']} = $formdata->{$strings['authkey']};
                 if (!in_array($strings['authkey'], $filecolumns)) {
                     array_push($filecolumns, $strings['authkey']);
                 }
-            }
+            }*/
         }
 
         return [$users, $filecolumns];
@@ -541,7 +590,6 @@ class uploaduser
                 case 'Курс':
                     $value = mb_convert_case($value, MB_CASE_LOWER);
                     if (isset(COURSE_STRING[$value])) {
-
                         $excel_header['Год поступления'] = ($period_end - COURSE_STRING[$value]) . ' год';
                     } else {
                         $excel_header['Год поступления'] = '';
@@ -594,7 +642,8 @@ class uploaduser
         return $workbook;
     }
 
-    public static function get_auth_selector_options(): array
+    // TODO: auth есть на стандартной форме загрузки пользователей
+    /*public static function get_auth_selector_options(): array
     {
         $auths = core_component::get_plugin_list('auth');
         $enabled = get_string('pluginenabled', 'core_plugin');
@@ -627,5 +676,5 @@ class uploaduser
         }
 
         return $authoptions;
-    }
+    }*/
 }

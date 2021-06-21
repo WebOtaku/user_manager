@@ -66,3 +66,6 @@ define('COURSE_STRING', array(
 ));
 
 define('IS_STUDENT_STATUS_1C', 'Является студентом');
+
+define('UPLOAD_METHOD_1C', '1c');
+define('UPLOAD_METHOD_FILE', 'file');
