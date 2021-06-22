@@ -261,24 +261,4 @@ class service
 
         return $new_arr_objs;
     }
-
-    public static function first_substr_in_strarr(string $substr, array $strings) {
-        foreach ($strings as $key => $string) {
-            if (strpos($string, $substr) !== false) {
-                return $key;
-            }
-        }
-
-        return -1;
-    }
-
-    public static function first_in_strarr_substr_of_str(array $substrs, string $string) {
-        foreach ($substrs as $key => $substr) {
-            if (strpos($string, $substr) !== false) {
-                return $key;
-            }
-        }
-
-        return -1;
-    }
 }

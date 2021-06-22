@@ -11,6 +11,7 @@ require_once('../locallib.php');
 use block_user_manager\cohort1c_lib1c;
 use block_user_manager\service;
 use block_user_manager\table, block_user_manager\uploaduser;
+use block_user_manager\string_operation;
 
 class um_select_upload_method_form extends moodleform {
     /**
@@ -198,7 +199,7 @@ class um_select_action_form extends moodleform {
         //$mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
         $mform->setType('group', PARAM_TEXT);
 
-        if ($from === UPLOAD_METHOD_1C) {
+        if ($from === UPLOAD_METHOD_1C || $from === UPLOAD_METHOD_FILE) {
             if ($group) {
                 if (in_array($group, $groups))
                     $mform->setDefault('group', $group);
@@ -217,9 +218,9 @@ class um_select_action_form extends moodleform {
 
                 if (in_array($faculty, $faculties))
                     $mform->setDefault('faculty', $faculty);
-                else if (($key = service::first_in_strarr_substr_of_str($faculties, $faculty)) >= 0)
+                else if (($key = string_operation::first_in_strarr_substr_of_str($faculties, $faculty)) >= 0)
                     $mform->setDefault('faculty', $faculties[$key]);
-                else if (($key = service::first_substr_in_strarr($faculty, $faculties)) >= 0)
+                else if (($key = string_operation::first_substr_in_strarr($faculty, $faculties)) >= 0)
                     $mform->setDefault('faculty', $faculties[$key]);
                 else $mform->setDefault('faculty', $faculties[0]);
             }

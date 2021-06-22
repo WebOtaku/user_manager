@@ -273,6 +273,16 @@ class uploaduser
                         <p>Если хотите обратно вернуться на форму загрузки <b>нажмите на кнопку "Отмена"</b></p>
                     </li>
                 </ol>
+                <h5>Действия после загрузки пользователей в систему</h5>
+                <ol class="um-list um-list-ol">
+                    <li class="um-list__item">
+                        <p><b>Добавить/Обновить глобальную группу.</b> Отвечает за добавлние/обновление глобальной группы и зачисления в неё загруженных пользоветелей.</p>
+                        <p>Перед выполнением действия вам будет показано окно с предупреждением, где вы сможете как потвердить, так и отменить его. В любом из случаев будет выполнено перенаправление на страницу с формой выбора действий над загруженными пользователями.</p>
+                    </li>
+                    <li class="um-list__item">
+                        <p><b>Продолжить.</b> Будет выполнено перенаправление на страницу с формой выбора действий над загруженными пользователями.</p>
+                    </li>
+                </ol>
             </div>
         ';
 
@@ -280,7 +290,7 @@ class uploaduser
     }
 
     public static function get_userlist_from_file(csv_import_reader $cir, array $stdfields, array $prffields,
-        moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = ''): array
+        moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = '', string $username_prefix = ''): array
     {
         global $USER;
 
@@ -321,8 +331,9 @@ class uploaduser
 
                 if ($key === $usernamekey) {
                     if (!empty(trim($value))) {
-                        if (!preg_match('/^(st).*?$/', trim($value))) {
-                            $user->$key = 'st' . trim($value);
+                        // Проверка на то, что префикс уже есть
+                        if (!preg_match('/^('.$username_prefix.').*?$/', trim($value))) {
+                            $user->$key = $username_prefix . trim($value);
                             continue;
                         } else {
                             $user->$key = $value;
@@ -348,7 +359,7 @@ class uploaduser
         return array($users, $filecolumns);
     }
 
-    public static function get_userlist_from_1c(array $users1c, string $emptystr = ''): array {
+    public static function get_userlist_from_1c(array $users1c, string $emptystr = '', string $username_prefix = ''): array {
         $users = array();
 
         foreach ($users1c as $user) {
@@ -372,7 +383,7 @@ class uploaduser
                         $newuser->middlename = trim($value);
                         break;
                     case 'ЗачетнаяКнига':
-                        $newuser->username = 'st'.trim($value);
+                        $newuser->username = $username_prefix . trim($value);
                         break;
                 }
             }
@@ -508,13 +519,7 @@ class uploaduser
     public static function prepare_data_for_upload(array $users, array $filecolumns, stdClass $formdata, array $strings = ['authkey' => '']): array
     {
         foreach ($users as $user) {
-            // TODO: auth есть на стандартной форме загрузки пользователей
-            /*if (isset($formdata->{$strings['authkey']}) && !empty($formdata->{$strings['authkey']})) {
-                $user->{$strings['authkey']} = $formdata->{$strings['authkey']};
-                if (!in_array($strings['authkey'], $filecolumns)) {
-                    array_push($filecolumns, $strings['authkey']);
-                }
-            }*/
+
         }
 
         return [$users, $filecolumns];
@@ -637,40 +642,4 @@ class uploaduser
 
         return $workbook;
     }
-
-    // TODO: auth есть на стандартной форме загрузки пользователей
-    /*public static function get_auth_selector_options(): array
-    {
-        $auths = core_component::get_plugin_list('auth');
-        $enabled = get_string('pluginenabled', 'core_plugin');
-        $disabled = get_string('plugindisabled', 'core_plugin');
-        $authoptions = array($enabled => array(), $disabled => array());
-        $cannotchangepass = array();
-        $cannotchangeusername = array();
-        $userid = -1;
-        foreach ($auths as $auth => $unused) {
-            $authinst = get_auth_plugin($auth);
-
-            if (!$authinst->is_internal()) {
-                $cannotchangeusername[] = $auth;
-            }
-
-            $passwordurl = $authinst->change_password_url();
-            if (!($authinst->can_change_password() && empty($passwordurl))) {
-                if ($userid < 1 and $authinst->is_internal()) {
-                    // This is unlikely but we can not create account without password
-                    // when plugin uses passwords, we need to set it initially at least.
-                } else {
-                    $cannotchangepass[] = $auth;
-                }
-            }
-            if (is_enabled_auth($auth)) {
-                $authoptions[$enabled][$auth] = get_string('pluginname', "auth_{$auth}");
-            } else {
-                $authoptions[$disabled][$auth] = get_string('pluginname', "auth_{$auth}");
-            }
-        }
-
-        return $authoptions;
-    }*/
 }

@@ -168,7 +168,7 @@ if ($action === 'add_cohort') {
 
         $period_end = date("Y");
         $period_start = $period_end - 1;
-        $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+        $group_info = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
         if (count($group_info)) {
             $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
@@ -563,7 +563,7 @@ if ($formdata = $mform2->is_cancelled()) {
             $existinguser->username = $user->username;
         }
 
-        $users[] = $user; // TODO: Добавление пользователей в массив
+        $users[] = $user; // Добавление пользователей в массив
 
         // can we process with update or insert?
         $skip = false;

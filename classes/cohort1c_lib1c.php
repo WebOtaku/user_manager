@@ -221,7 +221,6 @@ class cohort1c_lib1c
         if (isset($result->return) && isset($result->return->Students)) {
             $students = $result->return->Students;
         }
-;
 
         $students = self::SliceLastStudents($students);
         return service::filter_objs($students, 'Состояние', $status);
@@ -249,9 +248,9 @@ class cohort1c_lib1c
      * @param string $status
      * @return \stdClass - массив студентов указанной группы
      */
-    public static function GetGroupWithInfo(string $group, int $period_start, int $period_end, string $status): array
+    public static function GetGroupInfoByGroup(string $group, int $period_start, int $period_end, string $student_status): array
     {
-        $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $status);
+        $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $student_status);
         $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация', 'УровеньПодготовки');
 
         $group_with_info = array();
@@ -267,5 +266,35 @@ class cohort1c_lib1c
         }
 
         return $group_with_info;
+    }
+
+    public static function GetGroupInfoByUsername(string $username, int $period_start, int $period_end, string $student_status): array
+    {
+        $client = self::Connect1C();
+
+        if (!$client) {
+            return array();
+        }
+
+        $session = $period_start . ' - ' . $period_end;
+
+        $result = self::GetStudent($client, array(
+            'number' => $username,
+            'session' => $session
+        ));
+
+        $student_info = new \stdClass();
+
+        if (isset($result->return)) {
+            $student_info = $result->return;
+        }
+
+        $group_info = array();
+
+        if (isset($student_info->Группа)) {
+            $group_info = self::GetGroupInfoByGroup($student_info->Группа, $period_start, $period_end, $student_status);
+        }
+
+        return $group_info;
     }
 }

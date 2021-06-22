@@ -5,6 +5,7 @@ use block_user_manager\uploaduser;
 use block_user_manager\exportformat;
 use block_user_manager\table;
 use block_user_manager\cohort1c_lib1c;
+use block_user_manager\string_operation;
 
 require_once('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -88,6 +89,8 @@ $facultykey = 'faculty';
 $dnamekey = 'dname';
 //$authkey = 'auth';
 
+$username_prefix = 'st';
+
 //$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
 $emptystr = '';
 
@@ -140,14 +143,14 @@ if (!$upload_method) {
     die;
 }
 
-if ($upload_method === 'file') {
+if ($upload_method === UPLOAD_METHOD_FILE) {
     if (!$iid) {
         $uploaduser_form = new um_admin_uploaduser_form($baseurl, array(
             $STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS
         ));
 
         if ($uploaduser_form->is_cancelled()) {
-            $baseurl->remove_params(['upload_method', 'previewrows', 'delimiter_name']);
+            $baseurl->remove_params(['upload_method', 'previewrows', 'delimiter_name', 'from']);
             redirect($baseurl);
         } else if ($formdata = $uploaduser_form->get_data()) {
             // Изменение названия каталога для временного файла для устранения ошибки с доступок к одному и тому же временному файлу
@@ -165,7 +168,9 @@ if ($upload_method === 'file') {
                 print_error('csvloaderror', '', $baseurl, $csvloaderror);
             }
 
-            list($users, $filecolumns) = uploaduser::get_userlist_from_file($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
+            list($users, $filecolumns) = uploaduser::get_userlist_from_file(
+                $cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr, $username_prefix
+            );
 
             $missingfields = uploaduser::check_required_fields($filecolumns, $REQUIRED_FIELDS);
 
@@ -189,7 +194,8 @@ if ($upload_method === 'file') {
 
                     $urlparams = $urlparams + array(
                         'iid' => $iid,
-                        'previewrows' => $formdata->previewrows
+                        'previewrows' => $formdata->previewrows,
+                        'from' => UPLOAD_METHOD_FILE
                     );
 
                     if (isset($formdata->email_required) && $formdata->email_required)
@@ -221,8 +227,27 @@ if ($upload_method === 'file') {
 
         $group_info = array();
 
+        // Получение информации о группе при загрузке из 1С
         if ($from === UPLOAD_METHOD_1C && !$action) {
-            $group_info = cohort1c_lib1c::GetGroupWithInfo($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+            $group_info = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+        }
+
+        list($users, $filecolumns) = uploaduser::get_userlist_from_file(
+            $cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr, $username_prefix
+        );
+
+        // Получение информации о группе при загрузке из файла
+        if (count($users) && $from === UPLOAD_METHOD_FILE && !$action) {
+            foreach ($users as $user) {
+                if (isset($user->{$usernamekey})) {
+                    $username = $user->{$usernamekey};
+                    $username = string_operation::remove_prefix($username, $username_prefix);
+                    $group_info = cohort1c_lib1c::GetGroupInfoByUsername($username, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+
+                    if (isset($group_info['Группа'])) $group = $group_info['Группа'];
+                    if (count($group_info)) break;
+                }
+            }
         }
 
         $selectaction_form = new um_select_action_form($baseurl, array(
@@ -240,8 +265,6 @@ if ($upload_method === 'file') {
 
             redirect($baseurl);
         } elseif ($formdata = $selectaction_form->get_data()) {
-            list($users, $filecolumns) = uploaduser::get_userlist_from_file($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr);
-
             $action = $formdata->action;
 
             /*
@@ -258,6 +281,7 @@ if ($upload_method === 'file') {
                 }
 
                 list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings);
+                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_AD');
             }
 
             if ($action === ACTION_EXPORTXLS) {
@@ -265,7 +289,7 @@ if ($upload_method === 'file') {
                     uploaduser::print_error(get_string('nogroupspecifed', 'block_user_manager'), $baseurl);
                 }
 
-                $group_info = cohort1c_lib1c::GetGroupWithInfo($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+                $group_info = cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
                 if (!count($group_info)) {
                     uploaduser::print_error(get_string('nogroupinfo', 'block_user_manager'), $baseurl);
@@ -281,7 +305,7 @@ if ($upload_method === 'file') {
                 $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
 
                 foreach ($filecolumns as $key => $filecolumn) {
-                    $filecolumns[$key] = mb_convert_case($filecolumn, MB_CASE_TITLE);
+                    $filecolumns[$key] = string_operation::capitalize_first_letter_cyrillic($filecolumn);
                 }
 
                 //$group_info = (object)$GROUPS[$formdata->group]; // TODO: Заглушка
@@ -294,10 +318,12 @@ if ($upload_method === 'file') {
                 // list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
             }
 
+            if ($action === ACTION_EXPORTCSV || $action === ACTION_UPLOADUSER) {
+                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+            }
+
             if ($action === ACTION_EXPORTCSV || $action === ACTION_EXPORTCSVAD || $action === ACTION_UPLOADUSER) {
                 // Если выбран экспорт в формате .csv
-
-                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
                 $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $delimiter_name, false);
             }
 
@@ -327,7 +353,7 @@ if ($upload_method === 'file') {
 if ($upload_method === UPLOAD_METHOD_1C) {
     if ($group) {
         $users1c = cohort1c_lib1c::GetStudentsOfGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
-        $users = uploaduser::get_userlist_from_1c($users1c, $emptystr);
+        $users = uploaduser::get_userlist_from_1c($users1c, $emptystr, $username_prefix);
 
         $filecolumns = $REQUIRED_FIELDS;
         array_push($filecolumns, $passwordkey);
@@ -359,7 +385,7 @@ if ($upload_method === UPLOAD_METHOD_1C) {
                 'delimiter_name' => $delimiter_name
             );
 
-            $urlparams['upload_method'] = 'file';
+            $urlparams['upload_method'] = UPLOAD_METHOD_FILE;
 
             $baseurl = new moodle_url($pageurl, $urlparams);
 
