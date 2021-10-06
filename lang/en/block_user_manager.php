@@ -45,6 +45,11 @@ $string['previewheader'] = 'Preview';
 
 $string['addupdatecohort'] = 'Add/Update cohort';
 
+$string['eduform'] = 'Form of education';
+$string['full_time'] = 'Full-time';
+$string['extramural'] = 'Extramural';
+$string['part_time'] = 'Part-time';
+
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'System fields must be unique';
 $string['changessaved'] = 'Changes saved';
@@ -59,6 +64,7 @@ $string['emptygroup'] = 'There is no information about the composition of the gr
 $string['nogroupinfo'] = 'There is no information about the group.';
 $string['nofacultyspecified'] = 'Faculty must be specified.';
 $string['nogroupspecified'] = 'Group must be specified.';
+$string['noeduformspecified'] = 'Education form must be specified';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 

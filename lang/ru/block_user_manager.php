@@ -45,6 +45,11 @@ $string['previewheader'] = 'Предпросмотр';
 
 $string['addupdatecohort'] = 'Добавить/Обновить глобальную группу';
 
+$string['eduform'] = 'Форма обучения';
+$string['full_time'] = 'Очная';
+$string['extramural'] = 'Заочная';
+$string['part_time'] = 'Очно-заочная';
+
 // Сообщения/ошибки "Форма загрузки пользователей"
 $string['uniquefields'] = 'Системные поля должны быть уникальными';
 $string['changessaved'] = 'Изменения сохранены';
@@ -59,6 +64,7 @@ $string['emptygroup'] = 'Отсутствует информация о сост
 $string['nogroupinfo'] = 'Отсутствует информация о группе.';
 $string['nofacultyspecified'] = 'Должен быть указан факультет.';
 $string['nogroupspecified'] = 'Должна быть указана группа.';
+$string['noeduformspecified'] = 'Должна быть указана форма обучения';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

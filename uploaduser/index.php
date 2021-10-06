@@ -1,5 +1,6 @@
 <?php
 
+use block_user_manager\cohort;
 use block_user_manager\service;
 use block_user_manager\uploaduser;
 use block_user_manager\exportformat;
@@ -89,6 +90,9 @@ $facultykey = 'faculty';
 $dnamekey = 'dname';
 //$authkey = 'auth';
 
+$eduformfield1c = 'ФормаОбучения'; // TODO: вынести все названия полей из 1с как константы в locallib
+$recordbookfield1c = 'ЗачетнаяКнига';
+
 $username_prefix = 'st';
 
 //$emptystr = '<'.mb_strtolower(get_string('empty', 'block_user_manager')).'>';
@@ -113,7 +117,6 @@ list($PRF_FIELDS, $proffields) = uploaduser::get_profile_fields();
 
 // TODO: Заглушка.  Получать данные из 1с
 //$FACULTIES = FACULTIES;
-$FACULTIES = cohort1c_lib1c::GetFaculties();
 
 // TODO: Заглушка. Получать данные из 1с
 /*$GROUPS = array(
@@ -127,10 +130,12 @@ $FACULTIES = cohort1c_lib1c::GetFaculties();
     ]
 );*/
 
-$GROUPS = cohort1c_lib1c::GetGroups();
+$UNIV_FORM_STRUCTURE = cohort1c_lib1c::GetFormStructure();
+$GROUPS = cohort1c_lib1c::GetGroups($UNIV_FORM_STRUCTURE);
 
-$period_end = date("Y");
-$period_start = $period_end - 1;
+$ini = parse_ini_file('../conf.ini', true);
+$period_start = (int)$ini['period_start']; //$period_end - 1;
+$period_end = (int)$ini['period_end']; // date('Y');
 
 $upload_method_form = new um_select_upload_method_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $GROUPS));
 
@@ -226,46 +231,113 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
         $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
         $group_info = array();
+        $students = array();
 
         // Получение информации о группе при загрузке из 1С
-        if ($from === UPLOAD_METHOD_1C && !$action) {
-            $group_info = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+        if ($from === UPLOAD_METHOD_1C) {
+            if ($group) {
+                list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+
+                if (!count($students)) {
+                    $cir->cleanup(true);
+                    $baseurl->remove_params(['previewrows', 'upload_method', 'group', 'from', 'delimiter_name', 'iid', 'action']);
+                    uploaduser::print_error(get_string('emptygroup', 'block_user_manager'), $baseurl);
+                }
+            } else {
+                $cir->cleanup(true);
+                $baseurl->remove_params(['previewrows', 'upload_method', 'group', 'from', 'delimiter_name', 'iid']);
+                uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
+            }
         }
 
         list($users, $filecolumns) = uploaduser::get_userlist_from_file(
             $cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey, $usernamekey, $emptystr, $username_prefix
         );
 
-        // Получение информации о группе при загрузке из файла
-        if (count($users) && $from === UPLOAD_METHOD_FILE && !$action) {
+        /*if ($from === UPLOAD_METHOD_FILE) {
+            // Получение информации о группе при загрузке из файла
             foreach ($users as $user) {
-                if (isset($user->{$usernamekey})) {
-                    $username = $user->{$usernamekey};
+                if (isset($user->$usernamekey)) {
+                    $username = $user->$usernamekey;
                     $username = string_operation::remove_prefix($username, $username_prefix);
-                    $group_info = cohort1c_lib1c::GetGroupInfoByUsername($username, $period_start, $period_end, IS_STUDENT_STATUS_1C);
-
+                    list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByUsername($username, $period_start, $period_end, IS_STUDENT_STATUS_1C);
                     if (isset($group_info['Группа'])) $group = $group_info['Группа'];
                     if (count($group_info)) break;
                 }
             }
-        }
+        }*/
+
+        $FACULTIES = cohort1c_lib1c::GetFaculties($UNIV_FORM_STRUCTURE);
 
         $selectaction_form = new um_select_action_form($baseurl, array(
             STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS,
-            $from, $group, $group_info
+            $from, $group, $group_info, EDU_FORMS
         ));
 
         if ($selectaction_form->is_cancelled()) {
             $cir->cleanup(true);
-            $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required', 'group']);
+            $baseurl->remove_params(['previewrows', 'iid', 'delimiter_name', 'email_required', 'group', 'from']);
 
             if ($from === UPLOAD_METHOD_1C) {
-                $baseurl->remove_params(['upload_method', 'from']);
+                $baseurl->remove_params(['upload_method']);
             }
 
             redirect($baseurl);
-        } elseif ($formdata = $selectaction_form->get_data()) {
+        }
+        elseif ($formdata = $selectaction_form->get_data()) {
             $action = $formdata->action;
+
+            if (!isset($formdata->eduform) || empty($formdata->eduform)) {
+                uploaduser::print_error(get_string('noeduformspecified', 'block_user_manager'), $baseurl);
+            }
+
+            if ($from === UPLOAD_METHOD_FILE) {
+                if ($formdata->group) {
+                    list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+                    $group_info['ФормаОбучения'] = $formdata->eduform;
+
+                    if (empty($group_info['Группа'])) {
+                        $group_info['Группа'] = $formdata->group;
+                    }
+
+                    if (empty($group_info['Факультет'])) {
+                        $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($formdata->group);
+                    }
+
+                    if (empty($group_info['Курс'])) {
+                        $group_info['Курс'] = cohort::get_course_from_group($formdata->group, 1);
+                    }
+                } else {
+                    $cir->cleanup(true);
+                    $baseurl->remove_params(['previewrows', 'upload_method', 'group', 'from', 'delimiter_name', 'iid']);
+                    uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
+                }
+            }
+
+            if ($from === UPLOAD_METHOD_1C && count($students)) {
+                $students = service::filter_objs($students, $eduformfield1c, $formdata->eduform);
+                $group_info = cohort1c_lib1c::GetGroupInfoFromStudent($students[0]);
+
+                $studentsid = array();
+                foreach ($students as $student) {
+                    if (isset($student->$recordbookfield1c))
+                        array_push($studentsid, $student->$recordbookfield1c);
+                }
+
+                $new_users = array();
+                foreach ($users as $user) {
+                    $username = '';
+                    if (isset($user->$usernamekey)) {
+                        $username = $user->$usernamekey;
+                        $username = string_operation::remove_prefix($username, $username_prefix);
+                    }
+
+                    if (in_array($username, $studentsid))
+                        array_push($new_users, $user);
+                }
+
+                $users = $new_users;
+            }
 
             /*
              * ACTION_EXPORTCSV - Export in .csv format
@@ -285,16 +357,6 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             }
 
             if ($action === ACTION_EXPORTXLS) {
-                if (!isset($formdata->group) || empty($formdata->group)) {
-                    uploaduser::print_error(get_string('nogroupspecifed', 'block_user_manager'), $baseurl);
-                }
-
-                $group_info = cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
-
-                if (!count($group_info)) {
-                    uploaduser::print_error(get_string('nogroupinfo', 'block_user_manager'), $baseurl);
-                }
-
                 // Если выбран экспорт в формате .xls
                 $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . $formdata->group . '_' . gmdate("Ymd_Hi") . '.xls');
                 $worksheet_name = get_string('users');
@@ -309,6 +371,7 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                 }
 
                 //$group_info = (object)$GROUPS[$formdata->group]; // TODO: Заглушка
+
                 $header = uploaduser::form_excel_header_from_group_info($group_info, $period_end);
 
                 $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
@@ -335,10 +398,11 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                 // Если выбрана опция "Загрузка пользователей в систему"
                 // будет выполнено переадресация
 
-                if (!isset($formdata->previewrows) || empty($formdata->previewrows))
+                if (!isset($formdata->previewrows) || empty($formdata->previewrows)) {
                     $formdata->previewrows = 10;
+                }
 
-                uploaduser::import_users_into_system($users_csv, $baseurl, $group, $formdata->previewrows, $delimiter_name);
+                uploaduser::import_users_into_system($users_csv, $baseurl, $group, $formdata->eduform, $formdata->previewrows, $delimiter_name);
             }
         } else {
             echo $OUTPUT->header();
@@ -396,6 +460,6 @@ if ($upload_method === UPLOAD_METHOD_1C) {
         }
     } else {
         $baseurl->remove_params(['previewrows', 'upload_method', 'group']);
-        uploaduser::print_error(get_string('nogroupspecifed', 'block_user_manager'), $baseurl);
+        uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
     }
 }

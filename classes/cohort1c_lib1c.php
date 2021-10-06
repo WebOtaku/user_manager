@@ -3,6 +3,7 @@
 namespace block_user_manager;
 
 use moodle_url, SoapClient, SoapFault;
+use block_user_manager\service;
 
 class cohort1c_lib1c
 {
@@ -178,16 +179,29 @@ class cohort1c_lib1c
         return $tree;
     }
 
-    public static function GetFaculties(): array {
-        $tree = self::GetFormStructure();
-        return array_keys($tree);
+    public static function GetFaculties(array $univ_form_struct = []): array {
+        if (!count($univ_form_struct))
+            $univ_form_struct = self::GetFormStructure();
+
+        return array_keys($univ_form_struct);
     }
 
-    public static function GetGroups(): array {
-        $tree = self::GetFormStructure();
+    public static function FindFaculty(string $group, array $univ_form_struct = []) {
+        if (!count($univ_form_struct))
+            $univ_form_struct = self::GetFormStructure();
+
+        foreach ($univ_form_struct as $faculty => $groups) {
+            if (in_array($group, $groups)) return $faculty;
+        }
+    }
+
+    public static function GetGroups(array $univ_form_struct = []): array {
+        if (!count($univ_form_struct))
+            $univ_form_struct = self::GetFormStructure();
+
         $list_groups = array();
 
-        foreach ($tree as $groups) {
+        foreach ($univ_form_struct as $groups) {
             foreach ($groups as $group) {
                 array_push($list_groups, $group);
             }
@@ -245,27 +259,61 @@ class cohort1c_lib1c
      * @param string $group - группа в которой состоят студенты (Например: "ПИ-33")
      * @param int $period_start - начало учебного года
      * @param int $period_end - конец учебного года
-     * @param string $status
-     * @return \stdClass - массив студентов указанной группы
+     * @param string $student_status - статус студента в 1с
+     * @return array - массив студентов и информации указанной группы
      */
     public static function GetGroupInfoByGroup(string $group, int $period_start, int $period_end, string $student_status): array
     {
         $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $student_status);
-        $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'ФормаОбучения', 'Специализация', 'УровеньПодготовки');
+        $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'Специализация', 'УровеньПодготовки');
+        $group_arr_fields = array('ФормаОбучения');
 
-        $group_with_info = array();
+        $group_fields_values = array_fill(0, count($group_fields + $group_arr_fields), '');
+        $group_info = array_combine($group_fields + $group_arr_fields, $group_fields_values);
+
+        foreach ($group_arr_fields as $group_arr_field) {
+            $group_info[$group_arr_field] = [];
+        }
 
         if (count($students)) {
             $student = $students[0];
 
             foreach ($student as $field => $value) {
                 if (in_array($field, $group_fields)) {
-                    $group_with_info[$field] = trim($value);
+                    $group_info[$field] = trim($value);
+                }
+            }
+
+            foreach ($students as $student) {
+                foreach ($group_arr_fields as $group_arr_field) {
+                    if (isset($student->$group_arr_field)) {
+                        if (!in_array($student->$group_arr_field, $group_info[$group_arr_field]))
+                            array_push($group_info[$group_arr_field], $student->$group_arr_field);
+                    }
                 }
             }
         }
 
-        return $group_with_info;
+        return [$students, $group_info];
+    }
+
+    /**
+     * @param \stdClass $student - объект студента из 1с
+     * @return array - массив информации о группе
+     */
+    public static function GetGroupInfoFromStudent(\stdClass $student): array
+    {
+        $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'Специализация', 'УровеньПодготовки', 'ФормаОбучения');
+        $group_fields_values = array_fill(0, count($group_fields), '');
+        $group_info = array_combine($group_fields, $group_fields_values);
+
+        foreach ($student as $field => $value) {
+            if (in_array($field, $group_fields)) {
+                $group_info[$field] = trim($value);
+            }
+        }
+
+        return $group_info;
     }
 
     public static function GetGroupInfoByUsername(string $username, int $period_start, int $period_end, string $student_status): array
@@ -290,11 +338,12 @@ class cohort1c_lib1c
         }
 
         $group_info = array();
+        $students = array();
 
         if (isset($student_info->Группа)) {
-            $group_info = self::GetGroupInfoByGroup($student_info->Группа, $period_start, $period_end, $student_status);
+            list($students, $group_info) = self::GetGroupInfoByGroup($student_info->Группа, $period_start, $period_end, $student_status);
         }
 
-        return $group_info;
+        return [$students, $group_info];
     }
 }

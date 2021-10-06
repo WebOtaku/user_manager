@@ -507,8 +507,6 @@ if (!$users) {
     $table = NULL;
 
 } else {
-    //print_object($USER);
-
     $countries = get_string_manager()->get_list_of_countries(true);
     if (empty($mnethosts)) {
         $mnethosts = $DB->get_records('mnet_host', null, 'id', 'id,wwwroot,name');
@@ -817,12 +815,11 @@ $ufiltering->display_add();
 $ufiltering->display_active();
 
 if (!empty($table)) {
-    echo html_writer::start_tag('div', array('class'=>'no-overflow'));
+    echo html_writer::start_tag('div', array('class'=>'no-overflow um-no-overflow-mbt'));
     echo html_writer::table($table);
     echo html_writer::end_tag('div');
     echo $OUTPUT->paging_bar($usercount, $page, $perpage, $baseurl);
 }
-
 
 if (has_capability('moodle/user:create', $context) ) {
     if ($userfilter == 'cohort')

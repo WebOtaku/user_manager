@@ -70,7 +70,7 @@ class uploaduser
     }
 
     public static function import_users_into_system(
-        csv_export_writer $users_csv, moodle_url $returnurl, string $group = '', int $previewrows = 10,
+        csv_export_writer $users_csv, moodle_url $returnurl, string $group = '', string $eduform = '', int $previewrows = 10,
         string $delimiter_name = 'semicolon', string $encoding = 'UTF-8')
     {
         $content = $users_csv->print_csv_data(true);
@@ -88,7 +88,8 @@ class uploaduser
         $urlparams = array(
             'iid' => $iid,
             'previewrows' => $previewrows,
-            'returnurl' => $returnurl
+            'returnurl' => $returnurl,
+            'eduform' => $eduform
         );
 
         if ($group) {

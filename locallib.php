@@ -67,6 +67,13 @@ define('COURSE_STRING', array(
 
 define('IS_STUDENT_STATUS_1C', 'Является студентом');
 
+// Необходимо добавить соответствующие ключи в языковые файлы
+define('EDU_FORMS', array(
+    'Очная' => 'full_time',
+    'Заочная' => 'extramural',
+    'Очно-заочная' => 'part_time'
+));
+
 // Upload methods
 define('UPLOAD_METHOD_1C', '1c');
 define('UPLOAD_METHOD_FILE', 'file');

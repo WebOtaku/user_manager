@@ -29,6 +29,7 @@ use block_user_manager\cohort1c_lib1c;
 use block_user_manager\db_request;
 use block_user_manager\exportformat;
 use block_user_manager\uploaduser;
+use block_user_manager\string_operation;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -45,6 +46,7 @@ require_once('../locallib.php');
 $iid         = optional_param('iid', '', PARAM_INT);
 $previewrows = optional_param('previewrows', 10, PARAM_INT);
 $group       = optional_param('group', null, PARAM_TEXT);
+$eduform     = optional_param('eduform', null, PARAM_TEXT);
 $action      = optional_param('action', null, PARAM_TEXT);
 $confirm     = optional_param('confirm', '', PARAM_ALPHANUM);   //md5 confirmation hash
 
@@ -108,6 +110,10 @@ if ($group) {
     $urlparams['group'] = $group;
 }
 
+if ($eduform) {
+    $urlparams['eduform'] = $eduform;
+}
+
 $baseurl = new moodle_url($pageurl, $urlparams);
 $returnurl = new moodle_url($returnurl);
 $bulknurl  = new moodle_url('/admin/user/user_bulk.php');
@@ -131,6 +137,8 @@ $basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), 
 
 $basenode->make_active();
 // Навигация: Конец
+
+$eduformfield1c = 'ФормаОбучения';
 
 $today = time();
 $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
@@ -163,73 +171,100 @@ if ($action === 'add_cohort') {
     require_capability('moodle/cohort:manage', $context);
     require_capability('moodle/cohort:assign', $context);
 
-    if ($group && $iid) {
+    // TODO: Доавить обработку ошибок?
+    if ($group && $eduform && $iid) {
         $users = uploaduser::get_userlist_from_cir($cir, $filecolumns);
 
-        $period_end = date("Y");
-        $period_start = $period_end - 1;
-        $group_info = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+        $ini = parse_ini_file('../conf.ini', true);
+        $period_start = (int)$ini['period_start']; //$period_end - 1;
+        $period_end = (int)$ini['period_end']; // date('Y');
 
-        if (count($group_info)) {
-            $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
-            $course = (isset(COURSE_STRING[$lccourse])) ?
-                COURSE_STRING[$lccourse] : '';
+        list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
-            $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
+        $students = service::filter_objs($students, $eduformfield1c, $eduform);
 
-            $params = array(
-                'faculty' => $shortfaculty, //fmf - нужно делать сокращение названия факультета
-                'form' => $group_info['ФормаОбучения'],
-                'group' => $group_info['Группа'],
-                'subgroup' => $group_info['Подгруппа'],
-                'course' => $course
-            );
-            $cohort_name = cohort::get_cohort_name($params);
-
-            if ($confirm != md5($group)) {
-                global $DB;
-
-                echo $OUTPUT->header();
-                echo $OUTPUT->heading(get_string('addcohortwithusers_header', 'block_user_manager'));
-
-                $optionsyes = array(
-                    'confirm' => md5($group), 'action' => 'add_cohort'
-                );
-
-                $createurl = new moodle_url($baseurl, $optionsyes);
-                $createbutton = new single_button($createurl, get_string('add', 'block_user_manager'), 'get');
-
-                $messagedata = new stdClass();
-                $messagedata->cohort_name = $cohort_name;
-
-                echo $OUTPUT->confirm(
-                    get_string('addcohortwithusers_warning', 'block_user_manager', $messagedata),
-                    $createbutton, $returnurl
-                );
-                echo $OUTPUT->footer();
-                die;
-            } else {
-                $group1c_info = array(
-                    'faculty' => $group_info['Факультет'],
-                    'speciality' => $group_info['Специальность'],
-                    'specialization' => $group_info['Специализация'],
-                    'course' => $course,
-                    'form' => $group_info['ФормаОбучения'],
-                    'group1c' => $group_info['Группа'] . $group_info['Подгруппа'],
-                    'cohortid' => null,
-                );
-
-                $moodleusers = db_request::get_moodleusers_select($users);
-
-                $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
-                if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
-
-                $cir->cleanup(true);
-
-                redirect($returnurl);
-            }
+        if (count($students)) {
+            $group_info = cohort1c_lib1c::GetGroupInfoFromStudent($students[0]);
         } else {
-            uploaduser::print_error(get_string('nogroupinfo', 'block_user_manager'), $returnurl);
+            $group_info['ФормаОбучения'] = $eduform;
+        }
+
+        if (empty($group_info['Группа'])) {
+            $group_info['Группа'] = $group;
+        }
+
+        if (empty($group_info['Факультет'])) {
+            $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($group);
+        }
+
+        if (empty($group_info['ФормаОбучения'])) {
+            $group_info['ФормаОбучения'] = $eduform;
+        }
+
+        if (empty($group_info['Курс'])) {
+            $group_info['Курс'] = cohort::get_course_from_group($group, 1);
+        }
+
+
+        // TODO: Проверка наличия ключей в group_info
+        $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
+        $course = (isset(COURSE_STRING[$lccourse])) ?
+            COURSE_STRING[$lccourse] : '';
+
+        $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
+
+        $params = array(
+            'faculty' => $shortfaculty, //fmf - нужно делать сокращение названия факультета
+            'form' => $group_info['ФормаОбучения'],
+            //'form' => $eduform,
+            'group' => $group_info['Группа'],
+            //'group' => $group,
+            'subgroup' => $group_info['Подгруппа'],
+            //'course' => $course
+        );
+        $cohort_name = cohort::get_cohort_name($params);
+
+        if ($confirm != md5($group)) {
+            global $DB;
+
+            echo $OUTPUT->header();
+            echo $OUTPUT->heading(get_string('addcohortwithusers_header', 'block_user_manager'));
+
+            $optionsyes = array(
+                'confirm' => md5($group), 'action' => 'add_cohort'
+            );
+
+            $createurl = new moodle_url($baseurl, $optionsyes);
+            $createbutton = new single_button($createurl, get_string('add', 'block_user_manager'), 'get');
+
+            $messagedata = new stdClass();
+            $messagedata->cohort_name = $cohort_name;
+
+            echo $OUTPUT->confirm(
+                get_string('addcohortwithusers_warning', 'block_user_manager', $messagedata),
+                $createbutton, $returnurl
+            );
+            echo $OUTPUT->footer();
+            die;
+        } else {
+            $group1c_info = array(
+                'faculty' => $group_info['Факультет'],
+                'speciality' => $group_info['Специальность'],
+                'specialization' => $group_info['Специализация'],
+                'course' => $course,
+                'form' => $group_info['ФормаОбучения'],
+                'group1c' => $group_info['Группа'] . $group_info['Подгруппа'],
+                'cohortid' => null,
+            );
+
+            $moodleusers = db_request::get_moodleusers_select($users);
+
+            $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
+            if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
+
+            $cir->cleanup(true);
+
+            redirect($returnurl);
         }
     }
 }
@@ -1165,14 +1200,14 @@ if ($formdata = $mform2->is_cancelled()) {
                 if (is_null($ccache[$shortname]->groups)) {
                     $ccache[$shortname]->groups = array();
                     if ($groups = groups_get_all_groups($courseid)) {
-                        foreach ($groups as $gid=>$group) {
+                        foreach ($groups as $gid => $group_obj) {
                             $ccache[$shortname]->groups[$gid] = new stdClass();
                             $ccache[$shortname]->groups[$gid]->id   = $gid;
-                            $ccache[$shortname]->groups[$gid]->name = $group->name;
-                            if (!is_numeric($group->name)) { // only non-numeric names are supported!!!
-                                $ccache[$shortname]->groups[$group->name] = new stdClass();
-                                $ccache[$shortname]->groups[$group->name]->id   = $gid;
-                                $ccache[$shortname]->groups[$group->name]->name = $group->name;
+                            $ccache[$shortname]->groups[$gid]->name = $group_obj->name;
+                            if (!is_numeric($group_obj->name)) { // only non-numeric names are supported!!!
+                                $ccache[$shortname]->groups[$group_obj->name] = new stdClass();
+                                $ccache[$shortname]->groups[$group_obj->name]->id   = $gid;
+                                $ccache[$shortname]->groups[$group_obj->name]->name = $group_obj->name;
                             }
                         }
                     }
@@ -1254,7 +1289,6 @@ if ($formdata = $mform2->is_cancelled()) {
         require_capability('moodle/cohort:assign', $context);
 
         $baseurl->param('action', 'add_cohort');
-
         echo $OUTPUT->single_button($baseurl, get_string('addupdatecohort', 'block_user_manager'));
     }
 

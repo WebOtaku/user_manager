@@ -14,7 +14,7 @@ class string_operation
         return -1;
     }
 
-    public static function first_in_strarr_substr_of_str(array $substrs, string $string) {
+    public static function first_substr_of_str_in_strarr(array $substrs, string $string) {
         foreach ($substrs as $key => $substr) {
             if (strpos($string, $substr) !== false) {
                 return $key;

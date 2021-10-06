@@ -99,7 +99,6 @@ class cohort
 
     public static function form_cohort_members_select(array $cohort_members): string
     {
-
         if (count($cohort_members))
         {
             $extrasql = '(';
@@ -303,6 +302,21 @@ class cohort
         }
 
         return $shortfaculty;
+    }
+
+    /**
+     * Извлекает номер курса из названия группы (например ПИ-43 => 4 или Четвёртый)
+     * @param string $group - название группы (например ПИ-43)
+     * @param int $format - формат возвращаемого значения: 0 - число (напр. 4),  1 - строка (напр. Четвёртый)
+     * @return string - курс в выбранном формате
+     */
+    public static function get_course_from_group(string $group, int $format = 0): string
+    {
+        $course_num = explode('-', $group)[1][0];
+        $course_str = array_search($course_num, COURSE_STRING);
+        $course_str = string_operation::capitalize_first_letter_cyrillic($course_str);
+
+        return ($format)? $course_str : $course_num;
     }
 }
 ?>

@@ -133,7 +133,6 @@ class db_request {
 
         $select = 'username IN (';
         foreach ($users as $key => $user) {
-            //print_object($DB->get_record('user', array('username' => $user->username)));
             if (isset($user->username)) $select .= '\''. $user->username . '\'';
             if ($key < count($users) - 1) $select .= ',';
         }

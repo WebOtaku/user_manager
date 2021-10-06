@@ -249,16 +249,17 @@ class service
         ';
     }
 
-    public static function filter_objs(array $arr_objs, string $field, string $value): array
+    public static function filter_objs(array $objs_arr, string $field, string $value): array
     {
-        $new_arr_objs = array();
-
-        foreach ($arr_objs as $key => $obj) {
+        $new_objs_arr = array();
+        $i = 0;
+        foreach ($objs_arr as $obj) {
             if (isset($obj->$field) && $obj->$field === $value) {
-                $new_arr_objs[$key] = $obj;
+                $new_objs_arr[$i] = $obj;
+                $i++;
             }
         }
 
-        return $new_arr_objs;
+        return $new_objs_arr;
     }
 }

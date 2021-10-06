@@ -163,7 +163,8 @@ class um_select_action_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        list($systemfields, $helpfields, $required_fields, $faculties, $groups, $from, $group, $group_info) = $this->_customdata;
+        list($systemfields, $helpfields, $required_fields, $faculties,
+            $groups, $from, $group, $group_info, $edu_forms) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -194,9 +195,9 @@ class um_select_action_form extends moodleform {
 
         $choices = array_combine($groups, $groups);
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
-        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
-        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
-        //$mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
+//        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
+//        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
+//        $mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
         $mform->setType('group', PARAM_TEXT);
 
         if ($from === UPLOAD_METHOD_1C || $from === UPLOAD_METHOD_FILE) {
@@ -218,7 +219,7 @@ class um_select_action_form extends moodleform {
 
                 if (in_array($faculty, $faculties))
                     $mform->setDefault('faculty', $faculty);
-                else if (($key = string_operation::first_in_strarr_substr_of_str($faculties, $faculty)) >= 0)
+                else if (($key = string_operation::first_substr_of_str_in_strarr($faculties, $faculty)) >= 0)
                     $mform->setDefault('faculty', $faculties[$key]);
                 else if (($key = string_operation::first_substr_in_strarr($faculty, $faculties)) >= 0)
                     $mform->setDefault('faculty', $faculties[$key]);
@@ -232,6 +233,27 @@ class um_select_action_form extends moodleform {
         $mform->hideIf('previewrows', 'action', 'eq', ACTION_EXPORTCSVAD);
         $mform->hideIf('previewrows', 'action', 'eq', ACTION_EXPORTXLS);
         $mform->setType('previewrows', PARAM_INT);
+
+        $choices = array();
+
+        if (isset($group_info['ФормаОбучения']) && count($group_info['ФормаОбучения'])) {
+            $choices = array_combine($group_info['ФормаОбучения'], $group_info['ФормаОбучения']);
+
+            foreach ($group_info['ФормаОбучения'] as $edu_form) {
+                //$edu_form = mb_strtolower($edu_form);
+                if (isset($edu_forms[$edu_form])) {
+                    $choices[$edu_form] = get_string($edu_forms[$edu_form], 'block_user_manager');
+                }
+            }
+        }
+        else {
+            foreach ($edu_forms as $key => $edu_form) {
+                $choices[$key] = get_string($edu_form, 'block_user_manager');
+            }
+        }
+
+        $mform->addElement('select', 'eduform', get_string('eduform', 'block_user_manager'), $choices);
+        $mform->setType('eduform', PARAM_TEXT);
 
         $this->add_action_buttons(true, get_string('complete', 'block_user_manager'));
     }
