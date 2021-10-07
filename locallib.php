@@ -83,3 +83,6 @@ define('ACTION_EXPORTCSV', 'exportcsv');
 define('ACTION_EXPORTCSVAD', 'exportcsvad');
 define('ACTION_EXPORTXLS', 'exportxls');
 define('ACTION_UPLOADUSER', 'uploaduser');
+
+// Default values
+define('DEFAULT_EMAIL', '%u@no-email.local');

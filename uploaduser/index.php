@@ -13,7 +13,7 @@ require_once($CFG->libdir.'/adminlib.php');
 require_once('user_form.php');
 require_once('../locallib.php');
 
-$iid            = optional_param('iid', '', PARAM_INT);
+$iid            = optional_param('iid', null, PARAM_INT);
 $previewrows    = optional_param('previewrows', null, PARAM_INT);
 $delimiter_name = optional_param('delimiter_name', null, PARAM_TEXT);
 $email_required = optional_param('email_required', null, PARAM_INT);
@@ -113,7 +113,7 @@ if ($email_required) {
 }
 
 $STD_FIELDS = uploaduser::get_stdfields($db_userfields, $REQUIRED_FIELDS);
-list($PRF_FIELDS, $proffields) = uploaduser::get_profile_fields();
+list($PRF_FIELDS, $proffields, $proflabels) = uploaduser::get_profile_fields();
 
 // TODO: Заглушка.  Получать данные из 1с
 //$FACULTIES = FACULTIES;
@@ -151,7 +151,7 @@ if (!$upload_method) {
 if ($upload_method === UPLOAD_METHOD_FILE) {
     if (!$iid) {
         $uploaduser_form = new um_admin_uploaduser_form($baseurl, array(
-            $STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS
+            $STD_FIELDS, STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $PRF_FIELDS, $proflabels
         ));
 
         if ($uploaduser_form->is_cancelled()) {
@@ -181,7 +181,6 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
 
             if (!count($missingfields)) {
                 if (count($users)) {
-                    // TODO: возможно стоит сделать в виде одной функции
                     $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
                     $users_csv = exportformat::export_csv($users, $filecolumns, $filename_csv, $formdata->delimiter_name, false);
 
@@ -287,12 +286,22 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
         elseif ($formdata = $selectaction_form->get_data()) {
             $action = $formdata->action;
 
-            if (!isset($formdata->eduform) || empty($formdata->eduform)) {
-                uploaduser::print_error(get_string('noeduformspecified', 'block_user_manager'), $baseurl);
+            if ($from === UPLOAD_METHOD_1C) {
+                if (!isset($formdata->eduform) || empty($formdata->eduform)) {
+                    uploaduser::print_error(get_string('noeduformspecified', 'block_user_manager'), $baseurl);
+                }
             }
 
             if ($from === UPLOAD_METHOD_FILE) {
-                if ($formdata->group) {
+                if ($action === ACTION_EXPORTXLS || $action === ACTION_UPLOADUSER) {
+                    if (!isset($formdata->eduform) || empty($formdata->eduform)) {
+                        uploaduser::print_error(get_string('noeduformspecified', 'block_user_manager'), $baseurl);
+                    }
+
+                    if (!isset($formdata->group) || empty($formdata->group)) {
+                        uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
+                    }
+
                     list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
                     $group_info['ФормаОбучения'] = $formdata->eduform;
 
@@ -307,10 +316,6 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                     if (empty($group_info['Курс'])) {
                         $group_info['Курс'] = cohort::get_course_from_group($formdata->group, 1);
                     }
-                } else {
-                    $cir->cleanup(true);
-                    $baseurl->remove_params(['previewrows', 'upload_method', 'group', 'from', 'delimiter_name', 'iid']);
-                    uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
                 }
             }
 
@@ -364,21 +369,17 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                 $filecolumns = $REQUIRED_FIELDS;
                 array_push($filecolumns, $passwordkey);
 
-                $filecolumns = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
+                $filecolumns_ru = array_values(uploaduser::get_fields_helpers(STD_FIELDS_EN, STD_FIELDS_RU, $filecolumns));
 
-                foreach ($filecolumns as $key => $filecolumn) {
-                    $filecolumns[$key] = string_operation::capitalize_first_letter_cyrillic($filecolumn);
+                foreach ($filecolumns_ru as $key => $filecolumn_ru) {
+                    $filecolumns_ru[$key] = string_operation::capitalize_first_letter_cyrillic($filecolumn_ru);
                 }
 
                 //$group_info = (object)$GROUPS[$formdata->group]; // TODO: Заглушка
 
                 $header = uploaduser::form_excel_header_from_group_info($group_info, $period_end);
 
-                $users_excel = uploaduser::export_excel($users, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
-            }
-
-            if ($action === ACTION_EXPORTCSV || $action === ACTION_UPLOADUSER) {
-                // list($users, $filecolumns) = uploaduser::prepare_data_for_upload($users, $filecolumns, $formdata, array('authkey' => $authkey));
+                $users_excel = uploaduser::export_excel($users, $filecolumns_ru, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
             }
 
             if ($action === ACTION_EXPORTCSV || $action === ACTION_UPLOADUSER) {
@@ -423,7 +424,6 @@ if ($upload_method === UPLOAD_METHOD_1C) {
         array_push($filecolumns, $passwordkey);
 
         if (count($users)) {
-            // TODO: возможно стоит сделать в виде одной функции
             $iid = csv_import_reader::get_new_iid('uploaduser_tmp');
             $cir = new csv_import_reader($iid, 'uploaduser_tmp');
             $delimiter_name = 'semicolon';

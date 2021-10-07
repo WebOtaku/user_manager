@@ -43,7 +43,7 @@ require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 require_once('user_form.php');
 require_once('../locallib.php');
 
-$iid         = optional_param('iid', '', PARAM_INT);
+$iid         = optional_param('iid', null, PARAM_INT);
 $previewrows = optional_param('previewrows', 10, PARAM_INT);
 $group       = optional_param('group', null, PARAM_TEXT);
 $eduform     = optional_param('eduform', null, PARAM_TEXT);
@@ -164,6 +164,10 @@ $STD_FIELDS = STD_FIELDS_EN;
 
 list($PRF_FIELDS, $proffields) = uploaduser::get_profile_fields();
 
+if (!$iid) {
+    uploaduser::print_error(get_string('noiidspecified', 'block_user_manager'), $returnurl);
+}
+
 $cir = new csv_import_reader($iid, 'uploaduser');
 $filecolumns = uu_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl);
 
@@ -171,106 +175,108 @@ if ($action === 'add_cohort') {
     require_capability('moodle/cohort:manage', $context);
     require_capability('moodle/cohort:assign', $context);
 
-    // TODO: Доавить обработку ошибок?
-    if ($group && $eduform && $iid) {
-        $users = uploaduser::get_userlist_from_cir($cir, $filecolumns);
+    if (!$group) {
+        $cir->cleanup(true);
+        uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $returnurl);
+    }
 
-        $ini = parse_ini_file('../conf.ini', true);
-        $period_start = (int)$ini['period_start']; //$period_end - 1;
-        $period_end = (int)$ini['period_end']; // date('Y');
+    if (!$eduform) {
+        $cir->cleanup(true);
+        uploaduser::print_error(get_string('noeduformspecified', 'block_user_manager'), $baseurl);
+    }
 
-        list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+    $users = uploaduser::get_userlist_from_cir($cir, $filecolumns);
 
-        $students = service::filter_objs($students, $eduformfield1c, $eduform);
+    $ini = parse_ini_file('../conf.ini', true);
+    $period_start = (int)$ini['period_start']; //$period_end - 1;
+    $period_end = (int)$ini['period_end']; // date('Y');
 
-        if (count($students)) {
-            $group_info = cohort1c_lib1c::GetGroupInfoFromStudent($students[0]);
-        } else {
-            $group_info['ФормаОбучения'] = $eduform;
-        }
+    list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
-        if (empty($group_info['Группа'])) {
-            $group_info['Группа'] = $group;
-        }
+    $students = service::filter_objs($students, $eduformfield1c, $eduform);
 
-        if (empty($group_info['Факультет'])) {
-            $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($group);
-        }
+    if (count($students)) {
+        $group_info = cohort1c_lib1c::GetGroupInfoFromStudent($students[0]);
+    } else {
+        $group_info['ФормаОбучения'] = $eduform;
+    }
 
-        if (empty($group_info['ФормаОбучения'])) {
-            $group_info['ФормаОбучения'] = $eduform;
-        }
+    if (empty($group_info['Группа'])) {
+        $group_info['Группа'] = $group;
+    }
 
-        if (empty($group_info['Курс'])) {
-            $group_info['Курс'] = cohort::get_course_from_group($group, 1);
-        }
+    if (empty($group_info['Факультет'])) {
+        $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($group);
+    }
 
+    if (empty($group_info['ФормаОбучения'])) {
+        $group_info['ФормаОбучения'] = $eduform;
+    }
 
-        // TODO: Проверка наличия ключей в group_info
-        $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
-        $course = (isset(COURSE_STRING[$lccourse])) ?
-            COURSE_STRING[$lccourse] : '';
+    if (empty($group_info['Курс'])) {
+        $group_info['Курс'] = cohort::get_course_from_group($group, 1);
+    }
 
-        $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
+    $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
+    $course = (isset(COURSE_STRING[$lccourse])) ?
+        COURSE_STRING[$lccourse] : '';
 
-        $params = array(
-            'faculty' => $shortfaculty, //fmf - нужно делать сокращение названия факультета
-            'form' => $group_info['ФормаОбучения'],
-            //'form' => $eduform,
-            'group' => $group_info['Группа'],
-            //'group' => $group,
-            'subgroup' => $group_info['Подгруппа'],
-            //'course' => $course
+    $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
+
+    $params = array(
+        'faculty' => $shortfaculty, // ФМФ - нужно делать сокращение названия факультета
+        'form' => $group_info['ФормаОбучения'],
+        'group' => $group_info['Группа'],
+        'subgroup' => $group_info['Подгруппа']
+    );
+    $cohort_name = cohort::get_cohort_name($params);
+
+    if ($confirm != md5($group)) {
+        global $DB;
+
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading(get_string('addcohortwithusers_header', 'block_user_manager'));
+
+        $optionsyes = array(
+            'confirm' => md5($group), 'action' => 'add_cohort'
         );
-        $cohort_name = cohort::get_cohort_name($params);
 
-        if ($confirm != md5($group)) {
-            global $DB;
+        $createurl = new moodle_url($baseurl, $optionsyes);
+        $createbutton = new single_button($createurl, get_string('add', 'block_user_manager'), 'get');
 
-            echo $OUTPUT->header();
-            echo $OUTPUT->heading(get_string('addcohortwithusers_header', 'block_user_manager'));
+        $messagedata = new stdClass();
+        $messagedata->cohort_name = $cohort_name;
 
-            $optionsyes = array(
-                'confirm' => md5($group), 'action' => 'add_cohort'
-            );
+        echo $OUTPUT->confirm(
+            get_string('addcohortwithusers_warning', 'block_user_manager', $messagedata),
+            $createbutton, $returnurl
+        );
+        echo $OUTPUT->footer();
+        die;
+    } else {
+        $group1c_info = array(
+            'faculty' => $group_info['Факультет'],
+            'speciality' => $group_info['Специальность'],
+            'specialization' => $group_info['Специализация'],
+            'course' => $course,
+            'form' => $group_info['ФормаОбучения'],
+            'group1c' => $group_info['Группа'] . $group_info['Подгруппа'],
+            'cohortid' => null,
+        );
 
-            $createurl = new moodle_url($baseurl, $optionsyes);
-            $createbutton = new single_button($createurl, get_string('add', 'block_user_manager'), 'get');
+        $moodleusers = db_request::get_moodleusers_select($users);
 
-            $messagedata = new stdClass();
-            $messagedata->cohort_name = $cohort_name;
+        $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
+        if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
 
-            echo $OUTPUT->confirm(
-                get_string('addcohortwithusers_warning', 'block_user_manager', $messagedata),
-                $createbutton, $returnurl
-            );
-            echo $OUTPUT->footer();
-            die;
-        } else {
-            $group1c_info = array(
-                'faculty' => $group_info['Факультет'],
-                'speciality' => $group_info['Специальность'],
-                'specialization' => $group_info['Специализация'],
-                'course' => $course,
-                'form' => $group_info['ФормаОбучения'],
-                'group1c' => $group_info['Группа'] . $group_info['Подгруппа'],
-                'cohortid' => null,
-            );
+        $cir->cleanup(true);
 
-            $moodleusers = db_request::get_moodleusers_select($users);
-
-            $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
-            if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
-
-            $cir->cleanup(true);
-
-            redirect($returnurl);
-        }
+        redirect($returnurl);
     }
 }
 
 $mform2 = new um_uploaduser_action_form($baseurl, array('columns' => $filecolumns, 'data' => array(
-    'iid' => $iid, 'previewrows' => $previewrows, 'group' => $group
+    'iid' => $iid, 'previewrows' => $previewrows, 'group' => $group, 'default_email' => DEFAULT_EMAIL
 )));
 
 // If a file has been uploaded, then process it

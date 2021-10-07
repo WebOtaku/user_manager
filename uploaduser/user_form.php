@@ -57,7 +57,7 @@ class um_admin_uploaduser_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($stdfields, $systemfields, $helpfields, $required_fields, $prffields) = $this->_customdata;
+        list($stdfields, $systemfields, $helpfields, $required_fields, $prffields, $prflabels) = $this->_customdata;
 
         $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
 
@@ -68,7 +68,7 @@ class um_admin_uploaduser_form extends moodleform {
 
         $mform->addElement('header', 'validfieldsheader', get_string('validfields', 'block_user_manager'));
 
-        $validfields = table::generate_valid_fields_table($stdfields, $systemfields, $helpfields, $prffields);
+        $validfields = table::generate_valid_fields_table($stdfields, $systemfields, $helpfields, $prffields, $prflabels);
 
         $mform->addElement('html', $validfields);
         $mform->setExpanded('validfieldsheader', false);
@@ -149,6 +149,8 @@ class um_uploaduser_action_form extends admin_uploaduser_form2 {
             }
         }
 
+        $mform->setDefault('email', $data->data['default_email']);
+
         $mform->addElement('hidden', 'group');
         $mform->setType('group', PARAM_INT);
 
@@ -195,8 +197,10 @@ class um_select_action_form extends moodleform {
 
         $choices = array_combine($groups, $groups);
         $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
-//        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
-//        $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
+        if ($from === UPLOAD_METHOD_FILE) {
+            $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
+            $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
+        }
 //        $mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
         $mform->setType('group', PARAM_TEXT);
 
@@ -254,6 +258,11 @@ class um_select_action_form extends moodleform {
 
         $mform->addElement('select', 'eduform', get_string('eduform', 'block_user_manager'), $choices);
         $mform->setType('eduform', PARAM_TEXT);
+
+        if ($from === UPLOAD_METHOD_FILE) {
+            $mform->hideIf('eduform', 'action', 'eq', ACTION_EXPORTCSV);
+            $mform->hideIf('eduform', 'action', 'eq', ACTION_EXPORTCSVAD);
+        }
 
         $this->add_action_buttons(true, get_string('complete', 'block_user_manager'));
     }

@@ -64,7 +64,8 @@ $string['emptygroup'] = 'Отсутствует информация о сост
 $string['nogroupinfo'] = 'Отсутствует информация о группе.';
 $string['nofacultyspecified'] = 'Должен быть указан факультет.';
 $string['nogroupspecified'] = 'Должна быть указана группа.';
-$string['noeduformspecified'] = 'Должна быть указана форма обучения';
+$string['noeduformspecified'] = 'Должна быть указана форма обучения.';
+$string['noiidspecified'] = 'Должен быть указана iid (идентификатор временного файла).';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

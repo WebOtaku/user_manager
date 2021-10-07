@@ -163,7 +163,8 @@ class table
         return $html_str;
     }
 
-    public static function generate_valid_fields_table(array $stdfields, array $systemfields, array $helpfields = [], array $prffields = []): string
+    public static function generate_valid_fields_table(array $stdfields, array $systemfields, array $helpfields = [],
+                                                       array $prffields = [], array $prflabels = []): string
     {
         global $PAGE;
 
@@ -217,9 +218,9 @@ class table
                 <div class="um-prf-fields">
                     <h5>'.get_string('prffields', 'block_user_manager').'</h5>
                     <ul class="um-sublist um-list-ul">';
-            foreach ($prffields as $prffield) {
+            foreach ($prffields as $key => $prffield) {
                 $result_table_str .= '            
-                    <li class="um-sublist__item">'.$prffield.'</li>';
+                    <li class="um-sublist__item">'.$prffield.' ('.$prflabels[$key].')'.'</li>';
             }
 
             $result_table_str .= '            

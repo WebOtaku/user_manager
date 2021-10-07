@@ -106,6 +106,8 @@ class uploaduser
         global $DB;
 
         $PRF_FIELDS = array();
+        $proflabels = array();
+
         if ($proffields = $DB->get_records('user_info_field')) {
             foreach ($proffields as $key => $proffield) {
                 $profilefieldname = 'profile_field_'.$proffield->shortname;
@@ -114,10 +116,11 @@ class uploaduser
                 // used while checking if profile data is key and needs to be converted (eg. menu profile field)
                 $proffields[$profilefieldname] = $proffield;
                 unset($proffields[$key]);
+                array_push($proflabels, $proffield->name);
             }
         }
 
-        return [$PRF_FIELDS, $proffields];
+        return [$PRF_FIELDS, $proffields, $proflabels];
     }
 
     public static function field_exist(string $field, array $stdfields, string $key = '')
@@ -517,15 +520,6 @@ class uploaduser
         return [$newusers, $newfilecolumns];
     }
 
-    public static function prepare_data_for_upload(array $users, array $filecolumns, stdClass $formdata, array $strings = ['authkey' => '']): array
-    {
-        foreach ($users as $user) {
-
-        }
-
-        return [$users, $filecolumns];
-    }
-
     public static function get_field_helper(array $stdfields, array $stdfields_assoc, string $field) {
         $key = array_search($field, $stdfields);
         return ($key >= 0)? $stdfields_assoc[$key] : '';
@@ -604,7 +598,7 @@ class uploaduser
     }
 
     public static function export_excel(
-        array $objects, array $fields, array $header = [], int $header_offset = 1, string $worksheet_name = 'default',
+        array $objects, array $fields, array $required_fields, array $header = [], int $header_offset = 1, string $worksheet_name = 'default',
         string $filename = 'default.xls', bool $download = false): MoodleExcelWorkbook
     {
         $workbook = new MoodleExcelWorkbook('-');
@@ -633,8 +627,10 @@ class uploaduser
         foreach ($objects as $key => $object) {
             $j = 0;
             foreach ($object as $keynum => $value) {
-                $worksheet->write_string($key + $i, $j, $object->$keynum, $format);
-                $j++;
+                if (in_array($keynum, $required_fields)) {
+                    $worksheet->write_string($key + $i, $j, $object->$keynum, $format);
+                    $j++;
+                }
             }
         }
 
