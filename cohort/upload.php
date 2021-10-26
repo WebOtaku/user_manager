@@ -32,6 +32,8 @@ $strheading = get_string('uploadcohorts', 'cohort');
 } else {*/
 //}
 
+$blockurl = new moodle_url($blockurl);
+
 // Навигация: Начало
 $backnode = $PAGE->navigation->add(get_string('back'), $blockurl);
 
@@ -39,7 +41,7 @@ $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager
 
 $userstableurl_params = array('returnurl' => $blockurl);
 $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
-$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+$userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
 $returnurl = new moodle_url('/blocks/user_manager/cohort/index.php', array(
     'contextid' => $context->id,
@@ -47,7 +49,7 @@ $returnurl = new moodle_url('/blocks/user_manager/cohort/index.php', array(
     'blockurl'  => $blockurl
 ));
 
-$chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $returnurl);
+$chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $returnurl);
 
 $pageurl = '/blocks/user_manager/cohort/upload.php';
 $urlparams = array(
@@ -61,7 +63,11 @@ $basenode = $chtstablenode->add($strheading, $baseurl);
 
 $uploaduserurl_params = array('returnurl' => $blockurl);
 $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-$uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+$uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+$instructionurl_params = array('returnurl' => $blockurl);
+$instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+$instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
 $basenode->make_active();
 // Навигация: Конец
@@ -92,6 +98,12 @@ if ($uploadform->is_cancelled()) {
 //$PAGE->navbar->add($strheading);
 
 echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+if ($editcontrols = service::user_manager_edit_controls($baseurl, $blockurl, 'cohorts')) {
+    echo $OUTPUT->render($editcontrols);
+}
+
 echo $OUTPUT->heading_with_help($strheading, 'uploadcohorts', 'cohort');
 
 if ($editcontrols = service::cohort_edit_controls($context, $baseurl)) {

@@ -59,7 +59,9 @@ if ($from) {
 
 $baseurl = new moodle_url($pageurl, $urlparams);
 
-$pagetitle = get_string('uploadusers', 'tool_uploaduser');
+$returnurl = new moodle_url($returnurl);
+
+$pagetitle = get_string('uploaduser', 'block_user_manager');
 $PAGE->set_url($baseurl);
 
 // Навигация: Начало
@@ -68,14 +70,18 @@ $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager
 
 $userstableurl_params = array('returnurl' => $returnurl);
 $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
-$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+$userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
 $chtstableurl_params = array('returnurl' => $returnurl);
 $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
-$chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+$chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $chtstableurl);
 
 $new_baseurl = new moodle_url($pageurl, array('returnurl' => $returnurl));
-$basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $new_baseurl);
+$basenode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $new_baseurl);
+
+$instructionurl_params = array('returnurl' => $returnurl);
+$instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+$instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
 $basenode->make_active();
 // Навигация: Конец
@@ -106,7 +112,7 @@ $strings = [
 
 $db_userfields = $DB->get_records("block_user_manager_ufields");
 
-$REQUIRED_FIELDS = ['lastname' ,'firstname', 'middlename', 'username'];
+$REQUIRED_FIELDS = REQUIRED_FIELDS;
 
 if ($email_required) {
     array_push($REQUIRED_FIELDS, 'email');
@@ -137,13 +143,27 @@ $ini = parse_ini_file('../conf.ini', true);
 $period_start = (int)$ini['period_start']; //$period_end - 1;
 $period_end = (int)$ini['period_end']; // date('Y');
 
-$upload_method_form = new um_select_upload_method_form($baseurl, array(STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $GROUPS));
+$upload_method_form = new um_select_upload_method_form($baseurl, array($GROUPS));
 
 if (!$upload_method) {
     echo $OUTPUT->header();
-    echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+    echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+    if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, 'uploaduser')) {
+        echo $OUTPUT->render($editcontrols);
+    }
+
+    echo $OUTPUT->heading(get_string('selectupmethod', 'block_user_manager'));
     echo '<link rel="stylesheet" href="../css/uplodauser.css">';
     $upload_method_form->display();
+
+    // ------ Подключение JS модуля ------
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
+    $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
+    $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url));
+    $PAGE->requires->strings_for_js(array('groupinfo'), 'block_user_manager');
+    // -----------------------------------
+
     echo $OUTPUT->footer();
     die;
 }
@@ -220,7 +240,13 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             }
         } else {
             echo $OUTPUT->header();
-            echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+            echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+            if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, 'uploaduser')) {
+                echo $OUTPUT->render($editcontrols);
+            }
+
+            echo $OUTPUT->heading_with_help(get_string('upfile', 'block_user_manager'), 'uploadusers', 'tool_uploaduser');
             echo '<link rel="stylesheet" href="../css/uplodauser.css">';
             $uploaduser_form->display();
             echo $OUTPUT->footer();
@@ -269,8 +295,7 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
         $FACULTIES = cohort1c_lib1c::GetFaculties($UNIV_FORM_STRUCTURE);
 
         $selectaction_form = new um_select_action_form($baseurl, array(
-            STD_FIELDS_EN, STD_FIELDS_RU, $REQUIRED_FIELDS, $FACULTIES, $GROUPS,
-            $from, $group, $group_info, EDU_FORMS
+            $FACULTIES, $GROUPS, $from, $group, $group_info, EDU_FORMS
         ));
 
         if ($selectaction_form->is_cancelled()) {
@@ -302,20 +327,13 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                         uploaduser::print_error(get_string('nogroupspecified', 'block_user_manager'), $baseurl);
                     }
 
-                    list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
-                    $group_info['ФормаОбучения'] = $formdata->eduform;
+                    list($students, $group_info) =
+                        cohort1c_lib1c::GetGroupInfoByGroup($formdata->group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
-                    if (empty($group_info['Группа'])) {
-                        $group_info['Группа'] = $formdata->group;
-                    }
-
-                    if (empty($group_info['Факультет'])) {
-                        $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($formdata->group);
-                    }
-
-                    if (empty($group_info['Курс'])) {
-                        $group_info['Курс'] = cohort::get_course_from_group($formdata->group, 1);
-                    }
+                    $group_info['Специализация'] = cohort1c_lib1c::GetGroupInfoSpec(
+                        $group_info['Специализация'], $group_info['ФормаОбучения'], $formdata->eduform
+                    );
+                    $group_info = cohort1c_lib1c::SetGroupInfoDefaults($group_info, $formdata->eduform, $formdata->group, 1);
                 }
             }
 
@@ -377,7 +395,14 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
 
                 //$group_info = (object)$GROUPS[$formdata->group]; // TODO: Заглушка
 
-                $header = uploaduser::form_excel_header_from_group_info($group_info, $period_end);
+                //$header = uploaduser::form_excel_header($group_info, $period_end);
+                $filter_fields = array(
+                    'Факультет', 'Направление подготовки', 'Профиль',
+                    'Уровень подготовки', 'Форма обучения', 'Год поступления'
+                );
+                $header = cohort1c_lib1c::FormatGroupInfo(
+                    $group_info, count($students), $period_end, 0, FORMAT_FIELDS, $filter_fields
+                );
 
                 $users_excel = uploaduser::export_excel($users, $filecolumns_ru, $filecolumns, $header, 1, $worksheet_name, $filename_excel, true);
             }
@@ -407,9 +432,26 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             }
         } else {
             echo $OUTPUT->header();
-            echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+            echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+            if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, 'uploaduser')) {
+                echo $OUTPUT->render($editcontrols);
+            }
+
+            echo $OUTPUT->heading(get_string('selectaction', 'block_user_manager'));
+            echo '<link rel="stylesheet" href="../css/uplodauser.css">';
+
             echo table::generate_userspreview_table($cir, $filecolumns, $previewrows);
+            echo '<hr/>';
             $selectaction_form->display();
+
+            // ------ Подключение JS модуля ------
+            $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
+            $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
+            $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url));
+            $PAGE->requires->strings_for_js(array('groupinfo'), 'block_user_manager');
+            // -----------------------------------
+
             echo $OUTPUT->footer();
         }
     }

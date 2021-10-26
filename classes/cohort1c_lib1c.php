@@ -233,7 +233,13 @@ class cohort1c_lib1c
         $students = array();
 
         if (isset($result->return) && isset($result->return->Students)) {
-            $students = $result->return->Students;
+            if (is_array($result->return->Students)) {
+                $students = $result->return->Students;
+            }
+
+            if (is_object($result->return->Students)) {
+                array_push($students, $result->return->Students);
+            }
         }
 
         $students = self::SliceLastStudents($students);
@@ -265,8 +271,9 @@ class cohort1c_lib1c
     public static function GetGroupInfoByGroup(string $group, int $period_start, int $period_end, string $student_status): array
     {
         $students = self::GetStudentsOfGroup($group, $period_start, $period_end, $student_status);
-        $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'Специализация', 'УровеньПодготовки');
-        $group_arr_fields = array('ФормаОбучения');
+        $group_fields = array('Факультет', 'Группа', 'Подгруппа', 'Курс', 'Специальность', 'УровеньПодготовки');
+        $group_arr_fields = array('Специализация', 'ФормаОбучения');
+        //$group_arr_fields = array('ФормаОбучения');
 
         $group_fields_values = array_fill(0, count($group_fields + $group_arr_fields), '');
         $group_info = array_combine($group_fields + $group_arr_fields, $group_fields_values);
@@ -345,5 +352,153 @@ class cohort1c_lib1c
         }
 
         return [$students, $group_info];
+    }
+
+    /**
+     * Приводит массив с информацией о группе к требуемому виду
+     * @param array $group_info - ассоциативный массив с информацией о группе
+     * @param int $period_end - конец учебного года
+     * @param int $course_format - формат номера курса: 0 - число (напр. 4),  1 - строка (напр. Четвёртый)
+     * @param array $filter_fields - поля по которым будет отфильтрован итоговый массив
+     * @return array - ассоциативный массив с информацией о группе
+     */
+    public static function FormatGroupInfo(array $group_info, int $num_students, int $period_end, int $course_format = 1,
+                                           array $format_fields = [], array $filter_fields = []): array
+    {
+        $format_group_info = array();
+        $ffield = '';
+
+        foreach ($group_info as $field => $value) {
+            if (array_key_exists($field, $format_fields)) {
+                $ffield = $format_fields[$field];
+            }
+
+            if (count($filter_fields)) {
+                $is_in_array = false;
+                if (in_array($field, $filter_fields) ||
+                    in_array($ffield, $filter_fields)) $is_in_array = true;
+                if (!$is_in_array) continue;
+            }
+
+            if ($field === 'Курс') {
+                list($course_num, $course_str) = cohort1c_lib1c::GetCourseRepresent($value);
+
+                switch ($course_format) {
+                    case 0:
+                        $format_group_info[$field] = ($course_num >= 1) ? $course_num : '';
+                        break;
+                    case 1:
+                        $format_group_info[$field] = $course_str;
+                        break;
+                    default:
+                        $format_group_info[$field] = '';
+                        break;
+                }
+            } else {
+                if ($ffield) $field = $ffield;
+                $format_group_info[$field] = $value;
+            }
+        }
+
+        list($course_num, $course_str) = cohort1c_lib1c::GetCourseRepresent($group_info['Курс']);
+
+        $format_group_info['Год поступления'] =
+            ($course_num >= 1 && $period_end > 0) ? ($period_end - $course_num) . ' год' : '';
+
+        $format_group_info['Количество cтудентов'] = ($num_students >= 0)? $num_students : '';
+
+        if (count($filter_fields)) {
+            if (!in_array('Количество cтудентов', $filter_fields))
+                unset($format_group_info['Количество cтудентов']);
+            if (!in_array('Год поступления', $filter_fields))
+                unset($format_group_info['Год поступления']);
+        }
+
+
+        return $format_group_info;
+    }
+
+    /**
+     * Возвращает значение для поля "Специализация" (Профиль) в зависимости от выбранной формы обучения
+     * @param array $specializations - массив специализаций группый полученный из 1с
+     * @param array $eduforms - массив форм обучения группый полученный из 1с
+     * @return string - значение для поля "Специализация" (Профиль)
+     */
+    public static function GetGroupInfoSpec(array $specializations, array $eduforms, string $eduform): string
+    {
+        $specialization = '';
+
+        if (($eduformkey = array_search($eduform, $eduforms)) !== false) {
+            if (array_key_exists($eduformkey, $specializations)) {
+                $specialization = $specializations[$eduformkey];
+            } else {
+                for (; $eduformkey >= 0; $eduformkey -= 1) {
+                    if (array_key_exists($eduformkey, $specializations)) {
+                        $specialization = $specializations[$eduformkey];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $specialization;
+    }
+
+    /**
+     * Задаёт значения по умолчанию для ассоциоативного массива с информацией о группе
+     * @param array $group_info - ассоциативный массив с информацией о группе
+     * @param string $eduform - форма обучения (Например: "Очно-заочная")
+     * @param string $group - название группы (Например: "ПИ-43")
+     * @param int $course_format - формат номера курса: 0 - число (напр. 4),  1 - строка (напр. Четвёртый)
+     * @return array - ассоциативный массив с информацией о группе
+     */
+    public static function SetGroupInfoDefaults(array $group_info, string $eduform, string $group, int $course_format): array
+    {
+        $group_info['ФормаОбучения'] = $eduform;
+
+        if (empty($group_info['Группа'])) {
+            $group_info['Группа'] = $group;
+        }
+
+        if (empty($group_info['Факультет'])) {
+            $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($group);
+        }
+
+        if (empty($group_info['Специализация'])) {
+            $group_info['Специализация'] = '';
+        }
+
+        if (empty($group_info['Курс'])) {
+            $course_num = cohort::get_course_from_group($group, $course_format);
+            $group_info['Курс'] = ($course_num >= 1) ? $course_num : '';
+        }
+
+        return $group_info;
+    }
+
+    /**
+     * Возвращает курс в виде числа (1, 2, 3, ...) и строки (Первый, Второй, Третий, ...)
+     * @param $value - значение курса (в виде числа 1, 2, 3, ... или
+     * в виде строки (Первый (первый), Второй (второй), Третий (третий), ...)
+     * @return array - представления курса в виде числа и строки
+     */
+    public static function GetCourseRepresent($value): array {
+        $course_num = 0;
+        $course_str = '';
+
+        if (is_string($value) && !is_numeric($value)) {
+            $lcourse = mb_convert_case($value, MB_CASE_LOWER);
+            if (isset(COURSE_STRING[$lcourse])) {
+                $course_num = COURSE_STRING[$lcourse];
+                $course_str = $value;
+            }
+        } else if (is_int($value)) {
+            if (($course_str = array_search($value, COURSE_STRING)) !== false) {
+                $course_num = $value;
+                $course_str = string_operation::capitalize_first_letter_cyrillic($course_str);
+            }
+        }
+
+        return [$course_num, $course_str];
     }
 }

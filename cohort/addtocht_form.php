@@ -16,16 +16,22 @@ class addtocht_form extends moodleform {
 
         list($user) = $this->_customdata;
 
-        $mform->addElement('header', 'header', get_string('addtocht', 'block_user_manager'));
+        $full_name = "$user->lastname $user->firstname $user->middlename";
 
-        $attributes = array(
-            'value' => "$user->lastname $user->firstname $user->middlename",
-            'disabled' => true,
-            'size' => '32'
-        );
+        $full_name_html = '
+            <div id="fitem_id_fullname" class="form-group row  fitem">
+                <div class="col-md-3">
+                    <span class="float-sm-right text-nowrap"></span>
+                    <span class="col-form-label d-inline">'.get_string('user', 'admin').' </span>
+                </div>
+                <div class="col-md-9 form-inline felement" data-fieldtype="static">
+                    <div class="form-control-static">'.$full_name.'</div>
+                    <div class="form-control-feedback invalid-feedback" id="id_error_fullname"></div>
+                </div>
+            </div>
+        ';
 
-        $mform->addElement('text', 'fullname', get_string('user', 'admin'), $attributes);
-        $mform->setType('fullname', PARAM_TEXT);
+        $mform->addElement('html', $full_name_html);
 
         $options = array('multiple' => true);
 

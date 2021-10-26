@@ -86,7 +86,7 @@ $urlparams['page'] = $page;
 
 $baseurl = new moodle_url($pageurl, $urlparams);
 
-$pagetitle = get_string('users_table', 'block_user_manager');
+$pagetitle = get_string('users', 'block_user_manager');
 
 $PAGE->set_url($baseurl);
 /*$PAGE->set_title($pagetitle);
@@ -105,13 +105,17 @@ if ($userfilter == 'cohort')  {
     $userstableurl->remove_params('userfilter', 'chtid');
     $userstableurl->param('returnurl', (new moodle_url($userstableurl->get_param('returnurl')))->get_param('returnurl'));
 
-    $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+    $userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
-    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $returnurl);
+    $chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $returnurl);
 
     $uploaduserurl_params = array('returnurl' => $userstableurl->get_param('returnurl'));
     $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+    $uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+    $instructionurl_params = array('returnurl' => $userstableurl->get_param('returnurl'));
+    $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+    $instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
     $basenode = $chtstablenode->add($cht->name, $baseurl);
     $basenode->make_active();
@@ -120,15 +124,19 @@ else {
     $backnode = $PAGE->navigation->add(get_string('back'), $returnurl);
     $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
 
-    $basenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $baseurl);
+    $basenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $baseurl);
 
     $chtstableurl_params = array('returnurl' => $returnurl);
     $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
-    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+    $chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $chtstableurl);
 
     $uploaduserurl_params = array('returnurl' => $returnurl);
     $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+    $uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+    $instructionurl_params = array('returnurl' => $returnurl);
+    $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+    $instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 }
 
 $basenode->make_active();
@@ -369,6 +377,18 @@ if ($addfilter || $removeall || $removeselected) {
 }
 
 echo $OUTPUT->header();
+
+echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+if ($userfilter === 'cohort') {
+    $currenttab = 'cohorts';
+} else {
+    $currenttab = 'users';
+}
+
+if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, $currenttab)) {
+    echo $OUTPUT->render($editcontrols);
+}
 
 /*// Carry on with the user listing
 $context = context_system::instance();*/

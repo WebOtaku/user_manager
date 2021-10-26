@@ -1,4 +1,7 @@
 <?php
+
+use block_user_manager\service;
+
 require('../../../config.php');
 require_once('../locallib.php');
 
@@ -32,7 +35,7 @@ if (isset($_POST['systemfields']))
                 'data' => get_string('uniquefields', 'block_user_manager'),
                 'status' => $response_code
             );
-            returnJsonHttpResponse($data, $response_code);
+            service::returnJsonHttpResponse($data, $response_code);
         }
 
         $fields = array_combine($systemfields, $associatedfields);
@@ -66,7 +69,7 @@ if (isset($_POST['systemfields']))
             'data' => get_string('changessaved', 'block_user_manager'),
             'status' => $response_code
         );
-        returnJsonHttpResponse($data, $response_code);
+        service::returnJsonHttpResponse($data, $response_code);
     }
     else {
         deleteSystemFields($tablename, $db_systemfields);
@@ -76,7 +79,7 @@ if (isset($_POST['systemfields']))
             'data' => get_string('changessaved', 'block_user_manager'),
             'status' => $response_code
         );
-        returnJsonHttpResponse($data, $response_code);
+        service::returnJsonHttpResponse($data, $response_code);
     }
 } else {
     deleteSystemFields($tablename, $db_systemfields);
@@ -87,7 +90,7 @@ if (isset($_POST['systemfields']))
         'status' => $response_code
     );
 
-    returnJsonHttpResponse($data, $response_code);
+    service::returnJsonHttpResponse($data, $response_code);
 }
 
 
@@ -111,57 +114,4 @@ function deleteSystemFields($tablename, $db_systemfields) {
     foreach ($db_systemfields as $db_systemfield) {
         $DB->delete_records($tablename, array('system_field' => $db_systemfield));
     }
-}
-
-/*
- * returnJsonHttpResponse
- * @param $success: Boolean
- * @param $data: Object or Array
- */
-function returnJsonHttpResponse($data, $response_code = 200)
-{
-    // remove any string that could create an invalid JSON
-    // such as PHP Notice, Warning, logs...
-    ob_clean();
-
-    // this will clean up any previously added headers, to start clean
-    header_remove();
-
-    // Set the content type to JSON and charset
-    // (charset can be set to something else)
-    header("Content-type: application/json; charset=utf-8");
-
-    // Set your HTTP response code, 2xx = SUCCESS,
-    // anything else will be error, refer to HTTP documentation
-
-    // encode your PHP Object or Array into a JSON string.
-    // stdClass or array
-    $json = json_encode($data);
-
-    if ($json === false) {
-        // Set HTTP response status code to: 500 - Internal Server Error
-        $response_code = 500;
-        // Avoid echo of empty string (which is invalid JSON), and
-        // JSONify the error message instead:
-        $data = array(
-            'data' => json_last_error_msg(),
-            'status' => $response_code
-        );
-        $json = json_encode($data);
-
-        if ($json === false) {
-            // This should not happen, but we go all the way now:
-            $data = array(
-                'data' => get_string('unknown', 'block_user_manager'),
-                'status' => $response_code
-            );
-            $json = json_encode($data);
-        }
-    }
-
-    http_response_code($response_code);
-    echo $json;
-
-    // making sure nothing is added
-    exit();
 }

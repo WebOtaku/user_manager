@@ -26,14 +26,14 @@ class block_user_manager extends block_base {
         {
             $links[] = '/blocks/user_manager/user.php';
             $linksparams[] = ['returnurl' => $this->page->url];
-            $keyslangfile[] = 'users_table';
+            $keyslangfile[] = 'users';
         }
 
         if (self::has_access_to_cohorts())
         {
             $links[] = '/blocks/user_manager/cohort/index.php';
             $linksparams[] = ['returnurl' => $this->page->url];
-            $keyslangfile[] = 'chts_table';
+            $keyslangfile[] = 'cohorts';
         }
 
 
@@ -107,4 +107,6 @@ class block_user_manager extends block_base {
     public function instance_allow_multiple() {
         return false;
     }
+
+    function has_config() {return true;}
 }

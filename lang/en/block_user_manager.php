@@ -9,15 +9,19 @@ $string['user_manager:view'] = 'View "User Manager" block';
 $string['user_manager:edit'] = 'Edit "User Manager" block';
 
 $string['users_table'] = 'User List';
-$string['users_table_tabs'] = 'User List (tabs)';
 $string['chts_table'] = 'Cohorts List';
-
-$string['cht_users_table'] = 'User List';
+$string['cht_users_table'] = 'List of cohort members';
+$string['cohorts'] = 'Cohorts';
+$string['users'] = 'Users';
+$string['instruction'] = 'Instruction';
 
 // Форма загрузки пользователей
 $string['uploaduser'] = 'Upload users';
+$string['selectupmethod'] = 'Select upload method';
+$string['upfile'] = 'Upload file';
+$string['selectaction'] = 'Select action';
+
 $string['validfields'] = 'Valid fields';
-$string['instruction'] = 'Instruction';
 $string['systemfields'] = 'System fields';
 $string['associatedfields'] = 'Associated fields';
 $string['customfields'] = 'Custom fields';
@@ -27,16 +31,17 @@ $string['faculties'] = 'Faculties';
 $string['faculty'] = 'Faculty';
 $string['group'] = 'Group';
 
+$string['groupinfo'] = 'Group information';
+
 $string['exportcsv'] = 'Export in .csv format';
 $string['exportcsvad'] = 'Export in .csv format (AD)';
 $string['exportxls'] = 'Export in .xls (Excel) format';
 
-$string['selectaction'] = 'Select action';
 $string['complete'] = 'Complete';
 
 $string['further'] = 'Further';
 
-$string['upfromfile'] = 'Upload from file';
+$string['upfromfile'] = 'Upload from File';
 $string['upfrom1c'] = 'Upload from 1C';
 
 $string['uploadmethod'] = 'Upload method';
@@ -66,6 +71,7 @@ $string['nofacultyspecified'] = 'Faculty must be specified.';
 $string['nogroupspecified'] = 'Group must be specified.';
 $string['noeduformspecified'] = 'Education form must be specified.';
 $string['noiidspecified'] = 'iid must be specified (identifier of temporary file).';
+$string['groupnotarray'] = 'Group cannot be an array.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 

@@ -9,34 +9,39 @@ $string['user_manager:view'] = 'Видеть блок "Менеджер поль
 $string['user_manager:edit'] = 'Редактировать блок "Менеджер пользователей"';
 
 $string['users_table'] = 'Список пользователей';
-$string['users_table_tabs'] = 'Список пользователей (табы)';
 $string['chts_table'] = 'Список глобальных групп';
-
-$string['cht_users_table'] = 'Список пользователей';
+$string['cht_users_table'] = 'Список участников глобальной группы';
+$string['cohorts'] = 'Глобальные группы';
+$string['users'] = 'Пользователи';
+$string['instruction'] = 'Инструкция';
 
 // Форма загрузки пользователей
 $string['uploaduser'] = 'Загрузка пользователей';
+$string['selectupmethod'] = 'Выбор способа загрузки';
+$string['upfile'] = 'Загрузка файла';
+$string['selectaction'] = 'Выбор действия';
+
 $string['validfields'] = 'Допустимые поля';
-$string['instruction'] = 'Инструкция';
 $string['systemfields'] = 'Системные поля';
 $string['associatedfields'] = 'Ассоциированные поля';
 $string['customfields'] = 'Пользовательские поля';
-$string['emailrequired'] = 'Электроная почта обязательна';
+$string['emailrequired'] = 'Электронная почта обязательна';
 $string['prffields'] = 'Поля профиля (настраиваемые поля)';
 $string['faculties'] = 'Факультеты';
 $string['faculty'] = 'Факультет';
 $string['group'] = 'Группа';
 
+$string['groupinfo'] = 'Информация о группе';
+
 $string['exportcsv'] = 'Экспорт в формате .csv';
 $string['exportcsvad'] = 'Экспорт в формате .csv (AD)';
 $string['exportxls'] = 'Экспорт в формате .xls (Excel)';
 
-$string['selectaction'] = 'Выбор действия';
 $string['complete'] = 'Выполнить';
 
 $string['further'] = 'Далее';
 
-$string['upfromfile'] = 'Загрузка из файла';
+$string['upfromfile'] = 'Загрузка из Файла';
 $string['upfrom1c'] = 'Загрузка из 1С';
 
 $string['uploadmethod'] = 'Способ загрузки';
@@ -66,6 +71,7 @@ $string['nofacultyspecified'] = 'Должен быть указан факуль
 $string['nogroupspecified'] = 'Должна быть указана группа.';
 $string['noeduformspecified'] = 'Должна быть указана форма обучения.';
 $string['noiidspecified'] = 'Должен быть указана iid (идентификатор временного файла).';
+$string['groupnotarray'] = 'Группа не может быть массивом.';
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 

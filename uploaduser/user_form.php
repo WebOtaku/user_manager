@@ -19,26 +19,26 @@ class um_select_upload_method_form extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        list($systemfields, $helpfields, $required_fields, $groups) = $this->_customdata;
-
-        $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
-
-        $instruction = uploaduser::get_uploaduser_instruction($systemfields, $helpfields, $required_fields);
-
-        $mform->addElement('html', $instruction);
-        $mform->setExpanded('instructionheader', false);
-
-        $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
+        list($groups) = $this->_customdata;
 
         $choices = array(
             UPLOAD_METHOD_1C => get_string('upfrom1c', 'block_user_manager'),
             UPLOAD_METHOD_FILE => get_string('upfromfile', 'block_user_manager'),
         );
-        $mform->addElement('select', 'upload_method', get_string('uploadmethod', 'block_user_manager'), $choices);
+
+        $attributes = array(
+            ' size' => count($choices), // Фикс игнорирования аттрибута size это добавление пробела до или после слова size
+            'class' => 'um-custom-select'
+        );
+
+        $select = $mform->addElement('select', 'upload_method', get_string('uploadmethod', 'block_user_manager'),
+            $choices, $attributes);
+        $select->setSelected(UPLOAD_METHOD_1C);
         $mform->setType('upload_method', PARAM_INT);
 
         $choices = array_combine($groups, $groups);
-        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
+            $choices, array('class' => 'um-autocomplete-group'));
         $mform->hideIf('group', 'upload_method', 'eq', UPLOAD_METHOD_FILE);
         $mform->setType('group', PARAM_TEXT);
 
@@ -58,13 +58,6 @@ class um_admin_uploaduser_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
         list($stdfields, $systemfields, $helpfields, $required_fields, $prffields, $prflabels) = $this->_customdata;
-
-        $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
-
-        $instruction = uploaduser::get_uploaduser_instruction($systemfields, $helpfields, $required_fields);
-
-        $mform->addElement('html', $instruction);
-        $mform->setExpanded('instructionheader', false);
 
         $mform->addElement('header', 'validfieldsheader', get_string('validfields', 'block_user_manager'));
 
@@ -165,17 +158,7 @@ class um_select_action_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        list($systemfields, $helpfields, $required_fields, $faculties,
-            $groups, $from, $group, $group_info, $edu_forms) = $this->_customdata;
-
-        $mform->addElement('header', 'instructionheader', get_string('instruction', 'block_user_manager'));
-
-        $instruction = uploaduser::get_uploaduser_instruction($systemfields, $helpfields, $required_fields);
-
-        $mform->addElement('html', $instruction);
-        $mform->setExpanded('instructionheader', false);
-
-        $mform->addElement('header', 'settingsheader', get_string('selectaction', 'block_user_manager'));
+        list($faculties, $groups, $from, $group, $group_info, $edu_forms) = $this->_customdata;
 
         $choices = array(
             ACTION_EXPORTCSV => get_string(ACTION_EXPORTCSV, 'block_user_manager'),
@@ -183,7 +166,12 @@ class um_select_action_form extends moodleform {
             ACTION_EXPORTXLS => get_string(ACTION_EXPORTXLS, 'block_user_manager'),
             ACTION_UPLOADUSER => get_string(ACTION_UPLOADUSER, 'block_user_manager')
         );
-        $mform->addElement('select', 'action', get_string('action'), $choices);
+        $attributes = array(
+            ' size' => count($choices), // Фикс игнорирования аттрибута size это добавление пробела до или после слова size
+            'class' => 'um-custom-select'
+        );
+        $mform->addElement('select', 'action', get_string('action'), $choices, $attributes);
+        $mform->getElement('action')->setSelected(ACTION_EXPORTCSV);
         $mform->setType('action', PARAM_TEXT);
 
         $choices = array_combine($faculties, $faculties);
@@ -196,7 +184,8 @@ class um_select_action_form extends moodleform {
         // $groups = array_keys($groups); // TODO: Заглушка
 
         $choices = array_combine($groups, $groups);
-        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
+        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
+            $choices, array('class' => 'um-autocomplete-group'));
         if ($from === UPLOAD_METHOD_FILE) {
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);

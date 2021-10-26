@@ -1,3 +1,44 @@
+.um-message__content {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.25s linear;
+}
+
+.um-message-show .um-message__content {
+    display: block;
+    /*opacity: 1;*/
+}
+
+.um-toggle-btn {
+    padding: 0 11px;
+    max-height: 25px;
+    font-size: 13px;
+}
+
+.um-message-show .um-toggle-btn {
+    margin-bottom: 10px;
+}
+
+.um-toggle-arrow {
+    display: inline-block;
+    margin-left: 2px;
+    transform: rotate(270deg);
+    transition: transform 0.25s linear;
+}
+
+.um-message-show .um-toggle-arrow {
+    transform: rotate(360deg);
+}
+
+.um-autocomplete-group #umGroupInfo {
+    /*display: none;*/
+    margin-bottom: 10px;
+    max-width: 600px;
+}
+.um-autocomplete-group #umGroupInfo p {
+    margin: 0;
+}
+
 .um-input-info {
     font-size: 12px;
     color: #383d41;
@@ -10,4 +51,17 @@
 
 .um-alert-link {
     text-align: center;
+}
+
+.um-custom-select .custom-select {
+    display: flex;
+    padding: 5px;
+}
+
+.um-custom-select .custom-select[multiple], .custom-select[size]:not([size="1"]) {
+    padding-right: 5px;
+}
+
+.um-custom-select .custom-select option {
+    padding: 8px;
 }

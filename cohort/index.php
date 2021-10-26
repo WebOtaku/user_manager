@@ -82,13 +82,17 @@ $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager
 
 $userstableurl_params = array('returnurl' => $returnurl);
 $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
-$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+$userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
-$basenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $baseurl);
+$basenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $baseurl);
 
 $uploaduserurl_params = array('returnurl' => $returnurl);
 $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-$uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+$uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+$instructionurl_params = array('returnurl' => $returnurl);
+$instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+$instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
 $basenode->make_active();
 // Навигация: Конец
@@ -108,6 +112,12 @@ if ($cohorts['allcohorts'] > 0) {
     } else {
         $count = ' ('.$cohorts['totalcohorts'].'/'.$cohorts['allcohorts'].')';
     }
+}
+
+echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, 'cohorts')) {
+    echo $OUTPUT->render($editcontrols);
 }
 
 echo $OUTPUT->heading(get_string('cohortsin', 'cohort', $context->get_context_name()).$count);

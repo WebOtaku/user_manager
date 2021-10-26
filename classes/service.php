@@ -196,6 +196,26 @@ class service
         return null;
     }
 
+    public static function user_manager_edit_controls(moodle_url $currenturl, moodle_url $returnurl,  string $currenttab = 'users') {
+        $tabs = array();
+
+        $usersurl = new moodle_url('/blocks/user_manager/user.php', array('returnurl' => $returnurl));
+        $cohortsurl = new moodle_url('/blocks/user_manager/cohort/index.php', array('returnurl' => $returnurl));
+        $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', array('returnurl' => $returnurl));
+        $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', array('returnurl' => $returnurl));
+
+        $tabs[] = new tabobject('users', new moodle_url($usersurl), get_string('users', 'block_user_manager'));
+        $tabs[] = new tabobject('cohorts', new moodle_url($cohortsurl), get_string('cohorts', 'block_user_manager'));
+        $tabs[] = new tabobject('uploaduser', new moodle_url($uploaduserurl), get_string('uploaduser', 'block_user_manager'));
+        $tabs[] = new tabobject('instruction', new moodle_url($instructionurl), get_string('instruction', 'block_user_manager'));
+
+        if (count($tabs) > 1) {
+            return new tabtree($tabs, $currenttab);
+        }
+
+        return null;
+    }
+
     public static function generate_password(stdClass $user, string $emptystr = ''): string
     {
         /*if (empty($emptystr))
@@ -261,5 +281,58 @@ class service
         }
 
         return $new_objs_arr;
+    }
+
+    /*
+     * returnJsonHttpResponse
+     * @param $success: Boolean
+     * @param $data: Object or Array
+     */
+    public static function returnJsonHttpResponse($data, $response_code = 200)
+    {
+        // remove any string that could create an invalid JSON
+        // such as PHP Notice, Warning, logs...
+        ob_clean();
+
+        // this will clean up any previously added headers, to start clean
+        header_remove();
+
+        // Set the content type to JSON and charset
+        // (charset can be set to something else)
+        header("Content-type: application/json; charset=utf-8");
+
+        // Set your HTTP response code, 2xx = SUCCESS,
+        // anything else will be error, refer to HTTP documentation
+
+        // encode your PHP Object or Array into a JSON string.
+        // stdClass or array
+        $json = json_encode($data);
+
+        if ($json === false) {
+            // Set HTTP response status code to: 500 - Internal Server Error
+            $response_code = 500;
+            // Avoid echo of empty string (which is invalid JSON), and
+            // JSONify the error message instead:
+            $data = array(
+                'data' => json_last_error_msg(),
+                'status' => $response_code
+            );
+            $json = json_encode($data);
+
+            if ($json === false) {
+                // This should not happen, but we go all the way now:
+                $data = array(
+                    'data' => get_string('unknown', 'block_user_manager'),
+                    'status' => $response_code
+                );
+                $json = json_encode($data);
+            }
+        }
+
+        http_response_code($response_code);
+        echo $json;
+
+        // making sure nothing is added
+        exit();
     }
 }

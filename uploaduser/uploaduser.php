@@ -115,25 +115,31 @@ if ($eduform) {
 }
 
 $baseurl = new moodle_url($pageurl, $urlparams);
+
 $returnurl = new moodle_url($returnurl);
 $bulknurl  = new moodle_url('/admin/user/user_bulk.php');
 
 $PAGE->set_url($baseurl);
 
 // Навигация: Начало
-$backurl = (new moodle_url($returnurl))->param('returnurl');
+$backurl = new moodle_url($returnurl->get_param('returnurl'));
 $backnode = $PAGE->navigation->add(get_string('back'), $backurl);
 $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
 
 $userstableurl_params = array('returnurl' => $backurl);
 $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
-$userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+$userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
 $chtstableurl_params = array('returnurl' => $backurl);
 $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
-$chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+$chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $chtstableurl);
 
-$basenode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $baseurl);
+// TODO: Для всех basenode сделать URL аналогичный другим пунктам навигации
+$basenode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $baseurl);
+
+$instructionurl_params = array('returnurl' => $backurl);
+$instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+$instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
 $basenode->make_active();
 // Навигация: Конец
@@ -198,28 +204,15 @@ if ($action === 'add_cohort') {
     if (count($students)) {
         $group_info = cohort1c_lib1c::GetGroupInfoFromStudent($students[0]);
     } else {
-        $group_info['ФормаОбучения'] = $eduform;
+        $group_info['Специализация'] = cohort1c_lib1c::GetGroupInfoSpec(
+            $group_info['Специализация'], $group_info['ФормаОбучения'], $eduform
+        );
     }
 
-    if (empty($group_info['Группа'])) {
-        $group_info['Группа'] = $group;
-    }
-
-    if (empty($group_info['Факультет'])) {
-        $group_info['Факультет'] = cohort1c_lib1c::FindFaculty($group);
-    }
-
-    if (empty($group_info['ФормаОбучения'])) {
-        $group_info['ФормаОбучения'] = $eduform;
-    }
-
-    if (empty($group_info['Курс'])) {
-        $group_info['Курс'] = cohort::get_course_from_group($group, 1);
-    }
-
-    $lccourse = mb_convert_case($group_info['Курс'], MB_CASE_LOWER);
-    $course = (isset(COURSE_STRING[$lccourse])) ?
-        COURSE_STRING[$lccourse] : '';
+    $course_format = 0;
+    $group_info = cohort1c_lib1c::SetGroupInfoDefaults($group_info, $eduform, $group, $course_format);
+    list($course_num, $course_str) = cohort1c_lib1c::GetCourseRepresent($group_info['Курс']);
+    $group_info['Курс'] = ($course_format === 0)? (($course_num >= 1) ? $course_num : '') : $course_str;
 
     $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
 
@@ -258,7 +251,7 @@ if ($action === 'add_cohort') {
             'faculty' => $group_info['Факультет'],
             'speciality' => $group_info['Специальность'],
             'specialization' => $group_info['Специализация'],
-            'course' => $course,
+            'course' => $group_info['Курс'],
             'form' => $group_info['ФормаОбучения'],
             'group1c' => $group_info['Группа'] . $group_info['Подгруппа'],
             'cohortid' => null,
@@ -287,6 +280,12 @@ if ($formdata = $mform2->is_cancelled()) {
 } else if ($formdata = $mform2->get_data()) {
     // Print the header
     echo $OUTPUT->header();
+    echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+    if ($editcontrols = service::user_manager_edit_controls($baseurl, $backurl, 'uploaduser')) {
+        echo $OUTPUT->render($editcontrols);
+    }
+
     echo $OUTPUT->heading(get_string('uploadusersresult', 'tool_uploaduser'));
 
     $optype = $formdata->uutype;
@@ -1309,6 +1308,12 @@ if ($formdata = $mform2->is_cancelled()) {
 
 // Print the header
 echo $OUTPUT->header();
+
+echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+if ($editcontrols = service::user_manager_edit_controls($baseurl, $backurl, 'uploaduser')) {
+    echo $OUTPUT->render($editcontrols);
+}
 
 echo $OUTPUT->heading(get_string('uploaduserspreview', 'tool_uploaduser'));
 

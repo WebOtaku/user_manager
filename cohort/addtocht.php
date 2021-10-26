@@ -1,5 +1,7 @@
 <?php
 
+use block_user_manager\service;
+
 require_once('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once('addtocht_form.php');
@@ -28,8 +30,10 @@ $urlparams = array(
 $baseurl = new moodle_url($pageurl, $urlparams);
 
 $PAGE->set_url($baseurl);
-$PAGE->set_title(get_string('addtocht', 'block_user_manager'));
-$PAGE->set_heading(get_string('addtocht', 'block_user_manager'));
+
+$pagetitle = get_string('addtocht', 'block_user_manager');
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($pagetitle);
 $PAGE->set_pagelayout('standard');
 
 $returnurl = new moodle_url($returnurl);
@@ -45,39 +49,46 @@ if ($userfilter === 'cohort') {
 
     $userstableurl_params = array('returnurl' => $backurl);
     $userstableurl = new moodle_url('/blocks/user_manager/user.php', $userstableurl_params);
-    $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $userstableurl);
+    $userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $userstableurl);
 
-    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $returnurl->get_param('returnurl'));
+    $chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $returnurl->get_param('returnurl'));
 
     $cht = $DB->get_record('cohort', array('id' => $returnurl->get_param('chtid')));
     $userschttablenode = $chtstablenode->add($cht->name, $returnurl);
 
-    $basenode = $userschttablenode->add(get_string('addtochtshort', 'block_user_manager'), $baseurl);
+    $basenode = $userschttablenode->add($pagetitle, $baseurl);
 
     $uploaduserurl_params = array('returnurl' => $backurl);
     $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+    $uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+    $instructionurl_params = array('returnurl' => $backurl);
+    $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+    $instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 } else {
     $backurl = $returnurl->get_param('returnurl');
 
     $backnode = $PAGE->navigation->add(get_string('back'), $backurl);
     $usermanagernode = $backnode->add(get_string('user_manager', 'block_user_manager'));
-    $userstablenode = $usermanagernode->add(get_string('users_table', 'block_user_manager'), $returnurl);
+    $userstablenode = $usermanagernode->add(get_string('users', 'block_user_manager'), $returnurl);
 
     $chtstableurl_params = array('returnurl' => $backurl);
     $chtstableurl = new moodle_url('/blocks/user_manager/cohort/index.php', $chtstableurl_params);
-    $chtstablenode = $usermanagernode->add(get_string('chts_table', 'block_user_manager'), $chtstableurl);
+    $chtstablenode = $usermanagernode->add(get_string('cohorts', 'block_user_manager'), $chtstableurl);
 
-    $basenode = $userstablenode->add(get_string('addtochtshort', 'block_user_manager'), $baseurl);
+    $basenode = $userstablenode->add($pagetitle, $baseurl);
 
     $uploaduserurl_params = array('returnurl' => $backurl);
     $uploaduserurl = new moodle_url('/blocks/user_manager/uploaduser/index.php', $uploaduserurl_params);
-    $uploadusernode = $usermanagernode->add(get_string('uploadusers', 'tool_uploaduser'), $uploaduserurl);
+    $uploadusernode = $usermanagernode->add(get_string('uploaduser', 'block_user_manager'), $uploaduserurl);
+
+    $instructionurl_params = array('returnurl' => $backurl);
+    $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
+    $instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 }
 
 $basenode->make_active();
 // Навигация: Конец
-
 
 if (!$user = $DB->get_record('user', array('id' => $userid))) {
     print_error('invaliduser');
@@ -101,6 +112,13 @@ if($assign_form->is_cancelled()) {
 
 } else {
     echo $OUTPUT->header();
+    echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
+
+    if ($editcontrols = service::user_manager_edit_controls($baseurl, $returnurl, 'users')) {
+        echo $OUTPUT->render($editcontrols);
+    }
+
+    echo $OUTPUT->heading($pagetitle);
     $assign_form->display();
     echo $OUTPUT->footer();
 }

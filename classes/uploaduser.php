@@ -159,7 +159,8 @@ class uploaduser
         return false;
     }
 
-    public static function get_uploaduser_instruction(array $stdfields, array $stdfields_assoc, array $required_fields): string
+    /* Вынесена на отдельную страницу и редактируется через глобальные настройки*/
+    /*public static function get_uploaduser_instruction(array $stdfields, array $stdfields_assoc, array $required_fields): string
     {
         $required_fields = self::get_fields_with_helper($stdfields, $stdfields_assoc, $required_fields);
 
@@ -291,7 +292,7 @@ class uploaduser
         ';
 
         return $instruction;
-    }
+    }*/
 
     public static function get_userlist_from_file(csv_import_reader $cir, array $stdfields, array $prffields,
         moodle_url $baseurl, string $passwordkey, string $usernamekey, string $emptystr = '', string $username_prefix = ''): array
@@ -549,14 +550,15 @@ class uploaduser
         global $OUTPUT;
 
         echo $OUTPUT->header();
-        echo $OUTPUT->heading_with_help(get_string('uploadusers', 'tool_uploaduser'), 'uploadusers', 'tool_uploaduser');
+        echo $OUTPUT->heading(get_string('uploaduser', 'block_user_manager'));
         echo '<link rel="stylesheet" href="../css/uplodauser.css">';
         service::print_error($message, $baseurl);
         echo $OUTPUT->footer();
         die;
     }
 
-    public static function form_excel_header_from_group_info(array $group_with_info, int $period_end): array {
+    /* Заменена функцие cohort1c_lib1c::FormatGroupInfo */
+    /*public static function form_excel_header(array $group_info, int $period_end): array {
         $excel_header = array(
             'Факультет' => '',
             'Направление подготовки' => '',
@@ -566,7 +568,7 @@ class uploaduser
             'Год поступления' => ''
         );
 
-        foreach ($group_with_info as $field => $value) {
+        foreach ($group_info as $field => $value) {
             switch ($field) {
                 case 'Факультет':
                     $excel_header['Факультет'] = $value;
@@ -584,18 +586,25 @@ class uploaduser
                     $excel_header['Форма обучения'] = $value;
                     break;
                 case 'Курс':
-                    $value = mb_convert_case($value, MB_CASE_LOWER);
-                    if (isset(COURSE_STRING[$value])) {
-                        $excel_header['Год поступления'] = ($period_end - COURSE_STRING[$value]) . ' год';
+                    if (is_string($value)) {
+                        $lcourse = mb_convert_case($value, MB_CASE_LOWER);
+                        $course = (isset(COURSE_STRING[$lcourse]))? COURSE_STRING[$lcourse] : 0;
+                    } else if (is_int($value)) {
+                        $course = $value;
                     } else {
-                        $excel_header['Год поступления'] = '';
+                        $course = 0;
                     }
+
+                    if ($course >= 1) {
+                        $excel_header['Год поступления'] = ($period_end - $course) . ' год';
+                    }
+
                     break;
             }
         }
 
         return $excel_header;
-    }
+    }*/
 
     public static function export_excel(
         array $objects, array $fields, array $required_fields, array $header = [], int $header_offset = 1, string $worksheet_name = 'default',
