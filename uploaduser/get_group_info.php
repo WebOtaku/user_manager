@@ -41,7 +41,10 @@ if (isset($_POST['group'])) {
 
             $response_code = 200;
             $data = array(
-                'data' => $message,
+                'data' => [
+                    'groupInfoStr' => $message,
+                    'groupInfo' => $group_info
+                ],
                 'status' => $response_code
             );
             service::returnJsonHttpResponse($data, $response_code);

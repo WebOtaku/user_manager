@@ -160,8 +160,10 @@ if (!$upload_method) {
     // ------ Подключение JS модуля ------
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
     $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
-    $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url));
-    $PAGE->requires->strings_for_js(array('groupinfo'), 'block_user_manager');
+    $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url, null, null, null));
+    $PAGE->requires->strings_for_js(
+        array('groupinfo', 'nogroupinfo', 'full_time', 'extramural', 'part_time'), 'block_user_manager'
+    );
     // -----------------------------------
 
     echo $OUTPUT->footer();
@@ -466,8 +468,10 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             // ------ Подключение JS модуля ------
             $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
             $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
-            $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url));
-            $PAGE->requires->strings_for_js(array('groupinfo'), 'block_user_manager');
+            $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url, $from, UPLOAD_METHOD_FILE, EDU_FORMS));
+            $PAGE->requires->strings_for_js(
+                array('groupinfo', 'nogroupinfo', 'full_time', 'extramural', 'part_time'), 'block_user_manager'
+            );
             // -----------------------------------
 
             echo $OUTPUT->footer();

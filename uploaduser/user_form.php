@@ -194,7 +194,7 @@ class um_select_action_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        list($faculties, $groups, $from, $group, $group_info, $edu_forms) = $this->_customdata;
+        list($faculties, $groups, $from, $group, $group_info, $eduforms) = $this->_customdata;
 
         $choices = array(
             ACTION_EXPORTCSV => get_string(ACTION_EXPORTCSV, 'block_user_manager'),
@@ -273,17 +273,17 @@ class um_select_action_form extends moodleform {
 
         if (isset($group_info['ФормаОбучения']) && count($group_info['ФормаОбучения'])) {
             $choices = array_combine($group_info['ФормаОбучения'], $group_info['ФормаОбучения']);
-
-            foreach ($group_info['ФормаОбучения'] as $edu_form) {
-                //$edu_form = mb_strtolower($edu_form);
-                if (isset($edu_forms[$edu_form])) {
-                    $choices[$edu_form] = get_string($edu_forms[$edu_form], 'block_user_manager');
+            foreach ($group_info['ФормаОбучения'] as $eduform) {
+                if (isset($eduforms[$eduform])) {
+                    $choices[$eduform] = get_string($eduforms[$eduform], 'block_user_manager');
+                } else {
+                    $choices[$eduform] = $eduform;
                 }
             }
         }
         else {
-            foreach ($edu_forms as $key => $edu_form) {
-                $choices[$key] = get_string($edu_form, 'block_user_manager');
+            foreach ($eduforms as $key => $eduform) {
+                $choices[$key] = get_string($eduform, 'block_user_manager');
             }
         }
 
