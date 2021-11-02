@@ -283,6 +283,18 @@ class service
         return $new_objs_arr;
     }
 
+    public static function values_by_keys($values, $keys) {
+        $new_values = array();
+
+        foreach ($values as $key => $value) {
+            if (in_array($key, $keys)) {
+                array_push($new_values, $value);
+            }
+        }
+
+        return $new_values;
+    }
+
     /*
      * returnJsonHttpResponse
      * @param $success: Boolean

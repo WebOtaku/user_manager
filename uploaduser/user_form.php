@@ -66,7 +66,43 @@ class um_admin_uploaduser_form extends moodleform {
         $mform->addElement('html', $validfields);
         $mform->setExpanded('validfieldsheader', false);
 
-        $mform->addElement('header', 'settingsheader', get_string('upload'));
+        $mform->addElement('header', 'examples', get_string('examples', 'block_user_manager'));
+
+        $num_empty_rows = 3;
+        $empty_value = '<значение>';
+        $delimiter = ';';
+
+        $a = new stdClass();
+        $a->delimiter = $delimiter;
+
+        $example_header = get_string('examplecsv_system', 'block_user_manager', $a);
+        $header_fields = array_intersect(array_keys($stdfields), $required_fields);
+        $example = table::generate_example_csv_table(
+            $header_fields, $num_empty_rows, $empty_value, $delimiter, $example_header
+        );
+
+        $examples = $example . '<hr/>';
+
+        $example_header = get_string('examplecsv_assoc', 'block_user_manager', $a);
+        $example_desc = get_string('examplecsv_desc_assoc', 'block_user_manager');
+        $header_fields = service::values_by_keys($stdfields, $header_fields);
+        foreach ($header_fields as $key => $header_field) {
+            if (is_array($header_field)) {
+                $header_fields[$key] = (count($header_field))?
+                    array_values($header_field)[0] : '';
+            }
+        }
+
+        $example = table::generate_example_csv_table(
+            $header_fields, $num_empty_rows, $empty_value, $delimiter, $example_header, $example_desc
+        );
+
+        $examples .= $example;
+
+        $mform->addElement('html', $examples);
+        $mform->setExpanded('examples', false);
+
+        $mform->addElement('header', 'upload', get_string('upload'));
 
         $required_fields = uploaduser::get_fields_with_helper($systemfields, $helpfields, $required_fields);
 
@@ -183,15 +219,21 @@ class um_select_action_form extends moodleform {
 
         // $groups = array_keys($groups); // TODO: Заглушка
 
-        $choices = array_combine($groups, $groups);
-        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
-            $choices, array('class' => 'um-autocomplete-group'));
+        if ($from === UPLOAD_METHOD_1C) {
+            $mform->addElement('hidden', 'group');
+            $mform->setType('group', PARAM_TEXT);
+        }
+
         if ($from === UPLOAD_METHOD_FILE) {
+            $choices = array_combine($groups, $groups);
+            $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
+                $choices, array('class' => 'um-autocomplete-group'));
+
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);
+            //$mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
+            $mform->setType('group', PARAM_TEXT);
         }
-//        $mform->hideIf('group', 'action', 'eq', ACTION_UPLOADUSER);
-        $mform->setType('group', PARAM_TEXT);
 
         if ($from === UPLOAD_METHOD_1C || $from === UPLOAD_METHOD_FILE) {
             if ($group) {

@@ -33,6 +33,11 @@ $string['group'] = 'Group';
 
 $string['groupinfo'] = 'Group information';
 
+$string['examples'] = 'Examples';
+$string['examplecsv_system'] = 'An example of the structure of a .csv file (separated by \"{$a->delimiter}\") with system fields';
+$string['examplecsv_assoc'] = 'An example of the structure of a .csv file (separated by \"{$a->delimiter}\") with associated fields';
+$string['examplecsv_desc_assoc'] = 'The names of associated fields can be written with both <b> uppercase </b> and <b> lowercase </b> letters';
+
 $string['exportcsv'] = 'Export in .csv format';
 $string['exportcsvad'] = 'Export in .csv format (AD)';
 $string['exportxls'] = 'Export in .xls (Excel) format';

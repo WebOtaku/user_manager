@@ -376,12 +376,22 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                 }
 
                 list($users, $filecolumns) = uploaduser::prepare_data_for_ad($users, $filecolumns, $formdata, $email_domain, $strings);
-                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_AD');
+
+                if ($from === UPLOAD_METHOD_1C) {
+                    $eduform_short = cohort::get_form_short($formdata->eduform);
+                    $eduform_short = explode('/', $eduform_short)[0];
+                    $filename_csv = clean_filename($formdata->group . '(' . $eduform_short . ')' . '_AD');
+                } else {
+                    $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+                }
+
             }
 
             if ($action === ACTION_EXPORTXLS) {
                 // Если выбран экспорт в формате .xls
-                $filename_excel = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')) . '_' . $formdata->group . '_' . gmdate("Ymd_Hi") . '.xls');
+                $eduform_short = cohort::get_form_short($formdata->eduform);
+                $eduform_short = explode('/', $eduform_short)[0];
+                $filename_excel = clean_filename($formdata->group . '(' . $eduform_short . ')' . '_' . gmdate("Ymd_Hi") . '.xls');
                 $worksheet_name = get_string('users');
 
                 $filecolumns = $REQUIRED_FIELDS;
@@ -408,7 +418,15 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             }
 
             if ($action === ACTION_EXPORTCSV || $action === ACTION_UPLOADUSER) {
-                $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+                //$filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+
+                if ($from === UPLOAD_METHOD_1C) {
+                    $eduform_short = cohort::get_form_short($formdata->eduform);
+                    $eduform_short = explode('/', $eduform_short)[0];
+                    $filename_csv = clean_filename($formdata->group . '(' . $eduform_short . ')');
+                } else {
+                    $filename_csv = clean_filename(mb_strtolower(get_string('users')) . '_' . mb_strtolower(get_string('list')));
+                }
             }
 
             if ($action === ACTION_EXPORTCSV || $action === ACTION_EXPORTCSVAD || $action === ACTION_UPLOADUSER) {

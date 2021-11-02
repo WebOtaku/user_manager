@@ -33,6 +33,11 @@ $string['group'] = 'Группа';
 
 $string['groupinfo'] = 'Информация о группе';
 
+$string['examples'] = 'Примеры';
+$string['examplecsv_system'] = 'Пример структуры .csv файла (разделённого \"{$a->delimiter}\") с системными полями';
+$string['examplecsv_assoc'] = 'Пример структуры .csv файла (разделённого \"{$a->delimiter}\") с ассоциированными полями';
+$string['examplecsv_desc_assoc'] = 'Названия ассоциированных полей можно писать как с <b>заглавной</b> так и со <b>строчной</b> буквы';
+
 $string['exportcsv'] = 'Экспорт в формате .csv';
 $string['exportcsvad'] = 'Экспорт в формате .csv (AD)';
 $string['exportxls'] = 'Экспорт в формате .xls (Excel)';

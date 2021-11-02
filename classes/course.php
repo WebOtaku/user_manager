@@ -46,12 +46,16 @@ class course
 
             // Группируем course
             if (isset($group_users_courses[$userid]->courses) && $users_course->course) {
-                $group_users_courses[$userid]->courses[] = $users_course->course;
+                // <span> c courseid - фикс для функции array_unique, т.к. названия курсов могут совпадать
+                $group_users_courses[$userid]->courses[] =
+                    $users_course->course.' <span style="display:none;">#'.$users_course->courseid.'</span>';
                 $group_users_courses[$userid]->courses =
                     array_unique($group_users_courses[$userid]->courses);
             }
             elseif (!isset($group_users_courses[$userid]->courses) && $users_course->course)
-                $group_users_courses[$userid]->courses = array($users_course->course);
+                $group_users_courses[$userid]->courses = array(
+                    $users_course->course.' <span style="display:none;">#'.$users_course->courseid.'</span>'
+                );
             elseif (!isset($group_users_courses[$userid]->courses))
                 $group_users_courses[$userid]->courses = array();
 

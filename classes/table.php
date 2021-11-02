@@ -518,4 +518,52 @@ class table
 
         return html_writer::tag('div', html_writer::table($table), array('class'=>'flexible-wrap'));
     }
+
+    public static function generate_example_csv_table(array $header_fields, int $num_empty_rows = 3, string $empty_value = '...',
+                                                      string $delimiter = ';', string $header = '', string $description = '')
+    {
+        $table = '';
+
+        if (count($header_fields))
+        {
+            if ($header) {
+                $table .= "<h5 class='um-example-table-header'>$header</h5>";
+            }
+
+            if ($description) {
+                $table .= "<div class='um-example-table-desc'>$description</div>";
+            }
+
+            $table .= "<table class='um-example-table'>";
+            $table .= "<tr class='um-example-table__row'>";
+
+            $j = 0;
+            foreach ($header_fields as $header_field) {
+                if (!empty($header_field)) {
+                    $table .= "<th class='um-example-table__h-cell'>$header_field";
+                } else {
+                    $table .= "<th class='um-example-table__h-cell'>-";
+                }
+                if ($j < count($header_fields) - 1) $table .= $delimiter;
+                $table .= "</th>";
+                $j++;
+            }
+            $table .= "</tr>";
+
+            for ($i = 0; $i < $num_empty_rows; $i++) {
+                $table .= "<tr class='um-example-table__row'>";
+                for ($j = 0; $j < count($header_fields); $j++) {
+                    $table .= "<td class='um-example-table__cell'>
+                " . htmlspecialchars($empty_value);
+                    if ($j < count($header_fields) - 1) $table .= $delimiter;
+                    $table .= "</td>";
+                }
+                $table .= "</tr>";
+            }
+
+            $table .= "</table>";
+        }
+
+        return $table;
+    }
 }
