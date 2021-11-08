@@ -1,6 +1,6 @@
 <?php
 
-use block_user_manager\html_list_view;
+use block_user_manager\html;
 
 class block_user_manager extends block_base {
     public function init() {
@@ -47,7 +47,7 @@ class block_user_manager extends block_base {
         $langfile = 'block_user_manager';
 
         if (count($links))
-            $this->content->text .= html_list_view::get_html_list_links($links, $linksparams, $langfile, $keyslangfile);
+            $this->content->text .= html::generate_html_list_links($links, $linksparams, $langfile, $keyslangfile);
 
         return $this->content;
     }

@@ -27,9 +27,8 @@ use block_user_manager\service;
 use block_user_manager\cohort;
 use block_user_manager\cohort1c_lib1c;
 use block_user_manager\db_request;
-use block_user_manager\exportformat;
 use block_user_manager\uploaduser;
-use block_user_manager\string_operation;
+use block_user_manager\html;
 
 require('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
@@ -214,6 +213,12 @@ if ($action === 'add_cohort') {
     list($course_num, $course_str) = cohort1c_lib1c::GetCourseRepresent($group_info['Курс']);
     $group_info['Курс'] = ($course_format === 0)? (($course_num >= 1) ? $course_num : '') : $course_str;
 
+    $format_group_info = cohort1c_lib1c::FormatGroupInfo(
+        $group_info, count($users), $period_end, 0, FORMAT_FIELDS
+    );
+
+    $description = html::generate_paragraph_list_from_arr($format_group_info);
+
     $shortfaculty = cohort::get_faculty_short($group_info['Факультет']);
 
     $params = array(
@@ -259,7 +264,7 @@ if ($action === 'add_cohort') {
 
         $moodleusers = db_request::get_moodleusers_select($users);
 
-        $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info);
+        $cohortid = cohort::add_1c_cohort($cohort_name, $group1c_info, $description);
         if ($cohortid) cohort::add_1c_users($cohortid, $moodleusers);
 
         $cir->cleanup(true);

@@ -121,17 +121,19 @@ class cohort
      * @param array $group_1c_info информация о группе из 1с (поля как в таблице cohort1c_synch)
      * @return int
      */
-    public static function add_1c_cohort(string $name, array $group1c_info): int
+    public static function add_1c_cohort(string $name, array $group1c_info, string $description): int
     {
         global $DB;
         $cohort = new stdClass();
         $cohort->contextid = 1;
         $cohort->name = $name;
-        $cohort->description = 'Факультет: <b>'.$group1c_info['faculty'].'</b>'
-            .'<br>Направление: <b>'.$group1c_info['speciality'].'</b>'
-            .'<br>Профиль: <b>'.$group1c_info['specialization'].'</b>'
-            .'<br>Форма обучения: <b>'.$group1c_info['form'].'</b>'
-            .'<br>Курс: <b>'.$group1c_info['course'].'</b>';
+        /*$cohort->description =
+            '<b>Факультет: </b>'.$group1c_info['faculty']
+            .'<br><b>Направление: </b>'.$group1c_info['speciality']
+            .'<br><b>Профиль: </b>'.$group1c_info['specialization']
+            .'<br><b>Форма обучения: </b>'.$group1c_info['form']
+            .'<br><b>Курс: </b>'.$group1c_info['course'];*/
+        $cohort->description = $description;
         $params = array(
             'faculty' => $group1c_info['faculty'],
             'course' => $group1c_info['course'],

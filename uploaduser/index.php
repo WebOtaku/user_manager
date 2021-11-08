@@ -145,6 +145,10 @@ $period_end = (int)$ini['period_end']; // date('Y');
 
 $upload_method_form = new um_select_upload_method_form($baseurl, array($GROUPS));
 
+$selectFieldId = 'id_group';
+$eduformFieldId = 'id_eduform';
+$data_field_name = 'group';
+
 if (!$upload_method) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('user_manager', 'block_user_manager'));
@@ -158,9 +162,11 @@ if (!$upload_method) {
     $upload_method_form->display();
 
     // ------ Подключение JS модуля ------
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/autocomplete_info.js?newversion'));
     $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
-    $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url, null, null, null));
+    $PAGE->requires->js_init_call('M.block_user_manager_autocomplete_info.init',  array(
+        $request_url, $selectFieldId, $data_field_name, CONTEXT_UPLOAD_METHOD
+    ));
     $PAGE->requires->strings_for_js(
         array('groupinfo', 'nogroupinfo', 'full_time', 'extramural', 'part_time'), 'block_user_manager'
     );
@@ -258,12 +264,14 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
         $filecolumns = uploaduser::um_validate_user_upload_columns($cir, $STD_FIELDS, $PRF_FIELDS, $baseurl, $passwordkey);
 
         $group_info = array();
+        $format_group_info = array();
         $students = array();
 
         // Получение информации о группе при загрузке из 1С
         if ($from === UPLOAD_METHOD_1C) {
             if ($group) {
                 list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
+                $format_group_info = cohort1c_lib1c::FormatGroupInfo($group_info, count($students), $period_end, 0, FORMAT_FIELDS);
 
                 if (!count($students)) {
                     $cir->cleanup(true);
@@ -297,7 +305,7 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
         $FACULTIES = cohort1c_lib1c::GetFaculties($UNIV_FORM_STRUCTURE);
 
         $selectaction_form = new um_select_action_form($baseurl, array(
-            $FACULTIES, $GROUPS, $from, $group, $group_info, EDU_FORMS
+            $FACULTIES, $GROUPS, $from, $group, $group_info, $format_group_info, EDU_FORMS
         ));
 
         if ($selectaction_form->is_cancelled()) {
@@ -465,13 +473,23 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
             echo '<hr/>';
             $selectaction_form->display();
 
-            // ------ Подключение JS модуля ------
-            $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/group_info.js?newversion'));
-            $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
-            $PAGE->requires->js_init_call('M.block_user_manager_group_info.init',  array($request_url, $from, UPLOAD_METHOD_FILE, EDU_FORMS));
-            $PAGE->requires->strings_for_js(
-                array('groupinfo', 'nogroupinfo', 'full_time', 'extramural', 'part_time'), 'block_user_manager'
-            );
+            if ($from === UPLOAD_METHOD_FILE) {
+                // ------ Подключение JS модуля ------
+                $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/autocomplete_info.js?newversion'));
+                $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_group_info.php'));
+                $data = [
+                    'FROM' => $from,
+                    'UPLOAD_METHOD_FILE' => UPLOAD_METHOD_FILE,
+                    'EDU_FORMS' => EDU_FORMS,
+                    'EDU_FORM_FIELD_ID' => $eduformFieldId
+                ];
+                $PAGE->requires->js_init_call('M.block_user_manager_autocomplete_info.init', array(
+                        $request_url, $selectFieldId, $data_field_name, CONTEXT_SELECT_ACTION, $data)
+                );
+                $PAGE->requires->strings_for_js(
+                    array('groupinfo', 'nogroupinfo', 'full_time', 'part_time', 'extramural'), 'block_user_manager'
+                );
+            }
             // -----------------------------------
 
             echo $OUTPUT->footer();

@@ -2,6 +2,7 @@
 
 use block_user_manager\cohort1c_lib1c;
 use block_user_manager\service;
+use block_user_manager\html;
 
 require('../../../config.php');
 require_once('../locallib.php');
@@ -22,22 +23,11 @@ if (isset($_POST['group'])) {
         list($students, $group_info) = cohort1c_lib1c::GetGroupInfoByGroup($group, $period_start, $period_end, IS_STUDENT_STATUS_1C);
 
         if (count($students)) {
-            $group_info = cohort1c_lib1c::FormatGroupInfo($group_info, count($students), $period_end, 0, FORMAT_FIELDS);
+            $group_info = cohort1c_lib1c::FormatGroupInfo(
+                $group_info, count($students), $period_end, 0, FORMAT_FIELDS
+            );
 
-            $message = '';
-
-            foreach ($group_info as $key => $value) {
-                if (is_array($value)) {
-                    $message .= "<p><span style='font-weight: bold'>$key</span>: ";
-                    for ($i = 0; $i < count($value); $i++) {
-                        $message .= $value[$i];
-                        if ($i < count($value) - 1) $message .= ', ';
-                    }
-                    $message .= "</p>";
-                } else {
-                    $message .= "<p><span style='font-weight: bold'>$key</span>: $value</p>";
-                }
-            }
+            $message = html::generate_paragraph_list_from_arr($group_info);
 
             $response_code = 200;
             $data = array(

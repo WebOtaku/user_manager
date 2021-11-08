@@ -99,3 +99,7 @@ define('ACTION_UPLOADUSER', 'uploaduser');
 
 // Default values
 define('DEFAULT_EMAIL', '%u@no-email.local');
+
+// Contexts
+define('CONTEXT_SELECT_ACTION', 'select_action');
+define('CONTEXT_UPLOAD_METHOD', 'upload_method');

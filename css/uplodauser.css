@@ -1,12 +1,20 @@
+.um-message {
+    margin-bottom: 10px;
+}
+
 .um-message__content {
     display: none;
     opacity: 0;
     transition: opacity 0.25s linear;
+    max-width: 600px;
+}
+
+.um-message__content p {
+    margin: 0;
 }
 
 .um-message-show .um-message__content {
     display: block;
-    /*opacity: 1;*/
 }
 
 .um-toggle-btn {
@@ -28,15 +36,6 @@
 
 .um-message-show .um-toggle-arrow {
     transform: rotate(360deg);
-}
-
-.um-autocomplete-group #umGroupInfo {
-    /*display: none;*/
-    margin-bottom: 10px;
-    max-width: 600px;
-}
-.um-autocomplete-group #umGroupInfo p {
-    margin: 0;
 }
 
 .um-input-info {

@@ -80,6 +80,13 @@ $string['groupnotarray'] = 'Group cannot be an array.';
 
 $string['inputdelimiter'] = 'Field names separated by commas';
 
+// Cohort sync
+$string['nocohortinfo'] = 'There is no information about the cohort.';
+$string['cohortinfo'] = 'Cohort information';
+$string['selectcohort'] = 'Select cohort';
+$string['cohortnotarray'] = 'Cohort cannot be an array.';
+$string['nocohortspecified'] = 'Cohort must be specified.';
+
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';
 $string['addtocht'] = 'Adding to cohorts';

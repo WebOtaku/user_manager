@@ -8,6 +8,17 @@ require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
 
 class table
 {
+    private static function field_takes_value(stdClass $grouped_user_data, string $field, int $index, $value): bool {
+        $flag = false;
+
+        if (isset($grouped_user_data->$field)) {
+            if (is_array($grouped_user_data->$field) && isset($grouped_user_data->$field[$index]) &&
+                !empty($value) && (strpos($grouped_user_data->$field[$index], $value) !== false)) $flag = true;
+        }
+
+        return $flag;
+    }
+
     public static function generate_table_from_object(stdClass $grouped_user_data, array $object_fields_names = [],
                                                       array $actions = [], string $action_add = ''): string
     {
@@ -129,18 +140,7 @@ class table
         return $result_table_str;
     }
 
-    private static function field_takes_value(stdClass $grouped_user_data, string $field, int $index, $value): bool {
-        $flag = false;
-
-        if (isset($grouped_user_data->$field)) {
-            if (is_array($grouped_user_data->$field) && isset($grouped_user_data->$field[$index]) &&
-                !empty($value) && (strpos($grouped_user_data->$field[$index], $value) !== false)) $flag = true;
-        }
-
-        return $flag;
-    }
-
-    public static function generate_system_userfileds_selector(array $systemfields, string $systemfield, array $helpfields = [],
+    private static function generate_system_userfields_selector(array $systemfields, string $systemfield, array $helpfields = [],
                                                                bool $defaultempty = false, string $id = ""): string
     {
         $html_str = '        
@@ -181,7 +181,7 @@ class table
             $id = 0;
             foreach ($stdfields as $systemfield => $associatedfields) {
                 $result_table_str .= '<tr class="um-table__row">';
-                $result_table_str .= '<td class="um-table__cell">'. self::generate_system_userfileds_selector($systemfields, $systemfield,  $helpfields, true, $id) .'</td>';
+                $result_table_str .= '<td class="um-table__cell">'. self::generate_system_userfields_selector($systemfields, $systemfield,  $helpfields, true, $id) .'</td>';
 
                 $result_table_str .= '<td class="um-table__cell">';
                 if (is_array($associatedfields)) {

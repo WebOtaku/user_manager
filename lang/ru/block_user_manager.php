@@ -80,6 +80,13 @@ $string['groupnotarray'] = 'Группа не может быть массиво
 
 $string['inputdelimiter'] = 'Названия полей разделены запятой';
 
+// Cohort sync
+$string['nocohortinfo'] = 'Отсутствует информация о глобальной группе.';
+$string['cohortinfo'] = 'Информация о глобальной группе';
+$string['selectcohort'] = 'Выберите глобальную группу';
+$string['cohortnotarray'] = 'Глобальная группа не может быть массивом.';
+$string['nocohortspecified'] = 'Должна быть указана глобальная группа.';
+
 // Форма добавления пользователя в группу
 $string['add'] = 'Добавить';
 $string['addtocht'] = 'Добавление в глобальные группы';

@@ -12,6 +12,7 @@ use block_user_manager\cohort1c_lib1c;
 use block_user_manager\service;
 use block_user_manager\table, block_user_manager\uploaduser;
 use block_user_manager\string_operation;
+use block_user_manager\html;
 
 class um_select_upload_method_form extends moodleform {
     /**
@@ -37,8 +38,7 @@ class um_select_upload_method_form extends moodleform {
         $mform->setType('upload_method', PARAM_INT);
 
         $choices = array_combine($groups, $groups);
-        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
-            $choices, array('class' => 'um-autocomplete-group'));
+        $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
         $mform->hideIf('group', 'upload_method', 'eq', UPLOAD_METHOD_FILE);
         $mform->setType('group', PARAM_TEXT);
 
@@ -194,7 +194,7 @@ class um_select_action_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        list($faculties, $groups, $from, $group, $group_info, $eduforms) = $this->_customdata;
+        list($faculties, $groups, $from, $group, $group_info, $format_group_info, $eduforms) = $this->_customdata;
 
         $choices = array(
             ACTION_EXPORTCSV => get_string(ACTION_EXPORTCSV, 'block_user_manager'),
@@ -206,6 +206,21 @@ class um_select_action_form extends moodleform {
             ' size' => count($choices), // Фикс игнорирования аттрибута size это добавление пробела до или после слова size
             'class' => 'um-custom-select'
         );
+
+        if ($from === UPLOAD_METHOD_1C) {
+            $paragraph_list = '
+                <div class="um-message um-message-toggleable" role="alert">
+                    <div class="um-message__content alert alert-info" style="display: block; opacity: 1;">'.
+                        html::generate_paragraph_list_from_arr($format_group_info)
+                    .' </div>
+                </div>
+            ';
+
+            $mform->addElement('html', html::generate_label_with_html(
+                get_string('groupinfo', 'block_user_manager'), $paragraph_list
+            ));
+        }
+
         $mform->addElement('select', 'action', get_string('action'), $choices, $attributes);
         $mform->getElement('action')->setSelected(ACTION_EXPORTCSV);
         $mform->setType('action', PARAM_TEXT);
@@ -226,8 +241,7 @@ class um_select_action_form extends moodleform {
 
         if ($from === UPLOAD_METHOD_FILE) {
             $choices = array_combine($groups, $groups);
-            $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'),
-                $choices, array('class' => 'um-autocomplete-group'));
+            $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
 
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSV);
             $mform->hideIf('group', 'action', 'eq', ACTION_EXPORTCSVAD);

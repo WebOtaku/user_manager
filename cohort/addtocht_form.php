@@ -4,6 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/formslib.php');
 
+use block_user_manager\html;
+
 class addtocht_form extends moodleform {
 
     /**
@@ -18,20 +20,9 @@ class addtocht_form extends moodleform {
 
         $full_name = "$user->lastname $user->firstname $user->middlename";
 
-        $full_name_html = '
-            <div id="fitem_id_fullname" class="form-group row  fitem">
-                <div class="col-md-3">
-                    <span class="float-sm-right text-nowrap"></span>
-                    <span class="col-form-label d-inline">'.get_string('user', 'admin').' </span>
-                </div>
-                <div class="col-md-9 form-inline felement" data-fieldtype="static">
-                    <div class="form-control-static">'.$full_name.'</div>
-                    <div class="form-control-feedback invalid-feedback" id="id_error_fullname"></div>
-                </div>
-            </div>
-        ';
-
-        $mform->addElement('html', $full_name_html);
+        $mform->addElement('html', html::generate_label_with_html(
+            get_string('user', 'admin'), $full_name
+        ));
 
         $options = array('multiple' => true);
 
