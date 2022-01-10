@@ -240,6 +240,7 @@ class um_select_action_form extends moodleform {
         }
 
         if ($from === UPLOAD_METHOD_FILE) {
+            array_unshift($groups, '');
             $choices = array_combine($groups, $groups);
             $mform->addElement('autocomplete', 'group', get_string('group', 'block_user_manager'), $choices);
 

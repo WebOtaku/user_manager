@@ -24,10 +24,10 @@ class addtocht_form extends moodleform {
             get_string('user', 'admin'), $full_name
         ));
 
-        $options = array('multiple' => true);
+        //$options = array('multiple' => false);
 
-        $mform->addElement('cohort', 'chtids', get_string('cohorts', 'cohort'), $options);
-        $mform->addRule('chtids', get_string('required'), 'required', null, 'client');
+        $mform->addElement('cohort', 'chtid', get_string('cohorts', 'cohort')); //, $options);
+        //$mform->addRule('chtid', get_string('required'), 'required', null, 'client');
 
         $mform->addElement('hidden', 'userid');
         $mform->setType('userid', PARAM_INT);

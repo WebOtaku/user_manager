@@ -5,6 +5,7 @@ use block_user_manager\service;
 require_once('../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once('addtocht_form.php');
+require_once('../locallib.php');
 
 $userid = required_param('userid', PARAM_INT);
 $returnurl = required_param('returnurl', PARAM_LOCALURL);
@@ -102,9 +103,13 @@ if($assign_form->is_cancelled()) {
 } else if ($form_data = $assign_form->get_data()) {
     require_capability('moodle/cohort:assign', $context);
 
-    if (isset($form_data->chtids) && isset($form_data->userid)) {
-        foreach ($form_data->chtids as $chtid) {
-            cohort_add_member($chtid, $form_data->userid);
+    if (isset($form_data->chtid) && isset($form_data->userid)) {
+        if (is_array($form_data->chtid)) {
+            foreach ($form_data->chtid as $chtid) {
+                cohort_add_member($chtid, $form_data->userid);
+            }
+        } else {
+            cohort_add_member($form_data->chtid, $form_data->userid);
         }
         redirect($returnurl);
     }
@@ -120,5 +125,22 @@ if($assign_form->is_cancelled()) {
 
     echo $OUTPUT->heading($pagetitle);
     $assign_form->display();
+
+    $css_url = (string)(new moodle_url('/blocks/user_manager/css/uplodauser.css'));
+    echo '<link rel="stylesheet" href="'.$css_url.'">';
+
+    // ------ Подключение JS модуля ------
+    $selectFieldId = 'id_chtid';
+
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/autocomplete_info.js?newversion'));
+    $request_url = (string)(new moodle_url('/blocks/user_manager/uploaduser/get_cohort_info.php'));
+    $PAGE->requires->js_init_call('M.block_user_manager_autocomplete_info.init',  array(
+        $request_url, $selectFieldId, 'cohort', CONTEXT_COHORT_SYNC
+    ));
+    $PAGE->requires->strings_for_js(
+        array('cohortinfo', 'nocohortinfo', 'selectcohort'), 'block_user_manager'
+    );
+    // -----------------------------------
+
     echo $OUTPUT->footer();
 }

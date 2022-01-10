@@ -89,7 +89,7 @@ $string['nocohortspecified'] = 'Cohort must be specified.';
 
 // Форма добавления пользователя в группу
 $string['add'] = 'Add';
-$string['addtocht'] = 'Adding to cohorts';
+$string['addtocht'] = 'Adding to cohort';
 $string['addtochtshort'] = 'Adding to cohorts';
 
 // Удаление пользователя из глобальной группы

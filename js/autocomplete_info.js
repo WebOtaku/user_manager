@@ -5,6 +5,7 @@ M.block_user_manager_autocomplete_info = {
         $(document).ready(function () {
             const CONTEXTS = {
                 SELECT_ACTION: 'select_action',
+                SELECT_ACTION_FILE: 'select_action_file',
                 UPLOAD_METHOD: 'upload_method',
                 COHORT_SYNC: 'cohort_sync'
             };
@@ -105,7 +106,7 @@ M.block_user_manager_autocomplete_info = {
                         var curVal = $(selectFieldSelector).val();
 
                         if (!curVal) {
-                            if (CONTEXT === CONTEXTS.COHORT_SYNC) {
+                            if (CONTEXT === CONTEXTS.COHORT_SYNC || CONTEXT === CONTEXTS.SELECT_ACTION_FILE) {
                                 printMessage(placeholderMsg, msgClass, msgContentSelector);
                             }
                         }
@@ -187,14 +188,16 @@ M.block_user_manager_autocomplete_info = {
                 $.post(url, data)
                     .done(function(response) {
                         // ------- Обработка ответа от скрипта get_group_info.php -------
-                        if (CONTEXT === CONTEXTS.SELECT_ACTION || CONTEXT === CONTEXTS.UPLOAD_METHOD) {
+                        if (CONTEXT === CONTEXTS.SELECT_ACTION || CONTEXT === CONTEXTS.UPLOAD_METHOD ||
+                            CONTEXT === CONTEXTS.SELECT_ACTION_FILE)
+                        {
                             if (response?.data && Object.keys(response.data).length) {
                                 if (response.data?.groupInfoStr && response.data.groupInfoStr)
                                     printMessage(response.data.groupInfoStr, msgClass, msgContentSelector);
                                 else printMessage(noGroupInfo, errClass, msgContentSelector);
 
                                 // Для формы выбора действий, где присутствует поле выбора формы обучения
-                                if (CONTEXT === CONTEXTS.SELECT_ACTION) {
+                                if (CONTEXT === CONTEXTS.SELECT_ACTION || CONTEXT === CONTEXTS.SELECT_ACTION_FILE) {
                                     if (DATA?.FROM && DATA?.UPLOAD_METHOD_FILE && DATA.FROM && DATA.UPLOAD_METHOD_FILE) {
                                         if (DATA.FROM === DATA.UPLOAD_METHOD_FILE) {
                                             if (response.data?.groupInfo && Object.keys(response.data.groupInfo).length) {

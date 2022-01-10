@@ -484,7 +484,7 @@ if ($upload_method === UPLOAD_METHOD_FILE) {
                     'EDU_FORM_FIELD_ID' => $eduformFieldId
                 ];
                 $PAGE->requires->js_init_call('M.block_user_manager_autocomplete_info.init', array(
-                        $request_url, $selectFieldId, $data_field_name, CONTEXT_SELECT_ACTION, $data)
+                        $request_url, $selectFieldId, $data_field_name, CONTEXT_SELECT_ACTION_FILE, $data)
                 );
                 $PAGE->requires->strings_for_js(
                     array('groupinfo', 'nogroupinfo', 'full_time', 'part_time', 'extramural'), 'block_user_manager'

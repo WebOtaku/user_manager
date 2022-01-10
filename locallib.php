@@ -102,4 +102,6 @@ define('DEFAULT_EMAIL', '%u@no-email.local');
 
 // Contexts
 define('CONTEXT_SELECT_ACTION', 'select_action');
+define('CONTEXT_SELECT_ACTION_FILE', 'select_action_file');
 define('CONTEXT_UPLOAD_METHOD', 'upload_method');
+define('CONTEXT_COHORT_SYNC', 'cohort_sync');
