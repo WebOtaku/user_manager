@@ -51,8 +51,14 @@ $site = get_site();
 
 //require_login();
 
-if (!has_capability('moodle/user:update', $context) and !has_capability('moodle/user:delete', $context)) {
-    print_error('nopermissions', 'error', '', 'edit/delete users');
+if (!has_capability('moodle/cohort:manage', $context) and !has_capability('moodle/cohort:assign', $context) and
+    !has_capability('moodle/cohort:view', $context)) {
+    print_error('nopermissions', 'error', '', 'view/manage/assign cohorts');
+}
+
+if (!has_capability('moodle/user:create', $context) and !has_capability('moodle/user:update', $context) and
+    !has_capability('moodle/user:delete', $context)) {
+    print_error('nopermissions', 'error', '', 'create/edit/delete users');
 }
 
 /*if (!has_capability('block/user_manager:edit', $context)) {
@@ -117,7 +123,7 @@ if ($userfilter == 'cohort')  {
     $instructionurl = new moodle_url('/blocks/user_manager/instruction.php', $instructionurl_params);
     $instructionnode = $usermanagernode->add(get_string('instruction', 'block_user_manager'), $instructionurl);
 
-    $basenode = $chtstablenode->add($cht->name, $baseurl);
+    $basenode = $userstablenode->add($cht->name, $baseurl);
     $basenode->make_active();
 }
 else {
@@ -730,11 +736,15 @@ if (!$users) {
                 'cht_codes_mdl' => [
                     'fieldname' => $cht_code_mdl,
                     'type' => 'link',
-                    'url' => '/cohort/assign.php',
+                    'url' => $pageurl,
                     'urlparams' => [
-                        'id' => [
+                        'chtid' => [
                             'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
                             'value' => 'chtids'
+                        ],
+                        'userfilter' => [
+                            'type' => 'raw', // field - поле объекта, raw - заданное значение (любые данные)
+                            'value' => 'cohort'
                         ],
                         'returnurl' => [
                             'type' => 'raw',
@@ -747,11 +757,15 @@ if (!$users) {
                 'cht_codes' => [
                     'fieldname' => $cht_code,
                     'type' => 'link',
-                    'url' => '/cohort/assign.php',
+                    'url' =>  $pageurl,
                     'urlparams' => [
-                        'id' => [
+                        'chtid' => [
                             'type' => 'field', // field - поле объекта, raw - заданное значение (любые данные)
                             'value' => 'chtids'
+                        ],
+                        'userfilter' => [
+                            'type' => 'raw', // field - поле объекта, raw - заданное значение (любые данные)
+                            'value' => 'cohort'
                         ],
                         'returnurl' => [
                             'type' => 'raw',
@@ -816,6 +830,11 @@ if (!$users) {
         $table->data[] = $row;
     }
 
+    // ------ Подключение JS модуля ------
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/user_manager/js/close_table.js?newversion'));
+    $PAGE->requires->js_init_call('M.block_user_manager_close_table.init');
+    // -----------------------------------
+
     $PAGE->requires->js_amd_inline("
         require(['jquery'], function($) {
             $(document).ready(function() {
@@ -852,7 +871,7 @@ if (has_capability('moodle/user:create', $context) ) {
 
 if ($userfilter == 'cohort') {
     $url = $returnurl;
-    $btn_name = get_string('backtocohorts', 'cohort');
+    $btn_name = get_string('back');
     echo $OUTPUT->single_button($url, $btn_name);
 } /*else {
     $url = new moodle_url('/blocks/user_manager/cohort/index.php');

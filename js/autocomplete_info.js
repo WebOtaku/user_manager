@@ -209,8 +209,6 @@ M.block_user_manager_autocomplete_info = {
                                         }
                                     }
                                 }
-
-
                             } else printMessage(noGroupInfo, errClass, msgContentSelector);
                         }
                         // ------- Обработка ответа от скрипта get_group_info.php -------

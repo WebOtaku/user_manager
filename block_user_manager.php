@@ -44,6 +44,14 @@ class block_user_manager extends block_base {
             $keyslangfile[] = 'uploaduser';
         }
 
+        if (self::has_access_to_cohorts() || self::has_access_to_users() ||
+            self::has_access_to_uploadusers())
+        {
+            $links[] = '/blocks/user_manager/instruction.php';
+            $linksparams[] = ['returnurl' => $this->page->url];
+            $keyslangfile[] = 'instruction';
+        }
+
         $langfile = 'block_user_manager';
 
         if (count($links))
@@ -76,7 +84,8 @@ class block_user_manager extends block_base {
     public function has_access_to_users() {
         $context = context_system::instance();
 
-        return (
+        return self::has_access_to_cohorts() && (
+            has_capability('moodle/user:create', $context) &&
             has_capability('moodle/user:update', $context) &&
             has_capability('moodle/user:delete', $context)
         );
@@ -95,7 +104,8 @@ class block_user_manager extends block_base {
             return true;
         }
 
-        if (self::has_access_to_cohorts() || self::has_access_to_users())
+        if (self::has_access_to_cohorts() || self::has_access_to_users() ||
+            self::has_access_to_uploadusers())
         {
             return true;
         }
